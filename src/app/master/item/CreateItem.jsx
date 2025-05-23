@@ -10,7 +10,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IMAGE_URL, NO_IMAGE_URL } from "@/config/BaseUrl";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,6 +36,7 @@ const CreateItem = ({ editId = null }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [originalData, setOriginalData] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const [formData, setFormData] = useState({
     item_category_id: "",
@@ -69,7 +70,7 @@ const CreateItem = ({ editId = null }) => {
         const response = await apiClient.get(`${ITEM_EDIT_GET}/${editId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const fetchedData = response.data.item;
+        const fetchedData = response.data.items;
         setFormData({
           item_category_id: fetchedData?.item_category_id || "",
           item_name: fetchedData?.item_name || "",
@@ -133,8 +134,8 @@ const CreateItem = ({ editId = null }) => {
 
     setIsLoading(true);
     try {
-      // Create FormData object
       const data = new FormData();
+      data.append("_method", "PUT");
       data.append("item_category_id", formData.item_category_id);
       data.append("item_name", formData.item_name);
       data.append("item_size", formData.item_size);
@@ -142,7 +143,7 @@ const CreateItem = ({ editId = null }) => {
       data.append("item_weight", formData.item_weight);
       data.append("item_minimum_stock", formData.item_minimum_stock);
       if (formData.item_image) {
-        data.append("item_image", formData.item_image); // item_image is a File object
+        data.append("item_image", formData.item_image);
       }
       if (editId) {
         data.append("item_status", formData.item_status);
@@ -150,7 +151,7 @@ const CreateItem = ({ editId = null }) => {
 
       let response;
       if (editId) {
-        response = await apiClient.put(`${ITEM_EDIT_SUMBIT}/${editId}`, data, {
+        response = await apiClient.post(`${ITEM_EDIT_SUMBIT}/${editId}`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -231,11 +232,35 @@ const CreateItem = ({ editId = null }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {pathname === "/master/item" ? (
+        {pathname == "/master/item" ? (
           editId ? (
-            <button className="px-2 py-1 bg-yellow-400 hover:bg-yellow-600 rounded-lg text-black text-xs">
-              <Edit className="w-4 h-4" />
-            </button>
+            <div>
+              <div className="sm:hidden">
+                <button
+                  variant="default"
+                  className={`px-2 py-1 bg-yellow-400 hover:bg-yellow-600 rounded-lg text-black text-xs`}
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="hidden sm:block">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`transition-all duration-200 ${
+                    isHovered ? "bg-blue-50" : ""
+                  }`}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                >
+                  <Edit
+                    className={`h-4 w-4 transition-all duration-200 ${
+                      isHovered ? "text-blue-500" : ""
+                    }`}
+                  />
+                </Button>
+              </div>
+            </div>
           ) : (
             <div>
               <div className="sm:hidden">
@@ -360,16 +385,35 @@ const CreateItem = ({ editId = null }) => {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="grid col-span-2">
+                  <label htmlFor="item_image" className="text-sm font-medium">
+                    Image
+                  </label>
+                  <Input
+                    id="item_image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleInputChange}
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="item_image" className="text-sm font-medium">
-                  Image
-                </label>
-                <Input
-                  id="item_image"
-                  type="file"
-                  onChange={handleInputChange}
-                />
+                {(editId || formData.item_image) && (
+                  <div>
+                    <p className="text-xs text-gray-500">Current Image:</p>
+                    <img
+                      src={
+                        typeof formData.item_image === "string"
+                          ? `${IMAGE_URL}${formData.item_image}`
+                          : formData.item_image instanceof File
+                          ? URL.createObjectURL(formData.item_image)
+                          : NO_IMAGE_URL
+                      }
+                      alt="Item Preview"
+                      className="w-24 h-14 mt-1 rounded border object-cover"
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 {editId && (
@@ -415,7 +459,7 @@ const CreateItem = ({ editId = null }) => {
                 )}
                 <Button
                   onClick={handleSubmit}
-                  disabled={isLoading}
+                  disabled={editId ? !hasChanges : isLoading}
                   className={`mt-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} w-full`}
                 >
                   {isLoading ? (

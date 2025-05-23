@@ -1,14 +1,4 @@
 import Page from "@/app/dashboard/page";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,6 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -36,47 +32,57 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ChevronDown, Edit, Search, SquarePlus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+  ChevronDown,
+  Edit,
+  Search,
+  SquarePlus,
+  Trash2,
+  View,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  fetchPurchaseById,
-  navigateToPurchaseEdit,
-  PURCHASE_LIST,
+  fetchSalesById,
+  navigateTOSalesReturnEdit,
+  navigateTOSalesReturnView,
+  SALES_RETURN_LIST,
 } from "@/api";
 import { encryptId } from "@/components/common/Encryption";
 import Loader from "@/components/loader/Loader";
 import StatusToggle from "@/components/toggle/StatusToggle";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import BASE_URL from "@/config/BaseUrl";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import moment from "moment";
 import { RiWhatsappFill } from "react-icons/ri";
-import usetoken from "@/api/usetoken";
-import apiClient from "@/api/axios";
 
-const PurchaseList = () => {
-  const token = usetoken();
-
+const SalesReturnList = () => {
   const {
-    data: purchase,
+    data: sales,
     isLoading,
+    isFetching,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["purchase"],
+    queryKey: ["salesreturn"],
     queryFn: async () => {
-      const response = await apiClient.get(`${PURCHASE_LIST}`, {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${SALES_RETURN_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.purchase;
+      return response.data.sales;
     },
   });
 
@@ -87,21 +93,23 @@ const PurchaseList = () => {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
-  const [searchQuery, setSearchQuery] = useState("");
-  const { toast } = useToast();
-  const UserId = localStorage.getItem("userType");
-  const queryClient = useQueryClient();
-  const whatsapp = localStorage.getItem("whatsapp-number");
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const UserId = localStorage.getItem("userType");
+  const { toast } = useToast();
+  const whatsapp = localStorage.getItem("whatsapp-number");
+  const queryClient = useQueryClient();
+
   const handleDeleteRow = (productId) => {
     setDeleteItemId(productId);
     setDeleteConfirmOpen(true);
   };
   const confirmDelete = async () => {
     try {
+      const token = localStorage.getItem("token");
 
-      const response = await apiClient.delete(
-        `${BASE_URL}/api/purchases/${deleteItemId}`,
+      const response = await axios.delete(
+        `${BASE_URL}/api/sales-return/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -145,16 +153,15 @@ const PurchaseList = () => {
       setDeleteItemId(null);
     }
   };
-
-  const handleFetchPurchaseById = async (purchaseId) => {
+  const handleFetchSalesById = async (salesId) => {
     try {
       const data = await queryClient.fetchQuery({
-        queryKey: ["purchaseByid", purchaseId],
-        queryFn: () => fetchPurchaseById(purchaseId),
+        queryKey: ["salesByid", salesId],
+        queryFn: () => fetchSalesById(salesId),
       });
 
-      if (data?.purchase && data?.purchaseSub) {
-        handleSendWhatsApp(data.purchase, data.purchaseSub, data.buyer);
+      if (data?.sales && data?.salesSub) {
+        handleSendWhatsApp(data.sales, data.salesSub, data.buyer);
       } else {
         console.error("Incomplete data received");
       }
@@ -162,40 +169,38 @@ const PurchaseList = () => {
       console.error("Failed to fetch purchase data or send WhatsApp:", error);
     }
   };
-  const handleSendWhatsApp = (purchase, purchaseSub, buyer) => {
-    const { purchase_ref_no, purchase_date, purchase_vehicle_no } = purchase;
 
+  const handleSendWhatsApp = (sales, salesSub, buyer) => {
+    const { sales_ref_no, sales_date, sales_vehicle_no } = sales;
     const { buyer_name, buyer_city } = buyer;
-    const purchaseNo = purchase_ref_no?.split("-").pop();
-    const itemLines = purchaseSub.map((item) => {
-      const name = item.item_name.padEnd(25, " ");
-      const box = `(${String(item.purchase_sub_box).replace(
-        /\D/g,
-        ""
-      )})`.padStart(4, " ");
-      return `${name}      ${box}`;
+    const salesNo = sales_ref_no?.split("-").pop();
+
+    const itemLines = salesSub.map((item) => {
+      const name = item.item_name.trim();
+      const qty = String(item.sales_sub_box).replace(/\D/g, "");
+      return `${name}   (${qty})`;
     });
 
-    const totalQty = purchaseSub.reduce((sum, item) => {
-      const qty = parseInt(item.purchase_sub_box, 10) || 0;
+    const totalQty = salesSub.reduce((sum, item) => {
+      const qty = parseInt(item.sales_sub_box, 10) || 0;
       return sum + qty;
     }, 0);
-    const message = `=== PackList ===
-  No.        : ${purchaseNo}
-  Date       : ${moment(purchase_date).format("DD-MM-YYYY")}
-  Party      : ${buyer_name}
-  City       : ${buyer_city}
-  VEHICLE NO : ${purchase_vehicle_no}
-  ======================
-  Product    [SIZE]   (QTY)
-  ======================
-${itemLines.map((line) => "  " + line).join("\n")}
-  ======================
-  *Total QTY: ${totalQty}*
-  ======================`;
 
-    const phoneNumber = `${whatsapp}`;
+    const message = `=== DispatchList ===
+No       : ${salesNo}
+Date     : ${moment(sales_date).format("DD-MM-YYYY")}
+Party    : ${buyer_name}
+City     : ${buyer_city}
+Vehicle  : ${sales_vehicle_no}
+======================
+Product [SIZE] (QTY)
+======================
+${itemLines.join("\n")}
+======================
+*Total QTY: ${totalQty}*
+======================`;
     // const phoneNumber = "919360485526";
+    const phoneNumber = `${whatsapp}`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
@@ -205,14 +210,15 @@ ${itemLines.map((line) => "  " + line).join("\n")}
     {
       accessorKey: "index",
       header: "Sl No",
+      id: "Sl No",
       cell: ({ row }) => <div>{row.index + 1}</div>,
     },
     {
-      accessorKey: "purchase_date",
+      accessorKey: "sales_date",
       header: "Date",
       id: "Date",
       cell: ({ row }) => {
-        const date = row.original.purchase_date;
+        const date = row.original.sales_date;
         return moment(date).format("DD-MMM-YYYY");
       },
     },
@@ -223,31 +229,34 @@ ${itemLines.map((line) => "  " + line).join("\n")}
       cell: ({ row }) => <div>{row.original.buyer_name}</div>,
     },
     {
-      accessorKey: "purchase_ref_no",
+      accessorKey: "sales_ref_no",
       header: "Ref No",
       id: "Ref No",
-      cell: ({ row }) => <div>{row.original.purchase_ref_no}</div>,
+      cell: ({ row }) => <div>{row.original.sales_ref_no}</div>,
     },
     {
-      accessorKey: "purchase_vehicle_no",
+      accessorKey: "sales_vehicle_no",
       header: "Vehicle No",
       id: "Vehicle No",
-      cell: ({ row }) => <div>{row.original.purchase_vehicle_no}</div>,
+      cell: ({ row }) => <div>{row.original.sales_vehicle_no}</div>,
     },
     ...(UserId == 3
       ? [
           {
             accessorKey: "branch_name",
             header: "Branch Name",
+            id: "Branch Name",
+
             cell: ({ row }) => <div>{row.original.branch_name}</div>,
           },
         ]
       : []),
     {
-      accessorKey: "purchase_status",
+      accessorKey: "sales_status",
       header: "Status",
+      id: "Status",
       cell: ({ row }) => {
-        const status = row.original.purchase_status;
+        const status = row.original.sales_status;
         const statusId = row.original.id;
         return (
           <StatusToggle
@@ -264,9 +273,10 @@ ${itemLines.map((line) => "  " + line).join("\n")}
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
-        const purchaseId = row.original.id;
+        const salesId = row.original.id;
+
         return (
-          <div className="flex flex-row">
+          <div className="flex flex-row space-x-2">
             {UserId != 3 && (
               <TooltipProvider>
                 <Tooltip>
@@ -275,26 +285,44 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        navigateToPurchaseEdit(navigate, purchaseId);
+                        navigateTOSalesReturnEdit(navigate, salesId);
                       }}
                     >
                       <Edit />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Edit Purchase</p>
+                    <p>Edit Dispatch</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
 
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      navigateTOSalesReturnView(navigate, salesId);
+                    }}
+                  >
+                    <View />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View Dispatch</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             {UserId != 1 && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      onClick={() => handleDeleteRow(purchaseId)}
+                      onClick={() => handleDeleteRow(salesId)}
                       className="text-red-500"
                       type="button"
                     >
@@ -307,14 +335,13 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                 </Tooltip>
               </TooltipProvider>
             )}
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    onClick={() =>
-                      handleFetchPurchaseById(encryptId(purchaseId))
-                    }
+                    onClick={() => handleFetchSalesById(encryptId(salesId))}
                     className="text-green-500"
                     type="button"
                   >
@@ -322,7 +349,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Whatsapp Purchase</p>
+                  <p>Whatsapp Dispatch</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -332,14 +359,8 @@ ${itemLines.map((line) => "  " + line).join("\n")}
     },
   ];
 
-  const filteredItems =
-    purchase?.filter((item) =>
-      item.buyer_name.toLowerCase().includes(searchQuery.toLowerCase())
-    ) || [];
-
-  // Create the table instance
   const table = useReactTable({
-    data: purchase || [],
+    data: sales || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -363,7 +384,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
   });
 
   // Render loading state
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <Page>
         <div className="flex justify-center items-center h-full">
@@ -380,7 +401,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching purchase
+              Error Fetching Dispatch Return
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -399,18 +420,16 @@ ${itemLines.map((line) => "  " + line).join("\n")}
         <div className="sm:hidden">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
-              Purchase List
+              Dispatch Return List
             </h1>
             {UserId != 3 && (
               <div>
                 <Button
                   variant="default"
                   className={`md:ml-2 bg-yellow-400 hover:bg-yellow-600 text-black rounded-l-full`}
-                  onClick={() => {
-                    navigate("/purchase/create");
-                  }}
+                  onClick={() => navigate("/dispatch-return/create")}
                 >
-                  <SquarePlus className="h-4 w-4 " /> Purchase
+                  <SquarePlus className="h-4 w-4 " /> Dispatch Return
                 </Button>
               </div>
             )}
@@ -421,7 +440,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search purchase..."
+                placeholder="Search dispatch return..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -430,10 +449,13 @@ ${itemLines.map((line) => "  " + line).join("\n")}
           </div>
 
           <div className="space-y-3">
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item, index) => (
+            {sales.length > 0 ? (
+              sales.map((item, index) => (
                 <div
                   key={item.id}
+                  onClick={() => {
+                    navigateTOSalesReturnView(navigate, item.id);
+                  }}
                   className="relative bg-white rounded-lg shadow-sm border-l-4 border-r border-b border-t border-yellow-500 overflow-hidden"
                 >
                   <div className="p-2 flex flex-col gap-2">
@@ -450,13 +472,14 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                       <div className="flex items-center justify-between gap-2 ">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            item.purchase_status === "Active"
+                            item.sales_status === "Active"
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <StatusToggle
-                            initialStatus={item.purchase_status}
+                            initialStatus={item.sales_status}
                             teamId={item.id}
                             onStatusChange={() => {
                               refetch();
@@ -465,18 +488,20 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                         </span>
                         {UserId != 3 && (
                           <button
-                            variant="ghost"
                             className={`px-2 py-1 bg-yellow-400 hover:bg-yellow-600 rounded-lg text-black text-xs`}
-                            onClick={() => {
-                              navigateToPurchaseEdit(navigate, item.id);
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              navigateTOSalesReturnEdit(navigate, item.id);
                             }}
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                         )}
+
                         {UserId != 1 && (
                           <button
                             variant="ghost"
+                            type="button"
                             onClick={() => {
                               e.stopPropagation();
                               handleDeleteRow(item.id);
@@ -489,18 +514,18 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                           variant="ghost"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleFetchPurchaseById(encryptId(item.id));
+                            handleFetchSalesById(encryptId(item.id));
                           }}
                           className="text-green-500"
                           type="button"
                         >
                           <RiWhatsappFill className="h-4 w-4" />
-                        </button>{" "}
+                        </button>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap justify-between gap-1">
-                      {item.purchase_ref_no && (
+                      {item.sales_ref_no && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -518,11 +543,11 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                           </svg>
                           <span className="text-xs text-gray-700">
                             <span className="text-[10px]">Ref No:</span>
-                            {item.purchase_ref_no}
+                            {item.sales_ref_no}
                           </span>
                         </div>
                       )}
-                      {item.purchase_vehicle_no && (
+                      {item.sales_vehicle_no && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -543,11 +568,11 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                           </svg>
                           <span className="text-xs text-gray-700">
                             <span className="text-[10px]">Vehicle No:</span>
-                            {item.purchase_vehicle_no}
+                            {item.sales_vehicle_no}
                           </span>
                         </div>
                       )}
-                      {item.purchase_date && (
+                      {item.sales_date && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -574,7 +599,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                             <line x1="3" y1="10" x2="21" y2="10" />
                           </svg>
                           <span className="text-xs text-gray-700">
-                            {moment(item.purchase_date).format("DD-MMM-YY")}
+                            {moment(item.sales_date).format("DD-MMM-YY")}
                           </span>
                         </div>
                       )}
@@ -623,15 +648,14 @@ ${itemLines.map((line) => "  " + line).join("\n")}
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Purchase List
+            Dispatch Return List
           </div>
-
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
             {/* Search Input */}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search Purchase..."
+                placeholder="Search Dispatch Return..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -664,23 +688,24 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                     ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
               {UserId != 3 && (
                 <>
+                  {" "}
                   <Button
                     variant="default"
-                    className={`ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                    onClick={() => {
-                      navigate("/purchase/create");
-                    }}
+                    className={`w-full md:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                    onClick={() => navigate("/dispatch-return/create")}
                   >
-                    <SquarePlus className="h-4 w-4 mr-2" /> Purchase
-                  </Button>{" "}
+                    <SquarePlus className="h-4 w-4 mr-2" /> Dispatch Return
+                  </Button>
                 </>
               )}
             </div>
           </div>
+
           {/* table  */}
-          <div className="rounded-md border">
+          <div className="rounded-md border ">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -736,7 +761,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Purchase : &nbsp;
+              Total Sales : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">
@@ -766,7 +791,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              purchase.
+              disapatch return.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -784,4 +809,4 @@ ${itemLines.map((line) => "  " + line).join("\n")}
   );
 };
 
-export default PurchaseList;
+export default SalesReturnList;

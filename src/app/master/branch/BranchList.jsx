@@ -33,10 +33,11 @@ import { BRANCH_LIST } from "@/api";
 import Loader from "@/components/loader/Loader";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import BranchForm from "./BranchForm";
-// import CreateBuyer from "./CreateBuyer";
-// import EditBuyer from "./EditBuyer ";
-
+import usetoken from "@/api/usetoken";
+import apiClient from "@/api/axios";
 const BranchList = () => {
+  const token = usetoken();
+
   const {
     data: branch,
     isLoading,
@@ -45,8 +46,7 @@ const BranchList = () => {
   } = useQuery({
     queryKey: ["branchs"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${BRANCH_LIST}`, {
+      const response = await apiClient.get(`${BRANCH_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.branch;

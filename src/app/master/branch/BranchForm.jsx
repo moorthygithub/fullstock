@@ -1,4 +1,6 @@
 import { BRANCH_CREATE, BRANCH_EDIT_GET, BRANCH_EDIT_SUMBIT } from "@/api";
+import apiClient from "@/api/axios";
+import usetoken from "@/api/usetoken";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +19,6 @@ import {
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { AlertCircle, Edit, Loader2, SquarePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -30,12 +31,13 @@ const BranchForm = ({ branchId }) => {
   const isEditMode = !!branchId;
   const [formData, setFormData] = useState({
     branch_name: isEditMode ? null : "",
+    branch_prefix: isEditMode ? null : "",
     branch_whatsapp: "",
     branch_email: "",
     branch_status: isEditMode ? "" : null,
   });
   const [originalData, setOriginalData] = useState(null);
-
+  const token = usetoken();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
@@ -46,10 +48,12 @@ const BranchForm = ({ branchId }) => {
       const fetchBranch = async () => {
         setIsFetching(true);
         try {
-          const token = localStorage.getItem("token");
-          const { data } = await axios.get(`${BRANCH_EDIT_GET}/${branchId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const { data } = await apiClient.get(
+            `${BRANCH_EDIT_GET}/${branchId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
 
           const branch = data?.branch || {};
           const filledData = {
@@ -86,6 +90,7 @@ const BranchForm = ({ branchId }) => {
       if (!formData.branch_status) missingFields.push("Status");
     } else {
       if (!formData.branch_name) missingFields.push("Branch Name");
+      if (!formData.branch_prefix) missingFields.push("Branch Name");
       if (!formData.branch_whatsapp) missingFields.push("Branch Whatsapp");
       if (!formData.branch_email) missingFields.push("Branch Email");
     }
@@ -110,13 +115,12 @@ const BranchForm = ({ branchId }) => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
       const url = isEditMode
         ? `${BRANCH_EDIT_SUMBIT}/${branchId}`
         : BRANCH_CREATE;
       const method = isEditMode ? "put" : "post";
 
-      const response = await axios[method](url, formData, {
+      const response = await apiClient[method](url, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -131,6 +135,7 @@ const BranchForm = ({ branchId }) => {
         if (!isEditMode) {
           setFormData({
             branch_name: "",
+            branch_prefix: "",
             branch_whatsapp: "",
             branch_email: "",
           });
@@ -221,112 +226,172 @@ const BranchForm = ({ branchId }) => {
       </PopoverTrigger>
 
       <PopoverContent className="md:w-80">
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <h4 className="font-medium leading-none">
-              {isEditMode ? "Update Branch" : "Create New Branch"}
-            </h4>
-            <p className="text-sm text-muted-foreground">
-              {isEditMode
-                ? "Edit the details for the branch"
-                : "Enter the details for the new branch"}
-            </p>
+        {isFetching ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-          <div className="grid gap-2">
-            {!isEditMode && (
-              <Input
-                placeholder="Enter Branch Name"
-                value={formData.branch_name}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    branch_name: e.target.value,
-                  }))
-                }
-              />
-            )}
-            <Input
-              placeholder="Enter Branch Whatsapp"
-              value={formData.branch_whatsapp}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (/^\d{0,10}$/.test(value)) {
-                  setFormData((prev) => ({
-                    ...prev,
-                    branch_whatsapp: value,
-                  }));
-                }
-              }}
-            />
-            <Input
-              type="email"
-              placeholder="Enter Branch Email"
-              value={formData.branch_email}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  branch_email: e.target.value,
-                }))
-              }
-            />
-            {isEditMode && (
-              <>
-                <div className="grid gap-1">
-                  <Select
-                    value={formData.branch_status}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, branch_status: value }))
-                    }
-                  >
-                    <SelectTrigger
-                      className={hasChanges ? "border-blue-200" : ""}
-                    >
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                          Active
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Inactive">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
-                          Inactive
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {hasChanges && (
-                  <Alert className="bg-blue-50 border-blue-200 mt-2">
-                    <AlertCircle className="h-4 w-4 text-blue-500" />
-                    <AlertDescription className="text-blue-600 text-sm">
-                      You have unsaved changes
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </>
-            )}
-            <Button
-              onClick={handleSubmit}
-              disabled={isEditMode ? !hasChanges : isLoading}
-              className={`mt-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-            >
-              {isLoading ? (
+        ) : (
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none">
+                {isEditMode ? "Update Branch" : "Create New Branch"}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {isEditMode
+                  ? "Edit the details for the branch"
+                  : "Enter the details for the new branch"}
+              </p>
+            </div>
+            <div className="grid gap-2">
+              {!isEditMode && (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditMode ? "Updating..." : "Creating..."}
+                  <div>
+                    <label
+                      htmlFor="branch_name"
+                      className="text-sm font-medium"
+                    >
+                      Branch Name *
+                    </label>
+                    <Input
+                      placeholder="Enter Branch Name"
+                      value={formData.branch_name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          branch_name: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="branch_prefix"
+                      className="text-sm font-medium"
+                    >
+                      Branch Prefix *
+                    </label>
+                    <Input
+                      placeholder="Enter Branch Prefix"
+                      maxLength={2}
+                      value={formData.branch_prefix}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length <= 2) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            branch_prefix: value,
+                          }));
+                        }
+                      }}
+                    />
+                  </div>
                 </>
-              ) : isEditMode ? (
-                "Update Branch"
-              ) : (
-                "Create Branch"
               )}
-            </Button>
+              <div>
+                <label
+                  htmlFor="branch_whatsapp"
+                  className="text-sm font-medium"
+                >
+                  Branch Whatsapp *
+                </label>
+                <Input
+                  placeholder="Enter Branch Whatsapp"
+                  value={formData.branch_whatsapp}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d{0,10}$/.test(value)) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        branch_whatsapp: value,
+                      }));
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label htmlFor="branch_email" className="text-sm font-medium">
+                  Branch Email *
+                </label>
+                <Input
+                  type="email"
+                  placeholder="Enter Branch Email"
+                  value={formData.branch_email}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      branch_email: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              {isEditMode && (
+                <>
+                  <div className="grid gap-1">
+                    <label
+                      htmlFor="branch_status"
+                      className="text-sm font-medium"
+                    >
+                      Status *
+                    </label>
+                    <Select
+                      value={formData.branch_status}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          branch_status: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger
+                        className={hasChanges ? "border-blue-200" : ""}
+                      >
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                            Active
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Inactive">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
+                            Inactive
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {hasChanges && (
+                    <Alert className="bg-blue-50 border-blue-200 mt-2">
+                      <AlertCircle className="h-4 w-4 text-blue-500" />
+                      <AlertDescription className="text-blue-600 text-sm">
+                        You have unsaved changes
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </>
+              )}
+              <Button
+                onClick={handleSubmit}
+                disabled={isEditMode ? !hasChanges : isLoading}
+                className={`mt-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isEditMode ? "Updating..." : "Creating..."}
+                  </>
+                ) : isEditMode ? (
+                  "Update Branch"
+                ) : (
+                  "Create Branch"
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </PopoverContent>
     </Popover>
   );

@@ -1,4 +1,6 @@
 import { EDIT_PROFILE, PROFILE } from "@/api";
+import apiClient from "@/api/axios";
+import usetoken from "@/api/usetoken";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,6 +21,8 @@ import { useEffect, useState } from "react";
 const Profile = ({ open, setOpen }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const token = usetoken();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,8 +32,7 @@ const Profile = ({ open, setOpen }) => {
   const { refetch } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(PROFILE, {
+      const response = await apiClient.get(PROFILE, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFormData(response.data.profile);
@@ -81,8 +84,7 @@ const Profile = ({ open, setOpen }) => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(EDIT_PROFILE, formData, {
+      const response = await apiClient.put(EDIT_PROFILE, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -127,7 +129,7 @@ const Profile = ({ open, setOpen }) => {
             <Input
               id="name"
               name="name"
-              value={formData.name}
+              value={formData?.name}
               onChange={handleInputChange}
               placeholder="Enter Name"
               disabled
@@ -139,7 +141,7 @@ const Profile = ({ open, setOpen }) => {
               id="email"
               name="email"
               type="email"
-              value={formData.email}
+              value={formData?.email}
               onChange={handleInputChange}
               placeholder="Enter Email"
             />
@@ -149,7 +151,7 @@ const Profile = ({ open, setOpen }) => {
             <Input
               id="mobile"
               name="mobile"
-              value={formData.mobile}
+              value={formData?.mobile}
               onChange={handleInputChange}
               placeholder="Enter Mobile"
             />

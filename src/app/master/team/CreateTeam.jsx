@@ -1,4 +1,6 @@
 import { BRANCH_LIST_FETCH, CREATE_TEAM } from "@/api";
+import apiClient from "@/api/axios";
+import usetoken from "@/api/usetoken";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,6 +30,8 @@ const userTypes = [
 const CreateTeam = () => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const token = usetoken();
+
   const [formData, setFormData] = useState({
     branch_id: "",
     name: "",
@@ -42,8 +46,7 @@ const CreateTeam = () => {
   const { data: branch, refetch } = useQuery({
     queryKey: ["branchs"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${BRANCH_LIST_FETCH}`, {
+      const response = await apiClient.get(`${BRANCH_LIST_FETCH}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.branch;
@@ -90,8 +93,7 @@ const CreateTeam = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(`${CREATE_TEAM}`, formData, {
+      const response = await apiClient.post(`${CREATE_TEAM}`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -169,6 +171,9 @@ const CreateTeam = () => {
           </div>
           <div className="grid gap-2">
             <div>
+              <label htmlFor="branch_id" className="text-sm font-medium">
+                Branch *
+              </label>
               <Select
                 value={formData.branch_id}
                 onValueChange={(value) =>
@@ -187,36 +192,54 @@ const CreateTeam = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Input
-              id="name"
-              placeholder="Enter  Name"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name: e.target.value }))
-              }
-            />
-            <Input
-              type="email"
-              id="email"
-              placeholder="Enter Email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, email: e.target.value }))
-              }
-            />
-            <Input
-              id="mobile"
-              placeholder="Enter Mobile"
-              value={formData.mobile}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (/^\d{0,10}$/.test(value)) {
-                  setFormData((prev) => ({ ...prev, mobile: value }));
+            <div>
+              <label htmlFor="name" className="text-sm font-medium">
+                Name *
+              </label>
+              <Input
+                id="name"
+                placeholder="Enter Name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-              }}
-            />
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="text-sm font-medium">
+                Email *
+              </label>
+              <Input
+                type="email"
+                id="email"
+                placeholder="Enter Email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="mobile" className="text-sm font-medium">
+                Mobile *
+              </label>
+              <Input
+                id="mobile"
+                placeholder="Enter Mobile"
+                value={formData.mobile}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d{0,10}$/.test(value)) {
+                    setFormData((prev) => ({ ...prev, mobile: value }));
+                  }
+                }}
+              />
+            </div>
 
             <div>
+              <label htmlFor="user_type" className="text-sm font-medium">
+                UserType *
+              </label>
               <Select
                 value={formData.user_type}
                 onValueChange={(value) =>

@@ -43,7 +43,8 @@ import { useNavigate } from "react-router-dom";
 import {
   fetchPurchaseById,
   navigateToPurchaseEdit,
-  PURCHASE_LIST,
+  navigateToPurchaseReturnEdit,
+  PURCHASE_RETURN_LIST,
 } from "@/api";
 import { encryptId } from "@/components/common/Encryption";
 import Loader from "@/components/loader/Loader";
@@ -59,21 +60,19 @@ import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import moment from "moment";
 import { RiWhatsappFill } from "react-icons/ri";
-import usetoken from "@/api/usetoken";
-import apiClient from "@/api/axios";
 
-const PurchaseList = () => {
-  const token = usetoken();
-
+const PurchaseReturnList = () => {
   const {
     data: purchase,
     isLoading,
+    isFetching,
     isError,
     refetch,
   } = useQuery({
     queryKey: ["purchase"],
     queryFn: async () => {
-      const response = await apiClient.get(`${PURCHASE_LIST}`, {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${PURCHASE_RETURN_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.purchase;
@@ -99,9 +98,10 @@ const PurchaseList = () => {
   };
   const confirmDelete = async () => {
     try {
+      const token = localStorage.getItem("token");
 
-      const response = await apiClient.delete(
-        `${BASE_URL}/api/purchases/${deleteItemId}`,
+      const response = await axios.delete(
+        `${BASE_URL}/api/purchases-return/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -164,36 +164,33 @@ const PurchaseList = () => {
   };
   const handleSendWhatsApp = (purchase, purchaseSub, buyer) => {
     const { purchase_ref_no, purchase_date, purchase_vehicle_no } = purchase;
-
     const { buyer_name, buyer_city } = buyer;
     const purchaseNo = purchase_ref_no?.split("-").pop();
+
     const itemLines = purchaseSub.map((item) => {
-      const name = item.item_name.padEnd(25, " ");
-      const box = `(${String(item.purchase_sub_box).replace(
-        /\D/g,
-        ""
-      )})`.padStart(4, " ");
-      return `${name}      ${box}`;
+      const name = item.item_name.trim();
+      const qty = String(item.purchase_sub_box).replace(/\D/g, "");
+      return `${name}   (${qty})`;
     });
 
     const totalQty = purchaseSub.reduce((sum, item) => {
       const qty = parseInt(item.purchase_sub_box, 10) || 0;
       return sum + qty;
     }, 0);
-    const message = `=== PackList ===
-  No.        : ${purchaseNo}
-  Date       : ${moment(purchase_date).format("DD-MM-YYYY")}
-  Party      : ${buyer_name}
-  City       : ${buyer_city}
-  VEHICLE NO : ${purchase_vehicle_no}
-  ======================
-  Product    [SIZE]   (QTY)
-  ======================
-${itemLines.map((line) => "  " + line).join("\n")}
-  ======================
-  *Total QTY: ${totalQty}*
-  ======================`;
 
+    const message = `=== PackList ===
+No       : ${purchaseNo}
+Date     : ${moment(purchase_date).format("DD-MM-YYYY")}
+Party    : ${buyer_name}
+City     : ${buyer_city}
+Vehicle  : ${purchase_vehicle_no}
+======================
+Product [SIZE] (QTY)
+======================
+${itemLines.join("\n")}
+======================
+*Total QTY: ${totalQty}*
+======================`;
     const phoneNumber = `${whatsapp}`;
     // const phoneNumber = "919360485526";
     const encodedMessage = encodeURIComponent(message);
@@ -275,7 +272,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        navigateToPurchaseEdit(navigate, purchaseId);
+                        navigateToPurchaseReturnEdit(navigate, purchaseId);
                       }}
                     >
                       <Edit />
@@ -363,7 +360,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
   });
 
   // Render loading state
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <Page>
         <div className="flex justify-center items-center h-full">
@@ -380,7 +377,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching purchase
+              Error Fetching purchase return
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -399,7 +396,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
         <div className="sm:hidden">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
-              Purchase List
+              Purchase Return List
             </h1>
             {UserId != 3 && (
               <div>
@@ -407,10 +404,10 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                   variant="default"
                   className={`md:ml-2 bg-yellow-400 hover:bg-yellow-600 text-black rounded-l-full`}
                   onClick={() => {
-                    navigate("/purchase/create");
+                    navigate("/purchase-return/create");
                   }}
                 >
-                  <SquarePlus className="h-4 w-4 " /> Purchase
+                  <SquarePlus className="h-4 w-4 " /> Purchase Return
                 </Button>
               </div>
             )}
@@ -421,7 +418,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search purchase..."
+                placeholder="Search purchase return..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -623,7 +620,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Purchase List
+            Purchase Return List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -631,7 +628,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search Purchase..."
+                placeholder="Search Purchase return..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -670,7 +667,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                     variant="default"
                     className={`ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
                     onClick={() => {
-                      navigate("/purchase/create");
+                      navigate("/purchase-return/create");
                     }}
                   >
                     <SquarePlus className="h-4 w-4 mr-2" /> Purchase
@@ -784,4 +781,4 @@ ${itemLines.map((line) => "  " + line).join("\n")}
   );
 };
 
-export default PurchaseList;
+export default PurchaseReturnList;

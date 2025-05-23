@@ -28,6 +28,14 @@ import DispatchReport from "@/app/report/DispatchReport";
 import BranchList from "@/app/master/branch/BranchList";
 import TeamList from "@/app/master/team/TeamList";
 import ValidationWrapper from "@/utils/ValidationWrapper";
+import GoDownList from "@/app/master/godown/GoDownList";
+import PurchaseReturnList from "@/app/purchasereturn/PurchaseReturnList";
+import CreatePurchaseReturn from "@/app/purchasereturn/CreatePurchaseReturn";
+import EditPurchaseReturn from "@/app/purchasereturn/EditPurchaseReturn";
+import SalesReturnList from "@/app/salesreturn/SalesReturnList";
+import CreateSalesReturn from "@/app/salesreturn/CreateSalesReturn";
+import EditSalesReturn from "@/app/salesreturn/EditSalesReturn";
+import SalesReturnView from "@/app/salesreturn/SalesReturnView";
 
 function AppRoutes() {
   return (
@@ -46,14 +54,37 @@ function AppRoutes() {
           <Route path="/master/category" element={<CategoryList />} />
           <Route path="/master/branch" element={<BranchList />} />
           <Route path="/master/team" element={<TeamList />} />
+          <Route path="/master/go-down" element={<GoDownList />} />
           <Route path="/stock-view" element={<StockView />} />
           <Route path="/purchase" element={<PurchaseList />} />
           <Route path="/purchase/create" element={<CreatePurchase />} />
           <Route path="/purchase/edit/:id" element={<EditPurchase />} />
+          <Route path="/purchase-return" element={<PurchaseReturnList />} />
+          <Route
+            path="/purchase-return/create"
+            element={<CreatePurchaseReturn />}
+          />
+          <Route
+            path="/purchase-return/edit/:id"
+            element={<EditPurchaseReturn />}
+          />
           <Route path="/dispatch" element={<SalesList />} />
           <Route path="/dispatch/create" element={<CreateSales />} />
           <Route path="/dispatch/edit/:id" element={<EditSales />} />
           <Route path="/dispatch/view/:id" element={<SalesView />} />
+          <Route path="/dispatch-return" element={<SalesReturnList />} />
+          <Route
+            path="/dispatch-return/create"
+            element={<CreateSalesReturn />}
+          />
+          <Route
+            path="/dispatch-return/edit/:id"
+            element={<EditSalesReturn />}
+          />
+          <Route
+            path="/dispatch-return/view/:id"
+            element={<SalesReturnView />}
+          />
           <Route path="/report/stock" element={<Stock />} />
           <Route path="/report/buyer" element={<BuyerReport />} />
           <Route
