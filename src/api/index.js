@@ -1,6 +1,7 @@
 import { decryptId, encryptId } from "@/components/common/Encryption";
 import axios from "axios";
 import usetoken from "./usetoken";
+import apiClient from "./axios";
 //DOTENV
 export const DOT_ENV = `/panel-fetch-dotenv`;
 //PANELCHECK
@@ -95,19 +96,20 @@ export const navigateTOSalesReturnView = (navigate, salesId) => {
   navigate(ROUTES.SALES_RETURN_VIEW(salesId));
 };
 
-export const fetchPurchaseById = async (encryptedId) => {
+export const fetchPurchaseById = async (encryptedId, token) => {
   try {
-    const token = usetoken();
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
-    const response = await axios.get(`${PURCHASE_EDIT_LIST}/${id}`, {
+    const response = await apiClient.get(`${PURCHASE_EDIT_LIST}/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     return response.data;
   } catch (error) {
+    console.log(error, "error");
+
     throw new Error(
       error.response?.data?.message || "Failed to fetch purchase details"
     );

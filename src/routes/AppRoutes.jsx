@@ -58,7 +58,7 @@ function AppRoutes() {
           <Route path="/stock-view" element={<StockView />} />
           <Route path="/purchase" element={<PurchaseList />} />
           <Route path="/purchase/create" element={<CreatePurchase />} />
-          <Route path="/purchase/edit/:id" element={<EditPurchase />} />
+          <Route path="/purchase/edit/:id" element={<CreatePurchase />} />
           <Route path="/purchase-return" element={<PurchaseReturnList />} />
           <Route
             path="/purchase-return/create"

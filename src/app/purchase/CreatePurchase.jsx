@@ -1,3 +1,6 @@
+import { fetchPurchaseById, PURCHASE_CREATE, PURCHASE_EDIT_LIST } from "@/api";
+import apiClient from "@/api/axios";
+import usetoken from "@/api/usetoken";
 import Page from "@/app/dashboard/page";
 import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
@@ -23,19 +26,12 @@ import {
 } from "@/hooks/useApi";
 import { ArrowLeft, MinusCircle, PlusCircle, SquarePlus } from "lucide-react";
 import moment from "moment";
-import { useCallback, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import BuyerForm from "../master/buyer/CreateBuyer";
 import CreateItem from "../master/item/CreateItem";
-import apiClient from "@/api/axios";
-import {
-  ITEM_CREATE,
-  ITEM_EDIT_SUMBIT,
-  PURCHASE_CREATE,
-  PURCHASE_EDIT_LIST,
-} from "@/api";
-import usetoken from "@/api/usetoken";
-// Validation Schema
+import { useQuery } from "@tanstack/react-query";
+import { decryptId } from "@/components/common/Encryption";
 const BranchHeader = () => {
   return (
     <div
@@ -48,7 +44,11 @@ const BranchHeader = () => {
   );
 };
 
-const CreatePurchase = ({ editId = null }) => {
+const CreatePurchase = () => {
+  const { id } = useParams();
+  const decryptedId = decryptId(id);
+
+  const editId = Boolean(id);
   const { toast } = useToast();
   const navigate = useNavigate();
   const boxInputRefs = useRef([]);
@@ -98,6 +98,58 @@ const CreatePurchase = ({ editId = null }) => {
       boxInputRefs.current[rowIndex].focus();
     }
   };
+  const {
+    data: purchaseByid,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["purchaseByid", id],
+    queryFn: () => fetchPurchaseById(id, token),
+    enabled: !!id,
+  });
+  console.log(purchaseByid, "purchaseByid");
+  useEffect(() => {
+    if (editId && purchaseByid?.purchase) {
+      console.log("daata");
+      setFormData({
+        purchase_date: purchaseByid.purchase.purchase_date || "",
+        purchase_buyer_name: purchaseByid.buyer.buyer_name || "",
+        purchase_buyer_id: purchaseByid.purchase.purchase_buyer_id || "",
+        purchase_buyer_city: purchaseByid.buyer.buyer_city || "",
+        purchase_ref_no: purchaseByid.purchase.purchase_ref_no || "",
+        purchase_vehicle_no: purchaseByid.purchase.purchase_vehicle_no || "",
+        purchase_remark: purchaseByid.purchase.purchase_remark || "",
+        purchase_status: purchaseByid.purchase.purchase_status || "",
+      });
+
+      // Set invoice line items
+      const mappedData = Array.isArray(purchaseByid.purchaseSub)
+        ? purchaseByid.purchaseSub.map((sub) => ({
+            purchase_sub_item_id: sub.purchase_sub_item_id || "",
+            purchase_sub_box: sub.purchase_sub_box || "",
+            item_brand: sub.item_brand || "",
+            item_size: sub.item_size || "",
+            purchase_sub_item: sub.item_name || "",
+            purchase_sub_weight: sub.item_weight || "",
+            purchase_sub_godown_id: sub.purchase_sub_godown_id, // fill this from UI or skip if not needed
+            avaiable_box: "", // you can fetch this later based on item/brand/size if needed
+          }))
+        : [
+            {
+              purchase_sub_item_id: "",
+              purchase_sub_box: "",
+              item_brand: "",
+              item_size: "",
+              purchase_sub_item: "",
+              purchase_sub_weight: "",
+              purchase_sub_godown_id: "",
+              avaiable_box: "",
+            },
+          ];
+
+      setInvoiceData(mappedData);
+    }
+  }, [editId, purchaseByid]);
 
   const { data: buyerData } = useFetchBuyers();
   const { data: itemsData } = useFetchItems();
@@ -116,9 +168,7 @@ const CreatePurchase = ({ editId = null }) => {
 
     if (fieldName == "purchase_sub_item_id") {
       updatedData[rowIndex][fieldName] = value;
-      const selectedItem = itemsData?.items?.find(
-        (item) => item.id == value
-      );
+      const selectedItem = itemsData?.items?.find((item) => item.id == value);
       console.log(selectedItem, "selectedItem");
       if (selectedItem) {
         updatedData[rowIndex]["item_size"] = selectedItem.item_size;
@@ -209,7 +259,7 @@ const CreatePurchase = ({ editId = null }) => {
       }
 
       const response = await apiClient.post(
-        editId ? `${PURCHASE_EDIT_LIST}/${editId}` : PURCHASE_CREATE,
+        editId ? `${PURCHASE_EDIT_LIST}/${decryptedId}` : PURCHASE_CREATE,
         payload,
         {
           headers: {
@@ -536,13 +586,13 @@ const CreatePurchase = ({ editId = null }) => {
               </div>
 
               {/* Submit Button */}
-              {/* <div className="mb-20">
+              <div className="mb-20">
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-yellow-600 to-yellow-400 hover:from-yellow-700 hover:to-yellow-500 text-white font-bold py-3.5 rounded-xl shadow-md transition-all transform hover:scale-[0.99]"
-                  disabled={createBranchMutation.isPending}
+                  disabled={isLoading}
                 >
-                  {createBranchMutation.isPending ? (
+                  {isLoading ? (
                     <div className="flex items-center justify-center">
                       <span className="animate-spin mr-2">⟳</span>
                       Processing...
@@ -551,9 +601,7 @@ const CreatePurchase = ({ editId = null }) => {
                     "CREATE PURCHASE"
                   )}
                 </Button>
-              </div> */}
-
-              <div className="h-4"></div>
+              </div>
             </div>
           </form>
         </div>
@@ -563,7 +611,7 @@ const CreatePurchase = ({ editId = null }) => {
             <BranchHeader />
             <Card className={`mb-6 ${ButtonConfig.cardColor}`}>
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                   <div>
                     <div>
                       <label
@@ -658,25 +706,22 @@ const CreatePurchase = ({ editId = null }) => {
                       />
                     </div>
                   </div>
-                  <div className="md:col-span-3">
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        Remark
-                      </label>
-                      <Textarea
-                        className="bg-white"
-                        value={formData.purchase_remark}
-                        onChange={(e) =>
-                          handleInputChange(e, "purchase_remark")
-                        }
-                        placeholder="Enter Remark"
-                      />
-                    </div>
+                </div>
+                <div>
+                  <div>
+                    <label
+                      className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
+                    >
+                      Remark
+                    </label>
+                    <Textarea
+                      className="bg-white"
+                      value={formData.purchase_remark}
+                      onChange={(e) => handleInputChange(e, "purchase_remark")}
+                      placeholder="Enter Remark"
+                    />
                   </div>
                 </div>
-
                 <div className="mt-4 grid grid-cols-1">
                   <Table className="border border-gray-300 rounded-lg shadow-sm">
                     <TableHeader>
@@ -828,7 +873,7 @@ const CreatePurchase = ({ editId = null }) => {
               <Button
                 type="submit"
                 className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center mt-2`}
-                // disabled={createBranchMutation.isPending}
+                disabled={isLoading}
               >
                 {isLoading ? "Submitting..." : "Create Purchase"}
               </Button>
