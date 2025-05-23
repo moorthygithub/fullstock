@@ -25,7 +25,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, MessageCircle, Search, Share2 } from "lucide-react";
 import { useState } from "react";
 
 import { ITEM_LIST } from "@/api";
@@ -33,9 +33,8 @@ import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import Loader from "@/components/loader/Loader";
 import { Separator } from "@/components/ui/separator";
-import { ButtonConfig } from "@/config/ButtonConfig";
-import EditItem from "./EditItem";
 import { IMAGE_URL, NO_IMAGE_URL } from "@/config/BaseUrl";
+import { ButtonConfig } from "@/config/ButtonConfig";
 import CreateItem from "./CreateItem";
 
 const ItemList = () => {
@@ -170,7 +169,7 @@ const ItemList = () => {
               const ItemId = row.original.id;
               return (
                 <div className="flex flex-row">
-                  <EditItem ItemId={ItemId} />
+                  <CreateItem editId={ItemId} />
                 </div>
               );
             },
@@ -208,6 +207,23 @@ const ItemList = () => {
       },
     },
   });
+
+  const handleWhatsAppShare = () => {
+    const message = "Hello! Check this out: " + window.location.href;
+    const encodedMessage = encodeURIComponent(message);
+    const appUrl = `whatsapp://send?text=${encodedMessage}`;
+    const webUrl = `https://web.whatsapp.com/send?text=${encodedMessage}`;
+    const newWindow = window.open(appUrl, "_blank");
+
+    setTimeout(() => {      if (
+        !newWindow ||
+        newWindow.closed ||
+        typeof newWindow.closed === "undefined"
+      ) {
+        window.open(webUrl, "_blank");
+      }
+    }, 2000);
+  };
 
   // Render loading state
   if (isLoading) {
@@ -296,7 +312,7 @@ const ItemList = () => {
                         >
                           {item.item_status}
                         </span>
-                        {UserId != 3 && <EditItem ItemId={item.id} />}
+                        {UserId != 3 && <CreateItem editId={item.id} />}
                       </div>
                     </div>
                     <Separator />
@@ -491,6 +507,7 @@ const ItemList = () => {
         </div>
       </div>
     </Page>
+
   );
 };
 

@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -17,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -32,13 +32,17 @@ import { useState } from "react";
 
 import { TEAM_LIST, UPDATE_TEAM_STATUS } from "@/api";
 import Loader from "@/components/loader/Loader";
+import { Separator } from "@/components/ui/separator";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import { useToast } from "@/hooks/use-toast";
 import moment from "moment";
 import CreateTeam from "./CreateTeam";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+import usetoken from "@/api/usetoken";
+import apiClient from "@/api/axios";
 
 const TeamList = () => {
+  const token = usetoken();
+
   const {
     data: team,
     isLoading,
@@ -47,8 +51,7 @@ const TeamList = () => {
   } = useQuery({
     queryKey: ["teams"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${TEAM_LIST}`, {
+      const response = await apiClient.get(`${TEAM_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.team;
@@ -90,8 +93,7 @@ const TeamList = () => {
     }
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(
+      const response = await apiClient.put(
         `${UPDATE_TEAM_STATUS}/${teamId}`,
         {},
         {
@@ -304,7 +306,7 @@ const TeamList = () => {
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching Branch
+              Error Fetching Team
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -460,7 +462,7 @@ const TeamList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Branch List
+            Team List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -468,7 +470,7 @@ const TeamList = () => {
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search branch..."
+                placeholder="Search team..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"

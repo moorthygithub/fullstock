@@ -1,10 +1,4 @@
-import {
-  File,
-  Frame,
-  Package,
-  Settings2,
-  ShoppingBag
-} from "lucide-react";
+import { File, Frame, Package, Settings2, ShoppingBag } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -62,6 +56,10 @@ export function AppSidebar({ ...props }) {
                   title: "Buyer",
                   url: "/master/buyer",
                 },
+                {
+                  title: "Go Down",
+                  url: "/master/go-down",
+                },
                 ...(id == 3
                   ? [
                       {
@@ -89,8 +87,20 @@ export function AppSidebar({ ...props }) {
         isActive: false,
       },
       {
+        title: "Purchase Return",
+        url: "/purchase-return",
+        icon: ShoppingBag,
+        isActive: false,
+      },
+      {
         title: "Dispatch",
         url: "/dispatch",
+        icon: ShoppingBag,
+        isActive: false,
+      },
+      {
+        title: "Dispatch Return",
+        url: "/dispatch-return",
         icon: ShoppingBag,
         isActive: false,
       },

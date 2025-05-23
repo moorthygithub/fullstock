@@ -11,7 +11,12 @@ import {
 } from "@/components/ui/popover";
 import { useLocation } from "react-router-dom";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import { CATEGORY_CREATE, CATEGORY_UPDATE } from "@/api";
+import {
+  CATEGORY_CREATE,
+  CATEGORY_UPDATE,
+  GODOWN_CREATE,
+  GODOWN_UPDATE,
+} from "@/api";
 import usetoken from "@/api/usetoken";
 import apiClient from "@/api/axios";
 import {
@@ -23,36 +28,36 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const CreateCategory = ({ editId = null }) => {
+const CreateGoDownForm = ({ editId = null }) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [originalData, setOriginalData] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
   const [formData, setFormData] = useState({
-    category: "",
-    category_status: "",
+    godown: "",
+    godown_status: "",
   });
   const { toast } = useToast();
   const token = usetoken();
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
 
-  const fetchCategory = async () => {
+  const fetchGoDown = async () => {
     if (editId && open) {
       try {
         setIsFetching(true);
-        const response = await apiClient.get(`${CATEGORY_UPDATE}/${editId}`, {
+        const response = await apiClient.get(`${GODOWN_UPDATE}/${editId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const fetchedData = response.data.category;
+        const fetchedData = response.data.godown;
         setFormData({
-          category: fetchedData?.category || "",
-          category_status: fetchedData?.category_status || "",
+          godown: fetchedData?.godown || "",
+          godown_status: fetchedData?.godown_status || "",
         });
         setOriginalData({
-          category: fetchedData?.category || "",
-          category_status: fetchedData?.category_status || "",
+          godown: fetchedData?.godown || "",
+          godown_status: fetchedData?.godown_status || "",
         });
       } catch (error) {
         toast({
@@ -66,13 +71,13 @@ const CreateCategory = ({ editId = null }) => {
     }
   };
   useEffect(() => {
-    fetchCategory();
+    fetchGoDown();
   }, [editId, open]);
 
   const handleSubmit = async () => {
     const missingFields = [];
-    if (!formData.category) missingFields.push("Category");
-    if (editId && !formData.category_status) missingFields.push("Status");
+    if (!formData.godown) missingFields.push("Godown");
+    if (editId && !formData.godown_status) missingFields.push("Status");
 
     if (missingFields.length > 0) {
       toast({
@@ -95,15 +100,11 @@ const CreateCategory = ({ editId = null }) => {
     try {
       let response;
       if (editId) {
-        response = await apiClient.put(
-          `${CATEGORY_UPDATE}/${editId}`,
-          formData,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        response = await apiClient.put(`${GODOWN_UPDATE}/${editId}`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        response = await apiClient.post(CATEGORY_CREATE, formData, {
+        response = await apiClient.post(GODOWN_CREATE, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -113,8 +114,8 @@ const CreateCategory = ({ editId = null }) => {
           title: "Success",
           description: response.data.msg,
         });
-        setFormData({ category: "", category_status: "" });
-        queryClient.invalidateQueries(["category"]);
+        setFormData({ godown: "", godown_status: "" });
+        queryClient.invalidateQueries(["godown"]);
         setOpen(false);
       } else {
         toast({
@@ -135,12 +136,12 @@ const CreateCategory = ({ editId = null }) => {
   };
   const hasChanges =
     originalData &&
-    (formData.category !== originalData.category ||
-      formData.category_status !== originalData.category_status);
+    (formData.godown !== originalData.godown ||
+      formData.godown_status !== originalData.godown_status);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        {pathname === "/master/category" ? (
+        {pathname === "/master/go-down" ? (
           editId ? (
             <div>
               <div className="sm:hidden">
@@ -176,7 +177,7 @@ const CreateCategory = ({ editId = null }) => {
                   variant="default"
                   className={`md:ml-2 bg-yellow-400 hover:bg-yellow-600 text-black rounded-l-full`}
                 >
-                  <SquarePlus className="h-4 w-4" /> Category
+                  <SquarePlus className="h-4 w-4" /> GoDOwn
                 </Button>
               </div>
               <div className="hidden sm:block">
@@ -184,7 +185,7 @@ const CreateCategory = ({ editId = null }) => {
                   variant="default"
                   className={`md:ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
                 >
-                  <SquarePlus className="h-4 w-4 mr-2" /> Category
+                  <SquarePlus className="h-4 w-4 mr-2" /> GoDOwn
                 </Button>
               </div>
             </div>
@@ -192,7 +193,7 @@ const CreateCategory = ({ editId = null }) => {
         ) : pathname === "/purchase/create" ||
           pathname === "/dispatch/create" ? (
           <p className="text-xs text-red-600 w-32 hover:text-red-300 cursor-pointer">
-            Category
+            GoDOwn
           </p>
         ) : (
           <span />
@@ -208,41 +209,41 @@ const CreateCategory = ({ editId = null }) => {
           <div className="grid gap-4">
             <div className="space-y-2">
               <h4 className="font-medium leading-none">
-                {editId ? "Update Category" : "Create New Category"}
+                {editId ? "Update GoDown" : "Create New GoDown"}
               </h4>
               <p className="text-sm text-muted-foreground">
                 {editId
-                  ? "Update the details for the selected category"
-                  : "Enter the details for the new Category"}
+                  ? "Update the details for the selected godown"
+                  : "Enter the details for the new GoDown"}
               </p>
             </div>
 
             <div className="grid gap-2">
-              <label htmlFor="category" className="text-sm font-medium">
-                Category *
+              <label htmlFor="godown" className="text-sm font-medium">
+                GoDown *
               </label>
               <Input
-                id="category"
-                placeholder="Enter category"
-                value={formData.category}
+                id="godown"
+                placeholder="Enter GoDown"
+                value={formData.godown}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, category: e.target.value }))
+                  setFormData((prev) => ({ ...prev, godown: e.target.value }))
                 }
               />
               {editId && (
                 <div className="grid gap-1">
                   <label
-                    htmlFor="category_status"
+                    htmlFor="godown_status"
                     className="text-sm font-medium"
                   >
                     Status
                   </label>
                   <Select
-                    value={formData.category_status}
+                    value={formData.godown_status}
                     onValueChange={(value) =>
                       setFormData((prev) => ({
                         ...prev,
-                        category_status: value,
+                        godown_status: value,
                       }))
                     }
                   >
@@ -285,9 +286,9 @@ const CreateCategory = ({ editId = null }) => {
                     {editId ? "Updating..." : "Creating..."}
                   </>
                 ) : editId ? (
-                  "Update Category"
+                  "Update GoDown"
                 ) : (
-                  "Create Category"
+                  "Create GoDown"
                 )}
               </Button>
             </div>
@@ -298,4 +299,4 @@ const CreateCategory = ({ editId = null }) => {
   );
 };
 
-export default CreateCategory;
+export default CreateGoDownForm;

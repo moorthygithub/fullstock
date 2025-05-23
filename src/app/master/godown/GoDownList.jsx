@@ -1,4 +1,4 @@
-import { BUYER_LIST } from "@/api";
+import { GODOWN_LIST } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import Page from "@/app/dashboard/page";
@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import {
   flexRender,
@@ -32,34 +33,33 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, Search } from "lucide-react";
 import { useState } from "react";
-import BuyerForm from "./CreateBuyer";
+import CreateGoDownForm from "./CreateGoDown";
 
-const BuyerList = () => {
+const GoDownList = () => {
   const token = usetoken();
 
   const {
-    data: buyers,
+    data: godown,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["buyers"],
+    queryKey: ["godown"],
     queryFn: async () => {
-      const response = await apiClient.get(`${BUYER_LIST}`, {
+      const response = await apiClient.get(`${GODOWN_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.buyers;
+      return response.data.godown;
     },
   });
 
   // State for table management
+  const { toast } = useToast();
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Define columns for the table
   const columns = [
     {
       accessorKey: "index",
@@ -67,28 +67,21 @@ const BuyerList = () => {
       cell: ({ row }) => <div>{row.index + 1}</div>,
     },
     {
-      id: "Buyer Name",
-      accessorKey: "buyer_name",
-      header: "Buyer Name",
-      cell: ({ row }) => <div>{row.original.buyer_name}</div>,
+      accessorKey: "godown",
+      header: "GoDown",
+      cell: ({ row }) => <div>{row.getValue("godown")}</div>,
     },
     {
-      id: "City",
-      accessorKey: "buyer_city",
-      header: "City",
-      cell: ({ row }) => <div>{row.original.buyer_city}</div>,
-    },
-    {
-      id: "Status",
-      accessorKey: "buyer_status",
+      accessorKey: "godown_status",
       header: "Status",
+      id: "Status",
       cell: ({ row }) => {
-        const status = row.original.buyer_status;
+        const status = row.original.godown_status;
 
         return (
           <span
             className={`px-2 py-1 rounded text-xs ${
-              status === "Active"
+              status == "Active"
                 ? "bg-green-100 text-green-800"
                 : "bg-gray-100 text-gray-800"
             }`}
@@ -102,23 +95,20 @@ const BuyerList = () => {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
-        const buyerId = row.original.id;
-
-        return (
-          <div className="flex flex-row">
-            <BuyerForm buyerId={buyerId} />
-          </div>
-        );
+        const categoryId = row.original.id;
+        return <CreateGoDownForm editId={categoryId} />;
       },
     },
   ];
-  const filteredItems =
-    buyers?.filter((item) =>
-      item.buyer_name.toLowerCase().includes(searchQuery.toLowerCase())
-    ) || [];
+  const filteredCategories = Array.isArray(godown)
+    ? godown.filter((item) =>
+        item?.godown?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   // Create the table instance
   const table = useReactTable({
-    data: buyers || [],
+    data: godown || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -159,7 +149,7 @@ const BuyerList = () => {
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching Buyer
+              Error Fetching GoDown
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -174,14 +164,15 @@ const BuyerList = () => {
 
   return (
     <Page>
-      <div className="w-full p-0 md:p-4 grid grid-cols-1">
+      <div className="w-full p-0 md:p-4">
+        {/* for small screen  */}
         <div className="sm:hidden">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
-              Buyer List
+              GoDown List
             </h1>
             <div>
-              <BuyerForm />
+              <CreateGoDownForm />
             </div>
           </div>
 
@@ -190,61 +181,57 @@ const BuyerList = () => {
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search buyer..."
+                placeholder="Search godown..."
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                }}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
               />
             </div>
           </div>
-
           <div className="space-y-3">
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item, index) => (
+            {filteredCategories.length > 0 ? (
+              filteredCategories.map((item, index) => (
                 <div
                   key={item.id}
-                  className="relative bg-white rounded-lg shadow-sm border-l-4 border-r border-b border-t border-yellow-500 overflow-hidden"
+                  className="relative bg-white rounded-lg shadow-sm border-l-4 border-r border-b border-t  border-yellow-500 overflow-hidden"
                 >
-                  <div className="p-2 flex flex-col gap-2">
-                    {/* Sl No and Item Name */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="bg-gray-100 text-gray-600 rounded-full w-4 h-4 flex items-center justify-center text-xs font-medium">
-                          {index + 1}
-                        </div>
-                        <h3 className="font-medium flex flex-col text-sm text-gray-800">
-                          <span>{item.buyer_name}</span>
-                          <span className="text-xs">{item.buyer_city}</span>
-                        </h3>
+                  <div className="p-2 flex justify-between items-center border-b border-gray-50">
+                    <div className=" flex items-center space-x-2">
+                      <div className="bg-gray-100 text-gray-600 rounded-full w-4 h-4 flex items-center justify-center text-xs font-medium">
+                        {index + 1}
                       </div>
-                      <div className="flex items-center justify-between gap-2 ">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            item.buyer_status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {item.buyer_status}
-                        </span>
-
-                        <BuyerForm buyerId={item.id} />
-                      </div>
+                      <h3 className="font-medium text-sm text-gray-800">
+                        {item.godown}
+                      </h3>
+                    </div>
+                    <div className="flex items-center justify-between gap-5">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          item.godown_status === "Active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {item.godown_status}
+                      </span>
+                      <CreateGoDownForm editId={item.id} />
                     </div>
                   </div>
                 </div>
               ))
             ) : (
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center text-gray-500">
-                No items found.
+                No godown found.
               </div>
             )}
           </div>
         </div>
-
+        {/* medium screen onwards  */}
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Buyer List
+            GoDown List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -252,7 +239,7 @@ const BuyerList = () => {
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search buyer..."
+                placeholder="Search godown..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -286,7 +273,7 @@ const BuyerList = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <BuyerForm />
+              <CreateGoDownForm />
             </div>
           </div>
           {/* table  */}
@@ -346,7 +333,7 @@ const BuyerList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Buyer : &nbsp;
+              Total godown : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">
@@ -374,4 +361,4 @@ const BuyerList = () => {
   );
 };
 
-export default BuyerList;
+export default GoDownList;
