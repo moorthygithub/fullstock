@@ -67,6 +67,7 @@ const CreatePurchase = () => {
 
   const [invoiceData, setInvoiceData] = useState([
     {
+      id: editId ? "" : null,
       purchase_sub_item_id: "",
       purchase_sub_godown_id: "",
       purchase_sub_box: "",
@@ -125,14 +126,15 @@ const CreatePurchase = () => {
       // Set invoice line items
       const mappedData = Array.isArray(purchaseByid.purchaseSub)
         ? purchaseByid.purchaseSub.map((sub) => ({
+            id: sub.id || "",
             purchase_sub_item_id: sub.purchase_sub_item_id || "",
             purchase_sub_box: sub.purchase_sub_box || "",
             item_brand: sub.item_brand || "",
             item_size: sub.item_size || "",
             purchase_sub_item: sub.item_name || "",
             purchase_sub_weight: sub.item_weight || "",
-            purchase_sub_godown_id: sub.purchase_sub_godown_id, // fill this from UI or skip if not needed
-            avaiable_box: "", // you can fetch this later based on item/brand/size if needed
+            purchase_sub_godown_id: sub.purchase_sub_godown_id,
+            avaiable_box: "",
           }))
         : [
             {
@@ -404,22 +406,20 @@ const CreatePurchase = () => {
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <span className="w-1 h-4 bg-gray-300 rounded-full mr-2"></span>
-                    Remark
-                  </label>
-                  <Textarea
-                    className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.purchase_remark}
-                    onChange={(e) => handleInputChange(e, "purchase_remark")}
-                    placeholder="Add any notes here"
-                    rows={2}
-                  />
-                </div>
               </div>
-
+              <div>
+                <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                  <span className="w-1 h-4 bg-gray-300 rounded-full mr-2"></span>
+                  Remark
+                </label>
+                <Textarea
+                  className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
+                  value={formData.purchase_remark}
+                  onChange={(e) => handleInputChange(e, "purchase_remark")}
+                  placeholder="Add any notes here"
+                  rows={2}
+                />
+              </div>
               {/* Items Section  Table */}
               <div className="bg-white rounded-xl shadow-sm p-2 mb-4 border border-yellow-100">
                 <div className="flex items-center justify-between mb-4">
