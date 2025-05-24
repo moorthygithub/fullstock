@@ -74,7 +74,7 @@ export const navigateToPurchaseEdit = (navigate, purchaseId) => {
 export const navigateTODispatchEdit = (navigate, salesId) => {
   navigate(ROUTES.DISPATCH_EDIT(salesId));
 };
-export const navigateTOSalesView = (navigate, salesId) => {
+export const navigateTODispatchView = (navigate, salesId) => {
   navigate(ROUTES.SALES_VIEW(salesId));
 };
 

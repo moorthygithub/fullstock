@@ -39,7 +39,7 @@ import {
   DISPATCH_LIST,
   fetchDispatchById,
   navigateTODispatchEdit,
-  navigateTOSalesView,
+  navigateTODispatchView,
 } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
@@ -96,7 +96,7 @@ const DispatchList = () => {
         console.error("Incomplete data received");
       }
     } catch (error) {
-      console.error("Failed to fetch purchase data or send WhatsApp:", error);
+      console.error("Failed to fetch dispatch data or send WhatsApp:", error);
     }
   };
   const handleSendWhatsApp = (sales, salesSub, buyer) => {
@@ -236,7 +236,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      navigateTOSalesView(navigate, salesId);
+                      navigateTODispatchView(navigate, salesId);
                     }}
                   >
                     <View />
@@ -386,7 +386,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                 <div
                   key={item.id}
                   onClick={() => {
-                    navigateTOSalesView(navigate, item.id);
+                    navigateTODispatchView(navigate, item.id);
                   }}
                   className="relative bg-white rounded-lg shadow-sm border-l-4 border-r border-b border-t border-yellow-500 overflow-hidden"
                 >
@@ -404,14 +404,14 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                       <div className="flex items-center justify-between gap-2 ">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            item.sales_status === "Active"
+                            item.dispatch_status === "Active"
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <StatusToggle
-                            initialStatus={item.sales_status}
+                            initialStatus={item.dispatch_status}
                             teamId={item.id}
                             onStatusChange={() => {
                               refetch();
@@ -445,7 +445,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                     </div>
 
                     <div className="flex flex-wrap justify-between gap-1">
-                      {item.sales_ref_no && (
+                      {item.dispatch_ref_no && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -463,11 +463,11 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                           </svg>
                           <span className="text-xs text-gray-700">
                             <span className="text-[10px]">Ref No:</span>
-                            {item.sales_ref_no}
+                            {item.dispatch_ref_no}
                           </span>
                         </div>
                       )}
-                      {item.sales_vehicle_no && (
+                      {item.dispatch_vehicle_no && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -488,11 +488,11 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                           </svg>
                           <span className="text-xs text-gray-700">
                             <span className="text-[10px]">Vehicle No:</span>
-                            {item.sales_vehicle_no}
+                            {item.dispatch_vehicle_no}
                           </span>
                         </div>
                       )}
-                      {item.sales_date && (
+                      {item.dispatch_date && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -519,40 +519,9 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                             <line x1="3" y1="10" x2="21" y2="10" />
                           </svg>
                           <span className="text-xs text-gray-700">
-                            {moment(item.sales_date).format("DD-MMM-YY")}
+                            {moment(item.dispatch_date).format("DD-MMM-YY")}
                           </span>
                         </div>
-                      )}
-                      {UserId == 3 && (
-                        <>
-                          {item.branch_name && (
-                            <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="10"
-                                height="10"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-gray-600 mr-1"
-                              >
-                                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-                                <path d="M13 5v2" />
-                                <path d="M13 17v2" />
-                                <path d="M13 11v2" />
-                              </svg>
-                              <span className="text-xs text-gray-700">
-                                <span className="text-[10px]">
-                                  Branch Name:
-                                </span>
-                                {item.branch_name}
-                              </span>
-                            </div>
-                          )}
-                        </>
                       )}
                     </div>
                   </div>
