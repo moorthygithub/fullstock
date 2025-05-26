@@ -1,11 +1,22 @@
-import { fetchPurchaseById, PURCHASE_CREATE, PURCHASE_EDIT_LIST } from "@/api";
-import apiClient from "@/api/axios";
-import usetoken from "@/api/usetoken";
 import Page from "@/app/dashboard/page";
-import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
-import { MemoizedSelect } from "@/components/common/MemoizedSelect";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -15,254 +26,82 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import axios from "axios";
+import { ChevronDown, Edit, Search, SquarePlus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import {
+  fetchPurchaseById,
+  navigateToPurchaseEdit,
+  PURCHASE_LIST,
+} from "@/api";
+import { encryptId } from "@/components/common/Encryption";
+import Loader from "@/components/loader/Loader";
+import StatusToggle from "@/components/toggle/StatusToggle";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import BASE_URL from "@/config/BaseUrl";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
-import {
-  useFetchBuyers,
-  useFetchGoDown,
-  useFetchItems,
-  useFetchPurchaseRef,
-} from "@/hooks/useApi";
-import { ArrowLeft, MinusCircle, PlusCircle, SquarePlus } from "lucide-react";
 import moment from "moment";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import BuyerForm from "../master/buyer/CreateBuyer";
-import CreateItem from "../master/item/CreateItem";
-import { useQuery } from "@tanstack/react-query";
-import { decryptId } from "@/components/common/Encryption";
-const BranchHeader = () => {
-  return (
-    <div
-      className={`flex sticky top-0 z-10 border border-gray-200 rounded-lg justify-between items-start gap-8 mb-2 ${ButtonConfig.cardheaderColor} p-4 shadow-sm`}
-    >
-      <div className="flex-1">
-        <h1 className="text-lg font-bold text-gray-800">Create Purchase</h1>
-      </div>
-    </div>
-  );
-};
+import { RiWhatsappFill } from "react-icons/ri";
+import usetoken from "@/api/usetoken";
+import apiClient from "@/api/axios";
 
-const CreatePurchase = () => {
-  const { id } = useParams();
-  const decryptedId = decryptId(id);
-
-  const editId = Boolean(id);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const boxInputRefs = useRef([]);
-  const today = moment().format("YYYY-MM-DD");
-  const [isLoading, setIsLoading] = useState(false);
+const PurchaseList = () => {
   const token = usetoken();
 
-  const [formData, setFormData] = useState({
-    purchase_date: today,
-    purchase_buyer_id: "",
-    purchase_ref_no: "",
-    purchase_vehicle_no: "",
-    purchase_remark: "",
-    purchase_status: editId ? "" : null,
-  });
-
-  const [invoiceData, setInvoiceData] = useState([
-    {
-      id: editId ? "" : null,
-      purchase_sub_item_id: "",
-      purchase_sub_godown_id: "",
-      purchase_sub_box: "",
-      item_brand: "",
-      item_size: "",
-      avaiable_box: "",
-    },
-  ]);
-  const addRow = useCallback(() => {
-    setInvoiceData((prev) => [
-      ...prev,
-      {
-        purchase_sub_item_id: "",
-        purchase_sub_godown_id: "",
-        purchase_sub_box: "",
-      },
-    ]);
-  }, []);
-  const removeRow = useCallback(
-    (index) => {
-      if (invoiceData.length > 1) {
-        setInvoiceData((prev) => prev.filter((_, i) => i !== index));
-      }
-    },
-    [invoiceData.length]
-  );
-  const focusBoxInput = (rowIndex) => {
-    if (boxInputRefs.current[rowIndex]) {
-      boxInputRefs.current[rowIndex].focus();
-    }
-  };
   const {
-    data: purchaseByid,
+    data: purchase,
+    isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["purchaseByid", id],
-    queryFn: () => fetchPurchaseById(id, token),
-    enabled: !!id,
+    queryKey: ["purchase"],
+    queryFn: async () => {
+      const response = await apiClient.get(`${PURCHASE_LIST}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data.purchase;
+    },
   });
-  console.log(purchaseByid, "purchaseByid");
-  useEffect(() => {
-    if (editId && purchaseByid?.purchase) {
-      console.log("daata");
-      setFormData({
-        purchase_date: purchaseByid.purchase.purchase_date || "",
-        purchase_buyer_name: purchaseByid.buyer.buyer_name || "",
-        purchase_buyer_id: purchaseByid.purchase.purchase_buyer_id || "",
-        purchase_buyer_city: purchaseByid.buyer.buyer_city || "",
-        purchase_ref_no: purchaseByid.purchase.purchase_ref_no || "",
-        purchase_vehicle_no: purchaseByid.purchase.purchase_vehicle_no || "",
-        purchase_remark: purchaseByid.purchase.purchase_remark || "",
-        purchase_status: purchaseByid.purchase.purchase_status || "",
-      });
 
-      // Set invoice line items
-      const mappedData = Array.isArray(purchaseByid.purchaseSub)
-        ? purchaseByid.purchaseSub.map((sub) => ({
-            id: sub.id || "",
-            purchase_sub_item_id: sub.purchase_sub_item_id || "",
-            purchase_sub_box: sub.purchase_sub_box || "",
-            item_brand: sub.item_brand || "",
-            item_size: sub.item_size || "",
-            purchase_sub_item: sub.item_name || "",
-            purchase_sub_weight: sub.item_weight || "",
-            purchase_sub_godown_id: sub.purchase_sub_godown_id,
-            avaiable_box: "",
-          }))
-        : [
-            {
-              purchase_sub_item_id: "",
-              purchase_sub_box: "",
-              item_brand: "",
-              item_size: "",
-              purchase_sub_item: "",
-              purchase_sub_weight: "",
-              purchase_sub_godown_id: "",
-              avaiable_box: "",
-            },
-          ];
-
-      setInvoiceData(mappedData);
-    }
-  }, [editId, purchaseByid]);
-
-  const { data: buyerData } = useFetchBuyers();
-  const { data: itemsData } = useFetchItems();
-  const { data: godownData } = useFetchGoDown();
-  const { data: purchaseRef } = useFetchPurchaseRef();
-
-  const handlePaymentChange = (selectedValue, rowIndex, fieldName) => {
-    let value;
-
-    if (selectedValue && selectedValue.target) {
-      value = selectedValue.target.value;
-    } else {
-      value = selectedValue;
-    }
-    const updatedData = [...invoiceData];
-
-    if (fieldName == "purchase_sub_item_id") {
-      updatedData[rowIndex][fieldName] = value;
-      const selectedItem = itemsData?.items?.find((item) => item.id == value);
-      console.log(selectedItem, "selectedItem");
-      if (selectedItem) {
-        updatedData[rowIndex]["item_size"] = selectedItem.item_size;
-        updatedData[rowIndex]["item_brand"] = selectedItem.item_brand;
-        updatedData[rowIndex]["avaiable_box"] =
-          Number(selectedItem.openpurch) -
-          Number(selectedItem.closesale) +
-          (Number(selectedItem.purch) - Number(selectedItem.sale));
-      }
-
-      focusBoxInput(rowIndex);
-
-      setInvoiceData(updatedData);
-    } else {
-      if (["purchase_sub_box"].includes(fieldName)) {
-        if (!/^\d*$/.test(value)) {
-          console.log("Invalid input. Only digits are allowed.");
-          return;
-        }
-      }
-
-      updatedData[rowIndex][fieldName] = value;
-      setInvoiceData(updatedData);
-    }
+  // State for table management
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState(null);
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+  const UserId = localStorage.getItem("userType");
+  const queryClient = useQueryClient();
+  const whatsapp = localStorage.getItem("whatsapp-number");
+  const navigate = useNavigate();
+  const handleDeleteRow = (productId) => {
+    setDeleteItemId(productId);
+    setDeleteConfirmOpen(true);
   };
-
-  const handleInputChange = (e, field) => {
-    const value = e.target ? e.target.value : e;
-    console.log(value);
-    let updatedFormData = { ...formData, [field]: value };
-
-    setFormData(updatedFormData);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const missingFields = [];
-    if (!formData.purchase_date) missingFields.push("Purchase Date");
-    if (!formData.purchase_buyer_id) missingFields.push("Buyer Id");
-    if (!formData.purchase_ref_no) missingFields.push("Bill Ref No");
-    if (!formData.purchase_status && editId) {
-      missingFields.push("Status");
-    }
-    invoiceData.forEach((row, index) => {
-      if (!row.purchase_sub_godown_id)
-        missingFields.push(`Row ${index + 1}: Go Down`);
-      if (!row.purchase_sub_item_id)
-        missingFields.push(`Row ${index + 1}: Item`);
-
-      if (
-        row.purchase_sub_box === null ||
-        row.purchase_sub_box === undefined ||
-        row.purchase_sub_box === ""
-      ) {
-        missingFields.push(`Row ${index + 1}: Box`);
-      }
-    });
-
-    if (missingFields.length > 0) {
-      toast({
-        title: "Validation Error",
-        description: (
-          <div>
-            <p>Please fill in the following fields:</p>
-            <ul className="list-disc pl-5">
-              {missingFields.map((field, i) => (
-                <li key={i}>{field}</li>
-              ))}
-            </ul>
-          </div>
-        ),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
+  const confirmDelete = async () => {
     try {
-      const payload = {
-        ...formData,
-        purchase_product_data: invoiceData,
-      };
 
-      if (editId) {
-        payload.item_status = formData.item_status;
-      }
-
-      const response = await apiClient.post(
-        editId ? `${PURCHASE_EDIT_LIST}/${decryptedId}` : PURCHASE_CREATE,
-        payload,
+      const response = await apiClient.delete(
+        `${BASE_URL}/api/purchases/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -270,628 +109,679 @@ const CreatePurchase = () => {
         }
       );
 
-      if (response?.data.code == 200) {
+      const data = response.data;
+
+      if (data.code === 200) {
         toast({
           title: "Success",
-          description: response.data.msg,
+          description: data.msg,
+        });
+        refetch();
+      } else if (data.code === 400) {
+        toast({
+          title: "Duplicate Entry",
+          description: data.msg,
+          variant: "destructive",
         });
       } else {
         toast({
           title: "Error",
-          description: response.data.msg,
+          description: data.msg || "Something went wrong.",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.log(error);
       toast({
-        title: "Error",
-        description: error?.response?.data?.message || "Failed to save item",
+        title: "Unexpected Error",
+        description:
+          error?.response?.data?.msg ||
+          error.message ||
+          "Something unexpected happened.",
         variant: "destructive",
       });
+      console.error("Failed to delete product:", error);
     } finally {
-      setIsLoading(false);
+      setDeleteConfirmOpen(false);
+      setDeleteItemId(null);
     }
   };
 
+  const handleFetchPurchaseById = async (purchaseId) => {
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: ["purchaseByid", purchaseId],
+        queryFn: () => fetchPurchaseById(purchaseId),
+      });
+
+      if (data?.purchase && data?.purchaseSub) {
+        handleSendWhatsApp(data.purchase, data.purchaseSub, data.buyer);
+      } else {
+        console.error("Incomplete data received");
+      }
+    } catch (error) {
+      console.error("Failed to fetch purchase data or send WhatsApp:", error);
+    }
+  };
+  const handleSendWhatsApp = (purchase, purchaseSub, buyer) => {
+    const { purchase_ref_no, purchase_date, purchase_vehicle_no } = purchase;
+
+    const { buyer_name, buyer_city } = buyer;
+    const purchaseNo = purchase_ref_no?.split("-").pop();
+    const itemLines = purchaseSub.map((item) => {
+      const name = item.item_name.padEnd(25, " ");
+      const box = `(${String(item.purchase_sub_box).replace(
+        /\D/g,
+        ""
+      )})`.padStart(4, " ");
+      return `${name}      ${box}`;
+    });
+
+    const totalQty = purchaseSub.reduce((sum, item) => {
+      const qty = parseInt(item.purchase_sub_box, 10) || 0;
+      return sum + qty;
+    }, 0);
+    const message = `=== PackList ===
+  No.        : ${purchaseNo}
+  Date       : ${moment(purchase_date).format("DD-MM-YYYY")}
+  Party      : ${buyer_name}
+  City       : ${buyer_city}
+  VEHICLE NO : ${purchase_vehicle_no}
+  ======================
+  Product    [SIZE]   (QTY)
+  ======================
+${itemLines.map((line) => "  " + line).join("\n")}
+  ======================
+  *Total QTY: ${totalQty}*
+  ======================`;
+
+    const phoneNumber = `${whatsapp}`;
+    // const phoneNumber = "919360485526";
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const columns = [
+    {
+      accessorKey: "index",
+      header: "Sl No",
+      cell: ({ row }) => <div>{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "purchase_date",
+      header: "Date",
+      id: "Date",
+      cell: ({ row }) => {
+        const date = row.original.purchase_date;
+        return moment(date).format("DD-MMM-YYYY");
+      },
+    },
+    {
+      accessorKey: "buyer_name",
+      header: "Buyer Name",
+      id: "Buyer Name",
+      cell: ({ row }) => <div>{row.original.buyer_name}</div>,
+    },
+    {
+      accessorKey: "purchase_ref_no",
+      header: "Ref No",
+      id: "Ref No",
+      cell: ({ row }) => <div>{row.original.purchase_ref_no}</div>,
+    },
+    {
+      accessorKey: "purchase_vehicle_no",
+      header: "Vehicle No",
+      id: "Vehicle No",
+      cell: ({ row }) => <div>{row.original.purchase_vehicle_no}</div>,
+    },
+    ...(UserId == 3
+      ? [
+          {
+            accessorKey: "branch_name",
+            header: "Branch Name",
+            cell: ({ row }) => <div>{row.original.branch_name}</div>,
+          },
+        ]
+      : []),
+    {
+      accessorKey: "purchase_status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.purchase_status;
+        const statusId = row.original.id;
+        return (
+          <StatusToggle
+            initialStatus={status}
+            teamId={statusId}
+            onStatusChange={() => {
+              refetch();
+            }}
+          />
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => {
+        const purchaseId = row.original.id;
+        return (
+          <div className="flex flex-row">
+            {UserId != 3 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        navigateToPurchaseEdit(navigate, purchaseId);
+                      }}
+                    >
+                      <Edit />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit Purchase</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {UserId != 1 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleDeleteRow(purchaseId)}
+                      className="text-red-500"
+                      type="button"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete Purchase</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      handleFetchPurchaseById(encryptId(purchaseId))
+                    }
+                    className="text-green-500"
+                    type="button"
+                  >
+                    <RiWhatsappFill className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Whatsapp Purchase</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        );
+      },
+    },
+  ];
+
+  const filteredItems =
+    purchase?.filter((item) =>
+      item.buyer_name.toLowerCase().includes(searchQuery.toLowerCase())
+    ) || [];
+
+  // Create the table instance
+  const table = useReactTable({
+    data: purchase || [],
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 20,
+      },
+    },
+  });
+
+  // Render loading state
+  if (isLoading) {
+    return (
+      <Page>
+        <div className="flex justify-center items-center h-full">
+          <Loader />
+        </div>
+      </Page>
+    );
+  }
+
+  // Render error state
+  if (isError) {
+    return (
+      <Page>
+        <Card className="w-full max-w-md mx-auto mt-10">
+          <CardHeader>
+            <CardTitle className="text-destructive">
+              Error Fetching purchase
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </Page>
+    );
+  }
+
   return (
     <Page>
-      <div className="p-0 md:p-4">
-        <div className="sm:hidden bg-gradient-to-b from-yellow-50 to-white min-h-screen">
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            {/* Premium Header Section */}
-            <div className="bg-gradient-to-r from-yellow-600 to-yellow-400 text-white shadow-lg relative overflow-hidden">
-              {/* Decorative circles */}
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full"></div>
-              <div className="absolute top-10 -right-20 w-40 h-40 bg-white/5 rounded-full"></div>
-
-              <div className="flex items-center px-4 py-5 relative z-10">
-                <button
-                  type="button"
-                  onClick={() => navigate("/purchase")}
-                  className="p-1.5 bg-white/20 rounded-full text-white mr-3 shadow-sm hover:bg-white/30 transition-colors"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-                <div className="flex flex-col">
-                  <h1 className="text-lg font-bold tracking-wide">
-                    Create Purchase
-                  </h1>
-                  <p className="text-xs text-yellow-100 mt-0.5 opacity-90">
-                    Add new purchase details
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="p-2">
-              {/* Date and Buyer Row */}
-              <div className="bg-white rounded-xl shadow-sm p-4 mb-4 border border-yellow-100">
-                <div className="mb-4">
-                  <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <span className="w-1 h-4 bg-yellow-500 rounded-full mr-2"></span>
-                    Date<span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.purchase_date}
-                    onChange={(e) => handleInputChange(e, "purchase_date")}
-                    type="date"
-                  />
-                </div>
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-sm font-medium text-gray-700 flex items-center">
-                      <span className="w-1 h-4 bg-yellow-500 rounded-full mr-2"></span>
-                      Buyer<span className="text-red-500">*</span>
-                    </label>
-                    <button
-                      type="button"
-                      className="flex items-center text-xs text-yellow-600 font-medium bg-yellow-50 px-2 py-0.5 rounded-full"
-                    >
-                      <SquarePlus className="h-3 w-3 mr-1" />
-                      <BuyerForm />
-                    </button>
-                  </div>
-                  <MemoizedSelect
-                    value={formData.purchase_buyer_id}
-                    onChange={(e) => handleInputChange(e, "purchase_buyer_id")}
-                    options={
-                      buyerData?.buyers?.map((buyer) => ({
-                        value: buyer.id,
-                        label: buyer.buyer_name,
-                      })) || []
-                    }
-                    placeholder="Select Buyer"
-                    className="bg-white focus:ring-2 focus:ring-yellow-300"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                      <span className="w-1 h-4 bg-yellow-500 rounded-full mr-2"></span>
-                      Ref No<span className="text-red-500">*</span>
-                    </label>
-
-                    <MemoizedSelect
-                      value={formData.purchase_ref_no}
-                      onChange={(e) => handleInputChange(e, "purchase_ref_no")}
-                      options={
-                        purchaseRef
-                          ? [
-                              {
-                                value: purchaseRef.purchase_ref,
-                                label: purchaseRef.purchase_ref,
-                              },
-                            ]
-                          : []
-                      }
-                      placeholder="Select Ref"
-                      className="bg-white focus:ring-2 focus:ring-yellow-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                      <span className="w-1 h-4 bg-gray-300 rounded-full mr-2"></span>
-                      Vehicle No
-                    </label>
-                    <Input
-                      className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                      value={formData.purchase_vehicle_no}
-                      onChange={(e) =>
-                        handleInputChange(e, "purchase_vehicle_no")
-                      }
-                      placeholder="Vehicle No"
-                    />
-                  </div>
-                </div>
-              </div>
+      <div className="w-full p-0 md:p-4 grid grid-cols-1">
+        <div className="sm:hidden">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
+              Purchase List
+            </h1>
+            {UserId != 3 && (
               <div>
-                <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                  <span className="w-1 h-4 bg-gray-300 rounded-full mr-2"></span>
-                  Remark
-                </label>
-                <Textarea
-                  className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                  value={formData.purchase_remark}
-                  onChange={(e) => handleInputChange(e, "purchase_remark")}
-                  placeholder="Add any notes here"
-                  rows={2}
-                />
-              </div>
-              {/* Items Section  Table */}
-              <div className="bg-white rounded-xl shadow-sm p-2 mb-4 border border-yellow-100">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <span className="w-1.5 h-5 bg-yellow-500 rounded-full mr-2"></span>
-                    <h2 className="text-base font-semibold text-gray-800">
-                      Items
-                    </h2>
-                    <button
-                      type="button"
-                      className="flex items-center text-xs text-yellow-600 font-medium bg-yellow-50 px-2 py-0.5 rounded-full"
-                    >
-                      <SquarePlus className="h-3 w-3 mr-1" />
-                      <CreateItem />
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addRow}
-                    className="flex items-center bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs shadow-sm hover:bg-yellow-600 transition-colors"
-                  >
-                    <PlusCircle className="h-3 w-3 mr-1" />
-                    Add Item
-                  </button>
-                </div>
-
-                {/*  Item Table */}
-                <div className="overflow-hidden rounded-xl border border-yellow-200">
-                  <Table className="w-full border-collapse">
-                    <TableHeader>
-                      <TableRow className="bg-gradient-to-r from-yellow-100 to-yellow-50">
-                        <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
-                          Item
-                        </TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
-                          Godown<span className="text-red-500 ml-1">*</span>
-                        </TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
-                          Box<span className="text-red-500 ml-1">*</span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                      {invoiceData.map((row, rowIndex) => (
-                        <TableRow
-                          key={rowIndex}
-                          className="border-b border-yellow-100 hover:bg-yellow-50 transition-colors relative"
-                        >
-                          {/* Item Select */}
-                          <TableCell className="px-4 py-3 min-w-[200px] align-top">
-                            <div className="space-y-1">
-                              <MemoizedProductSelect
-                                value={row.purchase_sub_item_id}
-                                onChange={(e) =>
-                                  handlePaymentChange(
-                                    e,
-                                    rowIndex,
-                                    "purchase_sub_item_id"
-                                  )
-                                }
-                                options={
-                                  itemsData?.items?.map((product) => ({
-                                    value: product.id,
-                                    label: product.item_name,
-                                  })) || []
-                                }
-                                placeholder="Select Item"
-                                className="text-xs"
-                              />
-                              {row.item_size && (
-                                <div className="text-xs text-gray-600 flex gap-2">
-                                  <span className="bg-yellow-100 px-1.5 py-0.5 rounded text-yellow-800">
-                                    {row.item_size}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Delete Row Button */}
-                            <button
-                              type="button"
-                              onClick={() => removeRow(rowIndex)}
-                              disabled={invoiceData.length === 1}
-                              className={`absolute top-2 right-2 rounded-full p-1 ${
-                                invoiceData.length === 1
-                                  ? "bg-gray-200 text-gray-400"
-                                  : "bg-red-100 text-red-500"
-                              }`}
-                            >
-                              <MinusCircle className="h-4 w-4" />
-                            </button>
-                          </TableCell>
-
-                          {/* Godown Select */}
-                          <TableCell className="px-4 py-3 min-w-[150px] align-top">
-                            <MemoizedProductSelect
-                              value={row.purchase_sub_godown_id}
-                              onChange={(e) =>
-                                handlePaymentChange(
-                                  e,
-                                  rowIndex,
-                                  "purchase_sub_godown_id"
-                                )
-                              }
-                              options={
-                                godownData?.godown?.map((godown) => ({
-                                  value: godown.id,
-                                  label: godown.godown,
-                                })) || []
-                              }
-                              placeholder="Select Godown"
-                              className="text-xs"
-                            />
-                          </TableCell>
-
-                          {/* Box Input */}
-                          <TableCell className="px-4 py-3 min-w-[150px] align-top">
-                            <div className="space-y-1">
-                              <Input
-                                ref={(el) =>
-                                  (boxInputRefs.current[rowIndex] = el)
-                                }
-                                className="bg-white border border-gray-300 w-full text-xs"
-                                value={row.purchase_sub_box}
-                                onChange={(e) =>
-                                  handlePaymentChange(
-                                    e,
-                                    rowIndex,
-                                    "purchase_sub_box"
-                                  )
-                                }
-                                placeholder="Qty"
-                                type="number"
-                              />
-                              {row.item_brand && (
-                                <div className="text-xs text-gray-600">
-                                  <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
-                                    {row.item_brand}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Item count  */}
-                <div className="mt-2 text-xs text-gray-500 flex items-center">
-                  <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                  Total Items: {invoiceData.length}
-                  {invoiceData.some((row) => row.purchase_sub_box) && (
-                    <div className="flex items-center text-sm text-gray-700">
-                      <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                      Available Box:&nbsp;
-                      {invoiceData.find((row) => row.purchase_sub_box)
-                        ?.avaiable_box || 0}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="mb-20">
                 <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-yellow-600 to-yellow-400 hover:from-yellow-700 hover:to-yellow-500 text-white font-bold py-3.5 rounded-xl shadow-md transition-all transform hover:scale-[0.99]"
-                  disabled={isLoading}
+                  variant="default"
+                  className={`md:ml-2 bg-yellow-400 hover:bg-yellow-600 text-black rounded-l-full`}
+                  onClick={() => {
+                    navigate("/purchase/create");
+                  }}
                 >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <span className="animate-spin mr-2">⟳</span>
-                      Processing...
-                    </div>
-                  ) : (
-                    "CREATE PURCHASE"
-                  )}
+                  <SquarePlus className="h-4 w-4 " /> Purchase
                 </Button>
               </div>
+            )}
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
+            {/* Search Input */}
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder="Search purchase..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
+              />
             </div>
-          </form>
+          </div>
+
+          <div className="space-y-3">
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="relative bg-white rounded-lg shadow-sm border-l-4 border-r border-b border-t border-yellow-500 overflow-hidden"
+                >
+                  <div className="p-2 flex flex-col gap-2">
+                    {/* Sl No and Item Name */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="bg-gray-100 text-gray-600 rounded-full w-4 h-4 flex items-center justify-center text-xs font-medium">
+                          {index + 1}
+                        </div>
+                        <h3 className="font-medium text-sm text-gray-800">
+                          {item.buyer_name}
+                        </h3>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 ">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            item.purchase_status === "Active"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          <StatusToggle
+                            initialStatus={item.purchase_status}
+                            teamId={item.id}
+                            onStatusChange={() => {
+                              refetch();
+                            }}
+                          />
+                        </span>
+                        {UserId != 3 && (
+                          <button
+                            variant="ghost"
+                            className={`px-2 py-1 bg-yellow-400 hover:bg-yellow-600 rounded-lg text-black text-xs`}
+                            onClick={() => {
+                              navigateToPurchaseEdit(navigate, item.id);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
+                        {UserId != 1 && (
+                          <button
+                            variant="ghost"
+                            onClick={() => {
+                              e.stopPropagation();
+                              handleDeleteRow(item.id);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        )}
+                        <button
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFetchPurchaseById(encryptId(item.id));
+                          }}
+                          className="text-green-500"
+                          type="button"
+                        >
+                          <RiWhatsappFill className="h-4 w-4" />
+                        </button>{" "}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap justify-between gap-1">
+                      {item.purchase_ref_no && (
+                        <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-gray-600 mr-1"
+                          >
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                          </svg>
+                          <span className="text-xs text-gray-700">
+                            <span className="text-[10px]">Ref No:</span>
+                            {item.purchase_ref_no}
+                          </span>
+                        </div>
+                      )}
+                      {item.purchase_vehicle_no && (
+                        <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-gray-600 mr-1"
+                          >
+                            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                            <path d="M13 5v2" />
+                            <path d="M13 17v2" />
+                            <path d="M13 11v2" />
+                          </svg>
+                          <span className="text-xs text-gray-700">
+                            <span className="text-[10px]">Vehicle No:</span>
+                            {item.purchase_vehicle_no}
+                          </span>
+                        </div>
+                      )}
+                      {item.purchase_date && (
+                        <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-gray-600 mr-1"
+                          >
+                            <rect
+                              width="18"
+                              height="18"
+                              x="3"
+                              y="4"
+                              rx="2"
+                              ry="2"
+                            />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span className="text-xs text-gray-700">
+                            {moment(item.purchase_date).format("DD-MMM-YY")}
+                          </span>
+                        </div>
+                      )}
+                      {UserId == 3 && (
+                        <>
+                          {item.branch_name && (
+                            <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-gray-600 mr-1"
+                              >
+                                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                                <path d="M13 5v2" />
+                                <path d="M13 17v2" />
+                                <path d="M13 11v2" />
+                              </svg>
+                              <span className="text-xs text-gray-700">
+                                <span className="text-[10px]">
+                                  Branch Name:
+                                </span>
+                                {item.branch_name}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center text-gray-500">
+                No items found.
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="hidden sm:block">
-          <form onSubmit={handleSubmit} className="w-full ">
-            <BranchHeader />
-            <Card className={`mb-6 ${ButtonConfig.cardColor}`}>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                  <div>
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        Date <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        className="bg-white"
-                        value={formData.purchase_date}
-                        onChange={(e) => handleInputChange(e, "purchase_date")}
-                        placeholder="Enter Payment Date"
-                        type="date"
-                      />
-                    </div>
-                  </div>
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <label
-                        className={`text-sm font-medium ${ButtonConfig.cardLabel}`}
-                      >
-                        Buyer <span className="text-red-500">*</span>
-                      </label>
-                      <button
-                        type="button"
-                        className="flex items-center text-xs font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 px-2 py-1 rounded-full transition-colors duration-150"
-                      >
-                        <SquarePlus className="h-3 w-3 mr-1" />
+          <div className="flex text-left text-2xl text-gray-800 font-[400]">
+            Purchase List
+          </div>
 
-                        <BuyerForm />
-                      </button>
-                    </div>
+          <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
+            {/* Search Input */}
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder="Search Purchase..."
+                value={table.getState().globalFilter || ""}
+                onChange={(event) => table.setGlobalFilter(event.target.value)}
+                className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
+              />
+            </div>
 
-                    <MemoizedSelect
-                      value={formData.purchase_buyer_id}
-                      onChange={(e) =>
-                        handleInputChange(e, "purchase_buyer_id")
-                      }
-                      options={
-                        buyerData?.buyers?.map((buyer) => ({
-                          value: buyer.id,
-                          label: buyer.buyer_name,
-                        })) || []
-                      }
-                      placeholder="Select Buyer"
-                      className="bg-white focus:ring-2 focus:ring-yellow-300"
-                    />
-                  </div>
-
-                  <div>
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        Ref No<span className="text-red-500">*</span>
-                      </label>
-
-                      <MemoizedSelect
-                        value={formData.purchase_ref_no}
-                        onChange={(e) =>
-                          handleInputChange(e, "purchase_ref_no")
+            {/* Dropdown Menu & Sales Button */}
+            <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full md:w-auto">
+                    Columns <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
                         }
-                        options={
-                          purchaseRef
-                            ? [
-                                {
-                                  value: purchaseRef.purchase_ref,
-                                  label: purchaseRef.purchase_ref,
-                                },
-                              ]
-                            : []
-                        }
-                        placeholder="Select Ref"
-                        className="bg-white focus:ring-2 focus:ring-yellow-300"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
                       >
-                        Vehicle No
-                      </label>
-                      <Input
-                        className="bg-white"
-                        value={formData.purchase_vehicle_no}
-                        onChange={(e) =>
-                          handleInputChange(e, "purchase_vehicle_no")
-                        }
-                        placeholder="Enter Vehicle No"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div>
-                    <label
-                      className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                    >
-                      Remark
-                    </label>
-                    <Textarea
-                      className="bg-white"
-                      value={formData.purchase_remark}
-                      onChange={(e) => handleInputChange(e, "purchase_remark")}
-                      placeholder="Enter Remark"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 grid grid-cols-1">
-                  <Table className="border border-gray-300 rounded-lg shadow-sm">
-                    <TableHeader>
-                      <TableRow className="bg-gray-100">
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
-                          <div className="flex items-center justify-between">
-                            <span>
-                              Item
-                              <span className="text-red-500 ml-1 text-xs">
-                                *
-                              </span>
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <SquarePlus className="h-4 w-4 text-red-600" />
-                              <CreateItem />
-                            </div>
-                          </div>
-                        </TableHead>
-
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
-                          Godown
-                          <span className="text-red-500 ml-1 text-xs">*</span>
-                        </TableHead>
-
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
-                          Box
-                          <span className="text-red-500 ml-1 text-xs">*</span>
-                        </TableHead>
-
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
-                          <div className="flex justify-center items-center gap-2">
-                            Action
-                            <PlusCircle
-                              onClick={addRow}
-                              className="cursor-pointer text-blue-500 hover:text-gray-800 h-4 w-4"
-                            />
-                          </div>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                      {invoiceData.map((row, rowIndex) => (
-                        <TableRow
-                          key={rowIndex}
-                          className="border-t border-gray-200 hover:bg-gray-50"
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {UserId != 3 && (
+                <>
+                  <Button
+                    variant="default"
+                    className={`ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                    onClick={() => {
+                      navigate("/purchase/create");
+                    }}
+                  >
+                    <SquarePlus className="h-4 w-4 mr-2" /> Purchase
+                  </Button>{" "}
+                </>
+              )}
+            </div>
+          </div>
+          {/* table  */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead
+                          key={header.id}
+                          className={` ${ButtonConfig.tableHeader} ${ButtonConfig.tableLabel}`}
                         >
-                          {/* Item Column */}
-                          <TableCell className="px-4 py-3 align-top">
-                            <div className="flex flex-col gap-1">
-                              <MemoizedProductSelect
-                                value={row.purchase_sub_item_id}
-                                onChange={(e) =>
-                                  handlePaymentChange(
-                                    e,
-                                    rowIndex,
-                                    "purchase_sub_item_id"
-                                  )
-                                }
-                                options={
-                                  itemsData?.items?.map((product) => ({
-                                    value: product.id,
-                                    label: product.item_name,
-                                  })) || []
-                                }
-                                placeholder="Select Item"
-                              />
-                              {row.item_size && (
-                                <div className="text-xs text-gray-700">
-                                  • {row.item_size}
-                                </div>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
                               )}
-                            </div>
-                          </TableCell>
-
-                          {/* Godown Column */}
-                          <TableCell className="px-4 py-3 align-top">
-                            <div className="flex flex-col gap-1">
-                              <MemoizedProductSelect
-                                value={row.purchase_sub_godown_id}
-                                onChange={(e) =>
-                                  handlePaymentChange(
-                                    e,
-                                    rowIndex,
-                                    "purchase_sub_godown_id"
-                                  )
-                                }
-                                options={
-                                  godownData?.godown?.map((godown) => ({
-                                    value: godown.id,
-                                    label: godown.godown,
-                                  })) || []
-                                }
-                                placeholder="Select Godown"
-                              />
-                              {row.item_brand && (
-                                <div className="text-xs text-gray-700">
-                                  • {row.item_brand}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-
-                          {/* Box Column */}
-                          <TableCell className="px-4 py-3 align-top min-w-28">
-                            <div className="flex flex-col gap-1">
-                              <Input
-                                className="bg-white border border-gray-300 text-sm"
-                                value={row.purchase_sub_box}
-                                onChange={(e) =>
-                                  handlePaymentChange(
-                                    e,
-                                    rowIndex,
-                                    "purchase_sub_box"
-                                  )
-                                }
-                                placeholder="Enter Box"
-                                type="number"
-                              />
-                              {row.purchase_sub_box && (
-                                <div className="text-xs text-gray-700">
-                                  • Available Box: {row.avaiable_box}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-
-                          {/* Delete Button */}
-                          <TableCell className="p-2 align-middle">
-                            <Button
-                              variant="ghost"
-                              onClick={() => removeRow(rowIndex)}
-                              disabled={invoiceData.length === 1}
-                              className="text-red-500"
-                              type="button"
-                            >
-                              <MinusCircle className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex flex-row items-center gap-2 justify-end ">
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {/* row slection and pagintaion button  */}
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="flex-1 text-sm text-muted-foreground">
+              Total Purchase : &nbsp;
+              {table.getFilteredRowModel().rows.length}
+            </div>
+            <div className="space-x-2">
               <Button
-                type="submit"
-                className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center mt-2`}
-                disabled={isLoading}
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
               >
-                {isLoading ? "Submitting..." : "Create Purchase"}
+                Previous
               </Button>
               <Button
-                type="button"
-                onClick={() => {
-                  navigate("/purchase");
-                }}
-                className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center mt-2`}
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
               >
-                Go Back
+                Next
               </Button>
             </div>
-          </form>
+          </div>
         </div>
       </div>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              purchase.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className={`${ButtonConfig.backgroundColor}  ${ButtonConfig.textColor} text-black hover:bg-red-600`}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Page>
   );
 };
 
-export default CreatePurchase;
+export default PurchaseList;
