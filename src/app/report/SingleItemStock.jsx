@@ -16,6 +16,8 @@ import { useReactToPrint } from "react-to-print";
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
 import ExcelJS from "exceljs";
 import { RiFileExcel2Line } from "react-icons/ri";
+import usetoken from "@/api/usetoken";
+import apiClient from "@/api/axios";
 const SingleItemStock = () => {
   const containerRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -24,6 +26,7 @@ const SingleItemStock = () => {
     item_name: "",
   });
   const { toast } = useToast();
+  const token = usetoken();
 
   const handleInputChange = (field, e) => {
     const value = e.target ? e.target.value : e;
@@ -44,8 +47,7 @@ const SingleItemStock = () => {
   };
 
   const fetchSingleItemStock = async () => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
+    const response = await apiClient.post(
       `${SINGLE_ITEM_STOCK_REPORT}`,
       { ...formData },
       {
@@ -181,7 +183,8 @@ const SingleItemStock = () => {
       return { openingStock: 0, closingStock: 0, transactions: [] };
 
     const stock = reportData?.stock[0];
-    const openingStock = parseInt(stock?.openpurch) - parseInt(stock?.closesale);
+    const openingStock =
+      parseInt(stock?.openpurch) - parseInt(stock?.closesale);
 
     // Process transactions -- ui things
     const purchaseTransactions = reportData.purchase.map((p) => {
@@ -296,7 +299,7 @@ const SingleItemStock = () => {
                     <th className="border border-gray-300 px-2 py-2"></th>
                     <th className="border border-gray-300 px-2 py-2"></th>
                     <th className="border border-gray-300 px-2 py-2 text-right border-l border-r">
-                    Inward
+                      Inward
                     </th>
                     <th className="border border-gray-300 px-2 py-2 text-right">
                       Outward

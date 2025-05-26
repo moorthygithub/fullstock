@@ -12,7 +12,7 @@ import { getTodayDate } from "@/utils/currentDate";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import SalesBarChart from "./SalesBarChart";
+import DispatchBarChart from "./DispatchBarChart";
 import StockTableBoth from "./StockTableBoth";
 import StockTableSection from "./StockTableSection";
 const tabs = [
@@ -100,7 +100,6 @@ const Home = () => {
   const fetchStockData = async () => {
     const response = await apiClient.post(
       `${STOCK_REPORT}`,
-
       {
         from_date: "2024-01-01",
         to_date: currentDate,
@@ -116,7 +115,7 @@ const Home = () => {
   };
   const {
     data: stockData,
-    isLoading: isLoadingStock,
+    isFetching: isLoadingStock,
     isError: isErrorStock,
     refetch: refetchStock,
   } = useQuery({
@@ -144,10 +143,10 @@ const Home = () => {
     stockData?.filter((item) => {
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
-        item.item_name.toLowerCase().includes(searchLower) ||
-        item.item_category.toLowerCase().includes(searchLower) ||
-        item.item_size.toLowerCase().includes(searchLower) ||
-        (item.openpurch - item.closesale + (item.purch - item.sale))
+        item?.item_name?.toLowerCase().includes(searchLower) ||
+        item?.item_category?.toLowerCase().includes(searchLower) ||
+        item?.item_size?.toLowerCase().includes(searchLower) ||
+        (item?.openpurch - item?.closesale + (item?.purch - item?.sale))
           .toString()
           .toLowerCase()
           .includes(searchLower);
@@ -161,12 +160,12 @@ const Home = () => {
   //THIS IS >0 FILTER DATA
   const filteredItemsZero = (stockData || []).filter((item) => {
     const available =
-      item.openpurch - item.closesale + (item.purch - item.sale);
+      item?.openpurch - item?.closesale + (item.purch - item.sale);
     if (available >= 0) return false;
     const searchLower = searchQueryZero.toLowerCase();
     const matchesSearch =
-      item.item_name.toLowerCase().includes(searchLower) ||
-      item.item_category.toLowerCase().includes(searchLower) ||
+      item?.item_name?.toLowerCase().includes(searchLower) ||
+      item?.item_category?.toLowerCase().includes(searchLower) ||
       available.toString().toLowerCase().includes(searchLower);
     const matchesCategory =
       selectedCategoryZero === "All Categories" ||
@@ -182,9 +181,9 @@ const Home = () => {
     if (available >= 100) return false;
     const searchLower = searchQueryHundered.toLowerCase();
     const matchesSearch =
-      item.item_name.toLowerCase().includes(searchLower) ||
-      item.item_category.toLowerCase().includes(searchLower) ||
-      available.toString().toLowerCase().includes(searchLower);
+      item?.item_name?.toLowerCase().includes(searchLower) ||
+      item?.item_category?.toLowerCase().includes(searchLower) ||
+      available?.toString().toLowerCase().includes(searchLower);
     const matchesCategory =
       selectedCategoryHundered == "All Categories" ||
       item.item_category === selectedCategoryHundered;
@@ -288,16 +287,6 @@ const Home = () => {
     });
   };
 
-  if (isLoadingStock) {
-    return (
-      <Page>
-        <div className="flex justify-center items-center h-full">
-          <Loader />
-        </div>
-      </Page>
-    );
-  }
-
   if (isErrorStock) {
     return (
       <Page>
@@ -343,6 +332,7 @@ const Home = () => {
                 downloadCSV={downloadCSV}
                 currentDate={currentDate}
                 print="true"
+                loading={isLoadingStock}
               />
             </TabsContent>
             <TabsContent value="purchase">
@@ -359,6 +349,7 @@ const Home = () => {
                 print="false"
                 downloadCSV={downloadLessThanZeroExcel}
                 currentDate={currentDate}
+                loading={isLoadingStock}
               />
             </TabsContent>
             <TabsContent value="dispatch">
@@ -374,11 +365,12 @@ const Home = () => {
                 print="false"
                 downloadCSV={downloadLessThanHunderedExcel}
                 currentDate={currentDate}
+                loading={isLoadingStock}
               />
             </TabsContent>
             <TabsContent value="graph">
-              <SalesBarChart
-                title="Monthly Sales"
+              <DispatchBarChart
+                title="Monthly Dispatch"
                 dispatch={dashbordstock?.dispatch}
                 isLoadingdashboord={isLoadingdashboord}
                 isErrordashboord={isErrordashboord}
@@ -397,8 +389,8 @@ const Home = () => {
 
         <>
           <div className="hidden sm:block rounded-md border max-h-[500px] overflow-y-auto mb-4">
-            <SalesBarChart
-              title="Monthly Sales"
+            <DispatchBarChart
+              title="Monthly Dispatch"
               dispatch={dashbordstock?.dispatch}
               isLoadingdashboord={isLoadingdashboord}
               isErrordashboord={isErrordashboord}

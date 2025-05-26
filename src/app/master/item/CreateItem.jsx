@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Edit, Loader2, SquarePlus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 
 const CreateItem = ({ editId = null }) => {
@@ -37,10 +38,12 @@ const CreateItem = ({ editId = null }) => {
   const [isFetching, setIsFetching] = useState(false);
   const [originalData, setOriginalData] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
+  const BrandUnit = useSelector((state) => state.auth.branch_d_unit);
 
   const [formData, setFormData] = useState({
     item_category_id: "",
     item_name: "",
+    item_piece: "",
     item_size: "",
     item_brand: "",
     item_weight: "",
@@ -74,6 +77,7 @@ const CreateItem = ({ editId = null }) => {
         setFormData({
           item_category_id: fetchedData?.item_category_id || "",
           item_name: fetchedData?.item_name || "",
+          item_piece: fetchedData?.item_piece || "",
           item_size: fetchedData?.item_size || "",
           item_brand: fetchedData?.item_brand || "",
           item_weight: fetchedData?.item_weight || "",
@@ -84,6 +88,7 @@ const CreateItem = ({ editId = null }) => {
         setOriginalData({
           item_category_id: fetchedData?.item_category_id || "",
           item_name: fetchedData?.item_name || "",
+          item_piece: fetchedData?.item_piece || "",
           item_size: fetchedData?.item_size || "",
           item_brand: fetchedData?.item_brand || "",
           item_weight: fetchedData?.item_weight || "",
@@ -135,18 +140,19 @@ const CreateItem = ({ editId = null }) => {
     setIsLoading(true);
     try {
       const data = new FormData();
-      data.append("_method", "PUT");
       data.append("item_category_id", formData.item_category_id);
       data.append("item_name", formData.item_name);
       data.append("item_size", formData.item_size);
       data.append("item_brand", formData.item_brand);
       data.append("item_weight", formData.item_weight);
+      data.append("item_piece", formData.item_piece);
       data.append("item_minimum_stock", formData.item_minimum_stock);
       if (formData.item_image) {
         data.append("item_image", formData.item_image);
       }
       if (editId) {
         data.append("item_status", formData.item_status);
+        data.append("_method", "PUT");
       }
 
       let response;
@@ -174,6 +180,7 @@ const CreateItem = ({ editId = null }) => {
         setFormData({
           item_category_id: "",
           item_name: "",
+          item_piece: "",
           item_size: "",
           item_brand: "",
           item_weight: "",
@@ -209,7 +216,11 @@ const CreateItem = ({ editId = null }) => {
         ...prev,
         item_image: files && files.length > 0 ? files[0] : null,
       }));
-    } else if (id === "item_minimum_stock" || id === "item_weight") {
+    } else if (
+      id === "item_minimum_stock" ||
+      id === "item_weight" ||
+      id === "item_piece"
+    ) {
       if (/^\d*\.?\d*$/.test(value)) {
         setFormData((prev) => ({ ...prev, [id]: value }));
       }
@@ -325,18 +336,32 @@ const CreateItem = ({ editId = null }) => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label htmlFor="item_name" className="text-sm font-medium">
-                  Item Name *
-                </label>
-                <Input
-                  id="item_name"
-                  placeholder="Item Name"
-                  value={formData.item_name}
-                  onChange={handleInputChange}
-                />
-              </div>
+
               <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="item_name" className="text-sm font-medium">
+                    Item Name *
+                  </label>
+                  <Input
+                    id="item_name"
+                    placeholder="Item Name"
+                    value={formData.item_name}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                {BrandUnit == "Yes" && (
+                  <div>
+                    <label htmlFor="item_piece" className="text-sm font-medium">
+                      Item Piece
+                    </label>
+                    <Input
+                      id="item_piece"
+                      placeholder="Item Piece"
+                      value={formData.item_piece}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                )}
                 <div>
                   <label htmlFor="item_size" className="text-sm font-medium">
                     Item Size *

@@ -36,6 +36,7 @@ import { Separator } from "@/components/ui/separator";
 import { IMAGE_URL, NO_IMAGE_URL } from "@/config/BaseUrl";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import CreateItem from "./CreateItem";
+import { useSelector } from "react-redux";
 
 const ItemList = () => {
   const token = usetoken();
@@ -55,7 +56,9 @@ const ItemList = () => {
   });
 
   // State for table management
-  const UserId = localStorage.getItem("userType");
+  const UserId = useSelector((state) => state.auth.user_type);
+  const BrandUnit = useSelector((state) => state.auth.branch_d_unit);
+
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -131,6 +134,17 @@ const ItemList = () => {
       header: "Minimum Stock",
       cell: ({ row }) => <div>{row.original.item_minimum_stock}</div>,
     },
+
+    ...(BrandUnit == "Yes"
+      ? [
+          {
+            id: "Item Price",
+            accessorKey: "item_piece",
+            header: "Item Price",
+            cell: ({ row }) => <div>{row.original.item_piece}</div>,
+          },
+        ]
+      : []),
     ...(UserId == 3
       ? [
           {
@@ -215,7 +229,8 @@ const ItemList = () => {
     const webUrl = `https://web.whatsapp.com/send?text=${encodedMessage}`;
     const newWindow = window.open(appUrl, "_blank");
 
-    setTimeout(() => {      if (
+    setTimeout(() => {
+      if (
         !newWindow ||
         newWindow.closed ||
         typeof newWindow.closed === "undefined"
@@ -392,7 +407,6 @@ const ItemList = () => {
               />
             </div>
 
-            {/* Dropdown Menu & Sales Button */}
             <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -507,7 +521,6 @@ const ItemList = () => {
         </div>
       </div>
     </Page>
-
   );
 };
 

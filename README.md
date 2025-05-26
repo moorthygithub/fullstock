@@ -22,7 +22,7 @@ ag-solutions-bangalore-stock-crm/
 │   │   ├── auth/           # Authentication components
 │   │   ├── dashboard/      # Dashboard views
 │   │   ├── home/           # Home page
-│   │   ├── master/         # Master data management (buyers, categories, items, purchases, sales)
+│   │   ├── master/         # Master data management (buyers, categories, items, purchases, dispatch)
 │   │   └── report/         # Reports section (Buyer Report, Stock Report)
 │   ├── assets/             # Static assets (letterheads, signatures)
 │   ├── components/         # Reusable UI components
@@ -50,7 +50,7 @@ ag-solutions-bangalore-stock-crm/
 
 ✅ **Authentication** - Login, Logout, Session tracking  
 ✅ **Dashboard** - Overview of CRM activities  
-✅ **Master Data Management** - Buyers, Categories, Items, Purchases, Sales  
+✅ **Master Data Management** - Buyers, Categories, Items, Purchases, Dispatch  
 ✅ **Reports** - Generate and view reports on Buyers and Stock  
 ✅ **Responsive Design** - Optimized for mobile and desktop  
 ✅ **User Role Management** - Access control for different roles  

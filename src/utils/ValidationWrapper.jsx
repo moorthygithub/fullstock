@@ -22,11 +22,11 @@ const ValidationWrapper = ({ children }) => {
   useEffect(() => {
     const validateEnvironment = async () => {
       try {
-        const statusRes = await apiClient.get(`${PANEL_CHECK}`);
+        // const statusRes = await apiClient.get(`${PANEL_CHECK}`);
 
-        if (statusRes.data?.msg !== "success") {
-          throw new Error("Panel status check failed");
-        }
+        // if (statusRes.data?.msg !== "success") {
+        //   throw new Error("Panel status check failed");
+        // }
 
         const dotenvRes = await apiClient.get(`${DOT_ENV}`);
         const dynamicValidationKey = dotenvRes.data?.hashKey;
@@ -67,7 +67,7 @@ const ValidationWrapper = ({ children }) => {
     };
 
     validateEnvironment();
-  }, [navigate, location]);
+  }, [navigate]);
 
   return children;
 };

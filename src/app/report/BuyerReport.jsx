@@ -11,16 +11,18 @@ import { ButtonConfig } from "@/config/ButtonConfig";
 import { useReactToPrint } from "react-to-print";
 import { BUYER_DOWNLOAD, BUYER_REPORT } from "@/api";
 import Loader from "@/components/loader/Loader";
+import usetoken from "@/api/usetoken";
+import apiClient from "@/api/axios";
 
 const BuyerReport = () => {
   const containerRef = useRef();
   const { toast } = useToast();
+  const token = usetoken();
 
   // Fetch data from API
   const fetchBuyerData = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BUYER_REPORT}`,
         {},
         {
@@ -50,14 +52,14 @@ const BuyerReport = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
+      const response = await apiClient.post(
         `${BUYER_DOWNLOAD}`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
-          responseType: "blob", // Must be inside config object
+          responseType: "blob", 
         }
       );
 
@@ -67,7 +69,7 @@ const BuyerReport = () => {
       link.setAttribute("download", "buyer.csv");
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link); // Remove the link after clicking
+      document.body.removeChild(link); 
 
       toast({
         title: "Success",
@@ -109,7 +111,7 @@ const BuyerReport = () => {
     return (
       <Page>
         <div className="flex justify-center items-center h-full">
-         <Loader/>
+          <Loader />
         </div>
       </Page>
     );
@@ -137,71 +139,67 @@ const BuyerReport = () => {
   return (
     <Page>
       <div className="p-0 md:p-4">
+        <div className="sm:hidden">
+          <div
+            className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-3 mb-2`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              {/* Title Section */}
+              <div className="flex-1 text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+                  Buyer Summary
+                </h1>
+              </div>
 
-      <div className="sm:hidden">
-  <div
-    className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-3 mb-2`}
-  >
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-      {/* Title Section */}
-      <div className="flex-1 text-center sm:text-left">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-          Buyer Summary
-        </h1>
-      </div>
+              {/* Button Section */}
+              <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+                {/* Print Button */}
+                <button
+                  className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-2 rounded-lg flex items-center justify-center`}
+                  onClick={handlePrintPdf}
+                >
+                  <Printer className="h-3 w-3 mr-1" /> Print
+                </button>
 
-      {/* Button Section */}
-      <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
-        {/* Print Button */}
-        <button
-          className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-2 rounded-lg flex items-center justify-center`}
-          onClick={handlePrintPdf}
-        >
-          <Printer className="h-3 w-3 mr-1" /> Print
-        </button>
-
-        {/* Download Button */}
-        <button
-          className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-2 rounded-lg flex items-center justify-center`}
-          onClick={onSubmit}
-        >
-          <Download className="h-3 w-3 mr-1" /> Download
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-        <div className="hidden sm:block">
-        <div
-          className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-4 mb-2`}
-        >
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Title Section */}
-            <h1 className="text-lg sm:text-xl font-bold text-center sm:text-left">
-              Buyer Summary
-            </h1>
-
-            {/* Button Section */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              <Button
-                className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                onClick={handlePrintPdf}
-              >
-                <Printer className="h-4 w-4 mr-1" /> Print
-              </Button>
-              <Button
-                className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                onClick={onSubmit}
-              >
-                <Download className="h-4 w-4 mr-1" /> Download
-              </Button>
+                {/* Download Button */}
+                <button
+                  className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-2 rounded-lg flex items-center justify-center`}
+                  onClick={onSubmit}
+                >
+                  <Download className="h-3 w-3 mr-1" /> Download
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
+        <div className="hidden sm:block">
+          <div
+            className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-4 mb-2`}
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Title Section */}
+              <h1 className="text-lg sm:text-xl font-bold text-center sm:text-left">
+                Buyer Summary
+              </h1>
+
+              {/* Button Section */}
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                <Button
+                  className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                  onClick={handlePrintPdf}
+                >
+                  <Printer className="h-4 w-4 mr-1" /> Print
+                </Button>
+                <Button
+                  className={`w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                  onClick={onSubmit}
+                >
+                  <Download className="h-4 w-4 mr-1" /> Download
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
         <div
           className="overflow-x-auto text-[11px] grid grid-cols-1"

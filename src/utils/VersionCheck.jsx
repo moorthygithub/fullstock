@@ -1,3 +1,4 @@
+import { PANEL_CHECK } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ const VersionCheck = () => {
   useEffect(() => {
     const checkVersion = async () => {
       try {
-        const statusRes = await apiClient.get(`/panelCheck`);
+        const statusRes = await apiClient.get(`${PANEL_CHECK}`);
         const serverVer = statusRes?.data?.version?.version_panel;
         if (token && statusRes.data?.msg == "success") {
           dispatch(
@@ -79,7 +80,7 @@ const VersionCheck = () => {
     };
 
     checkVersion();
-  }, [token, localVersion, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     if (retryPopup) {

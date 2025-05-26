@@ -11,11 +11,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSelector } from "react-redux";
 
 export function AppBottombar() {
   const location = useLocation();
   const [activeDropdown, setActiveDropdown] = React.useState(null);
-  const id = localStorage.getItem("userType");
+  const id = useSelector((state) => state.auth.user_type);
 
   const navItems = [
     {
@@ -70,13 +71,33 @@ export function AppBottombar() {
 
     {
       title: "Purchase",
-      url: "/purchase",
+      url: "#",
       icon: ShoppingBag,
+      items: [
+        {
+          title: "Purchase",
+          url: "/purchase",
+        },
+        {
+          title: "Purchase Return",
+          url: "/purchase-return",
+        },
+      ],
     },
     {
       title: "Dispatch",
-      url: "/dispatch",
+      url: "#",
       icon: ShoppingBag,
+      items: [
+        {
+          title: "Dispatch",
+          url: "/dispatch",
+        },
+        {
+          title: "Dispatch Return",
+          url: "/dispatch-return",
+        },
+      ],
     },
 
     {

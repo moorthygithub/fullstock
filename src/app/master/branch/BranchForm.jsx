@@ -34,6 +34,8 @@ const BranchForm = ({ branchId }) => {
     branch_prefix: isEditMode ? null : "",
     branch_whatsapp: "",
     branch_email: "",
+    branch_s_unit: "",
+    branch_d_unit: "",
     branch_status: isEditMode ? "" : null,
   });
   const [originalData, setOriginalData] = useState(null);
@@ -61,6 +63,8 @@ const BranchForm = ({ branchId }) => {
             branch_whatsapp: branch.branch_whatsapp || "",
             branch_email: branch.branch_email || "",
             branch_status: branch.branch_status || "",
+            branch_d_unit: branch.branch_d_unit || "",
+            branch_s_unit: branch.branch_s_unit || "",
           };
 
           setFormData(filledData);
@@ -88,11 +92,19 @@ const BranchForm = ({ branchId }) => {
       if (!formData.branch_whatsapp) missingFields.push("Branch Whatsapp");
       if (!formData.branch_email) missingFields.push("Branch Email");
       if (!formData.branch_status) missingFields.push("Status");
+      if (!formData.branch_s_unit) missingFields.push("Single Unit");
+      if (!formData.branch_d_unit) missingFields.push("DOuble Unit");
+      if (formData.branch_d_unit == "No" && formData.branch_s_unit == "No")
+        missingFields.push("Both Unit Cannot be No");
     } else {
       if (!formData.branch_name) missingFields.push("Branch Name");
       if (!formData.branch_prefix) missingFields.push("Branch Name");
       if (!formData.branch_whatsapp) missingFields.push("Branch Whatsapp");
       if (!formData.branch_email) missingFields.push("Branch Email");
+      if (!formData.branch_s_unit) missingFields.push("Single Unit");
+      if (!formData.branch_d_unit) missingFields.push("DOuble Unit");
+      if (formData.branch_d_unit == "No" && formData.branch_s_unit == "No")
+        missingFields.push("Both Unit Cannot be No");
     }
 
     if (missingFields.length > 0) {
@@ -157,10 +169,18 @@ const BranchForm = ({ branchId }) => {
       setIsLoading(false);
     }
   };
+  const handleSelectChange = (field) => (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
   const hasChanges =
     originalData &&
     (formData.branch_whatsapp !== originalData.branch_whatsapp ||
       formData.branch_email !== originalData.branch_email ||
+      formData.branch_s_unit !== originalData.branch_s_unit ||
+      formData.branch_d_unit !== originalData.branch_d_unit ||
       formData.branch_status !== originalData.branch_status);
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -323,6 +343,68 @@ const BranchForm = ({ branchId }) => {
                     }))
                   }
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-1">
+                  <label
+                    htmlFor="branch_s_unit"
+                    className="text-sm font-medium"
+                  >
+                    S Unit *
+                  </label>
+                  <Select
+                    value={formData.branch_s_unit}
+                    onValueChange={handleSelectChange("branch_s_unit")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select S Unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                          Yes
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="No">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
+                          No
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1">
+                  <label
+                    htmlFor="branch_d_unit"
+                    className="text-sm font-medium"
+                  >
+                    D Unit *
+                  </label>
+                  <Select
+                    value={formData.branch_d_unit}
+                    onValueChange={handleSelectChange("branch_d_unit")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select D Unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                          Yes
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="No">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
+                          No
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               {isEditMode && (
                 <>

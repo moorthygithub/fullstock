@@ -81,6 +81,8 @@ export default function LoginAuth() {
           token_expire_time: UserInfo.token_expires_at,
           whatsapp_number: res?.data?.branch?.branch_whatsapp,
           version: res?.data?.version?.version_panel,
+          branch_d_unit: res?.data?.branch?.branch_d_unit,
+          branch_s_unit: res?.data?.branch?.branch_s_unit,
         };
         dispatch(loginSuccess(userData));
 

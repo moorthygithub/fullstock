@@ -87,6 +87,18 @@ const BranchList = () => {
       cell: ({ row }) => <div>{row.original.branch_email}</div>,
     },
     {
+      id: "S Unit",
+      accessorKey: "branch_s_unit",
+      header: "S Unit",
+      cell: ({ row }) => <div>{row.original.branch_s_unit}</div>,
+    },
+    {
+      id: "D Unit",
+      accessorKey: "branch_d_unit",
+      header: "D Unit",
+      cell: ({ row }) => <div>{row.original.branch_d_unit}</div>,
+    },
+    {
       id: "Status",
       accessorKey: "branch_status",
       header: "Status",
@@ -317,7 +329,6 @@ const BranchList = () => {
               />
             </div>
 
-            {/* Dropdown Menu & Sales Button */}
             <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

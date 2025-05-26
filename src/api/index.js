@@ -1,14 +1,12 @@
 import { decryptId, encryptId } from "@/components/common/Encryption";
-import axios from "axios";
-import usetoken from "./usetoken";
 import apiClient from "./axios";
 //DOTENV
 export const DOT_ENV = `/panel-fetch-dotenv`;
 //PANELCHECK
 export const PANEL_CHECK = `/panelCheck`;
-//PANELCHECK
+//PANEL_LOGIN
 export const PANEL_LOGIN = `/login`;
-//PANELCHECK
+//PANEL_FORGOT_PASSWORD
 export const PANEL_FORGOT_PASSWORD = `/forgot-password`;
 
 //PROFILE
@@ -19,11 +17,25 @@ export const PURCHASE_LIST = `/purchases-list`;
 export const PURCHASE_EDIT_LIST = `/purchases`;
 export const PURCHASE_CREATE = `/purchases`;
 export const PURCHASE_SUB_DELETE = `/purchases-sub`;
+export const PURCHASE_STATUS = `/purchases-status`;
+// PURCHASE -RETURN
+export const PURCHASE_RETURN_LIST = `/purchases-return-list`;
+export const PURCHASE_RETURN_EDIT_LIST = `/purchases-return`;
+export const PURCHASE_RETURN_CREATE = `/purchases-return`;
+export const PURCHASE_RETURN_SUB_DELETE = `/purchases-return-sub`;
+
 //DISPATCH
 export const DISPATCH_LIST = `/dispatch-list`;
 export const DISPATCH_EDIT_LIST = `/dispatch`;
 export const DISPATCH_CREATE = `/dispatch`;
 export const DISPATCH_SUB_DELETE = `/dispatch-sub`;
+export const DISPATCH_STATUS = `/dispatch-status`;
+//DISPATCH -RETURN
+export const DISPATCH_RETURN_LIST = `/dispatch-return-list`;
+export const DISPATCH_RETURN_EDIT_LIST = `/dispatch-return`;
+export const DISPATCH_RETURN_CREATE = `/dispatch-return`;
+export const DISPATCH_RETURN_SUB_DELETE = `/dispatch-return-sub`;
+
 //DASHBOARD
 export const DASHBOARD_LIST = `/dashboard`;
 //MASTER-CATEGORY-ITEM-BUYER
@@ -60,24 +72,35 @@ export const BUYER_DOWNLOAD = `/download-buyer-data`;
 export const STOCK_REPORT = `/stock`;
 export const SINGLE_ITEM_STOCK_REPORT = `/item-stock`;
 export const PURCHASE_REPORT = `/report-purchases-data`;
-export const SALES_REPORT = `/report-sales-data`;
+export const DISPATCH_REPORT = `/report-dispatch-data`;
 
 // ROUTE CONFIGURATION
 export const ROUTES = {
   PURCHASE_EDIT: (id) => `/purchase/edit/${encryptId(id)}`,
+  PURCHASE_RETURN_EDIT: (id) => `/purchase-return/edit/${encryptId(id)}`,
   DISPATCH_EDIT: (id) => `/dispatch/edit/${encryptId(id)}`,
-  SALES_VIEW: (id) => `/dispatch/view/${encryptId(id)}`,
+  DISPATCH_RETURN_EDIT: (id) => `/dispatch-return/edit/${encryptId(id)}`,
+  DISPATCH_VIEW: (id) => `/dispatch/view/${encryptId(id)}`,
+  DISPATCH_RETURN_VIEW: (id) => `/dispatch-return/view/${encryptId(id)}`,
 };
 export const navigateToPurchaseEdit = (navigate, purchaseId) => {
   navigate(ROUTES.PURCHASE_EDIT(purchaseId));
 };
-export const navigateTODispatchEdit = (navigate, salesId) => {
-  navigate(ROUTES.DISPATCH_EDIT(salesId));
+export const navigateToPurchaseReturnEdit = (navigate, purchaseId) => {
+  navigate(ROUTES.PURCHASE_RETURN_EDIT(purchaseId));
 };
-export const navigateTODispatchView = (navigate, salesId) => {
-  navigate(ROUTES.SALES_VIEW(salesId));
+export const navigateTODispatchEdit = (navigate, dispatchId) => {
+  navigate(ROUTES.DISPATCH_EDIT(dispatchId));
 };
-
+export const navigateTODispatchView = (navigate, dispatchId) => {
+  navigate(ROUTES.DISPATCH_VIEW(dispatchId));
+};
+export const navigateTODispatchReturnEdit = (navigate, dispatchId) => {
+  navigate(ROUTES.DISPATCH_RETURN_EDIT(dispatchId));
+};
+export const navigateTODispatchReturnView = (navigate, dispatchId) => {
+  navigate(ROUTES.DISPATCH_RETURN_VIEW(dispatchId));
+};
 export const fetchPurchaseById = async (encryptedId, token) => {
   try {
     if (!token) throw new Error("No authentication token found");
@@ -92,6 +115,21 @@ export const fetchPurchaseById = async (encryptedId, token) => {
   } catch (error) {
     console.log(error, "error");
 
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch purchase details"
+    );
+  }
+};
+export const fetchPurchaseReturnById = async (encryptedId, token) => {
+  try {
+    const id = decryptId(encryptedId);
+    const response = await apiClient.get(`${PURCHASE_RETURN_EDIT_LIST}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
     throw new Error(
       error.response?.data?.message || "Failed to fetch purchase details"
     );
@@ -114,47 +152,20 @@ export const fetchDispatchById = async (encryptedId, token) => {
     );
   }
 };
-
-export const updatePurchaseEdit = async (encryptedId, data) => {
+export const fetchDispatchReturnById = async (encryptedId, token) => {
   try {
-    const token = usetoken();
-    if (!token) throw new Error("No authentication token found");
     const id = decryptId(encryptedId);
-    const requestData = data.data || data;
-    const response = await axios.put(
-      `${PURCHASE_EDIT_LIST}/${id}`,
-      requestData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await apiClient.get(`${DISPATCH_RETURN_EDIT_LIST}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    // console.log("res data", response.data);
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-export const updateSalesEdit = async (encryptedId, data) => {
-  try {
-    const token = usetoken();
-    if (!token) throw new Error("No authentication token found");
-    const id = decryptId(encryptedId);
-    const requestData = data.data || data;
-    const response = await axios.put(
-      `${DISPATCH_EDIT_LIST}/${id}`,
-      requestData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
+    console.log(error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch purchase details"
     );
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
   }
 };

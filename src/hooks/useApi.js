@@ -45,7 +45,16 @@ export const useFetchGoDown = () => {
 export const useFetchPurchaseRef = () => {
   return useQuery(createQueryConfig(["purchasesref"], "/purchases-ref"));
 };
-
+export const useFetchPurchaseReturnRef = () => {
+  return useQuery(
+    createQueryConfig(["purchasesreturnref"], "/purchases-return-ref")
+  );
+};
 export const useFetchDispatchRef = () => {
   return useQuery(createQueryConfig(["dispatchref"], "/dispatch-ref"));
+};
+export const useFetchDispatchReturnRef = () => {
+  return useQuery(
+    createQueryConfig(["dispatchreturnref"], "/dispatch-return-ref")
+  );
 };

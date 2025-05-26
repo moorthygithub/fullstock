@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import { DISPATCH_STATUS, PURCHASE_STATUS } from "@/api";
+import usetoken from "@/api/usetoken";
 
 const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
   const [status, setStatus] = useState(initialStatus);
@@ -22,7 +24,7 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const location = useLocation();
-
+  const token = usetoken();
   const handleToggleClick = () => {
     setIsDialogOpen(true);
   };
@@ -31,13 +33,18 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
     setIsDialogOpen(false);
     setIsLoading(true);
     const newStatus = status === "Active" ? "Inactive" : "Active";
-    const token = localStorage.getItem("token");
 
     let apiUrl = "";
-    if (location.pathname.includes("/purchase")) {
-      apiUrl = `${BASE_URL}/api/purchases-status/${teamId}`;
-    } else if (location.pathname.includes("/dispatch")) {
-      apiUrl = `${BASE_URL}/api/sales-status/${teamId}`;
+    if (
+      location.pathname.includes("/purchase") ||
+      location.pathname.includes("/purchase-return")
+    ) {
+      apiUrl = `${PURCHASE_STATUS}/${teamId}`;
+    } else if (
+      location.pathname.includes("/dispatch") ||
+      location.pathname.includes("/dispatch-return")
+    ) {
+      apiUrl = `${DISPATCH_STATUS}/${teamId}`;
     } else {
       toast({
         title: "Error",
@@ -61,7 +68,9 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
 
       toast({
         title: "Status Updated",
-        description: `Sales status changed to ${newStatus === "Active" ? "Open" : "Closed"}`,
+        description: `Dispatch status changed to ${
+          newStatus === "Active" ? "Open" : "Closed"
+        }`,
         variant: "default",
       });
     } catch (error) {
@@ -87,7 +96,11 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
               : "text-gray-800 hover:bg-gray-100"
           } transition-colors`}
       >
-        <RefreshCcw className={`hidden sm:block h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        <RefreshCcw
+          className={`hidden sm:block h-4 w-4 ${
+            isLoading ? "animate-spin" : ""
+          }`}
+        />
         <span>{status === "Active" ? "Open" : "Closed"}</span>
       </button>
 
@@ -96,12 +109,18 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will change the status from {status === "Active" ? "Open" : "Closed"} to {status === "Active" ? "Closed" : "Open"}.
+              This will change the status from{" "}
+              {status === "Active" ? "Open" : "Closed"} to{" "}
+              {status === "Active" ? "Closed" : "Open"}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleToggle} disabled={isLoading}  className={`${ButtonConfig.backgroundColor}  ${ButtonConfig.textColor} text-black hover:bg-red-600`}>
+            <AlertDialogAction
+              onClick={handleToggle}
+              disabled={isLoading}
+              className={`${ButtonConfig.backgroundColor}  ${ButtonConfig.textColor} text-black hover:bg-red-600`}
+            >
               {isLoading ? "Updating..." : "Continue"}
             </AlertDialogAction>
           </AlertDialogFooter>
