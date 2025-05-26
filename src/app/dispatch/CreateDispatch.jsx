@@ -69,7 +69,8 @@ const CreateDispatch = () => {
   const boxInputRefs = useRef([]);
   const today = moment().format("YYYY-MM-DD");
   const [isLoading, setIsLoading] = useState(false);
-
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
   const token = usetoken();
 
   const [formData, setFormData] = useState({
@@ -91,8 +92,10 @@ const CreateDispatch = () => {
       item_brand: "",
       item_size: "",
       avaiable_box: "",
+      dispatch_sub_piece: "",
     },
   ]);
+
   const addRow = useCallback(() => {
     setInvoiceData((prev) => [
       ...prev,
@@ -100,6 +103,7 @@ const CreateDispatch = () => {
         dispatch_sub_item_id: "",
         dispatch_sub_godown_id: "",
         dispatch_sub_box: "",
+        dispatch_sub_piece: "",
       },
     ]);
   }, []);
@@ -145,6 +149,7 @@ const CreateDispatch = () => {
             id: sub.id || "",
             dispatch_sub_item_id: sub.dispatch_sub_item_id || "",
             dispatch_sub_box: sub.dispatch_sub_box || "",
+            dispatch_sub_piece: sub.dispatch_sub_piece || "",
             item_brand: sub.item_brand || "",
             item_size: sub.item_size || "",
             dispatch_sub_godown_id: sub.dispatch_sub_godown_id,
@@ -155,7 +160,7 @@ const CreateDispatch = () => {
               dispatch_sub_box: "",
               item_brand: "",
               item_size: "",
-
+              dispatch_sub_piece: "",
               dispatch_sub_godown_id: "",
               avaiable_box: "",
             },
@@ -196,7 +201,7 @@ const CreateDispatch = () => {
 
       setInvoiceData(updatedData);
     } else {
-      if (["dispatch_sub_box"].includes(fieldName)) {
+      if (["dispatch_sub_box", "dispatch_sub_piece"].includes(fieldName)) {
         if (!/^\d*$/.test(value)) {
           console.log("Invalid input. Only digits are allowed.");
           return;
@@ -243,13 +248,23 @@ const CreateDispatch = () => {
         missingFields.push(`Row ${index + 1}: Go Down`);
       if (!row.dispatch_sub_item_id)
         missingFields.push(`Row ${index + 1}: Item`);
-
-      if (
-        row.dispatch_sub_box === null ||
-        row.dispatch_sub_box === undefined ||
-        row.dispatch_sub_box === ""
-      ) {
-        missingFields.push(`Row ${index + 1}: Box`);
+      if (singlebranch == "Yes") {
+        if (
+          row.dispatch_sub_box === null ||
+          row.dispatch_sub_box === undefined ||
+          row.dispatch_sub_box === ""
+        ) {
+          missingFields.push(`Row ${index + 1}: Box`);
+        }
+      }
+      if (doublebranch == "Yes") {
+        if (
+          row.dispatch_sub_piece === null ||
+          row.dispatch_sub_piece === undefined ||
+          row.dispatch_sub_piece === ""
+        ) {
+          missingFields.push(`Row ${index + 1}: Piece`);
+        }
       }
     });
 
@@ -584,9 +599,17 @@ const CreateDispatch = () => {
                         <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
                           Godown<span className="text-red-500 ml-1">*</span>
                         </TableHead>
-                        <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
-                          Box<span className="text-red-500 ml-1">*</span>
-                        </TableHead>
+                        {singlebranch == "Yes" && (
+                          <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
+                            Box<span className="text-red-500 ml-1">*</span>
+                          </TableHead>
+                        )}
+
+                        {doublebranch == "Yes" && (
+                          <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
+                            Piece<span className="text-red-500 ml-1">*</span>
+                          </TableHead>
+                        )}
                       </TableRow>
                     </TableHeader>
 
@@ -617,7 +640,7 @@ const CreateDispatch = () => {
                                 placeholder="Select Item"
                                 className="text-xs"
                               />
-                              {row.item_size && (
+                              {!editId && row.item_size && (
                                 <div className="text-xs text-gray-600 flex gap-2">
                                   <span className="bg-yellow-100 px-1.5 py-0.5 rounded text-yellow-800">
                                     {row.item_size}
@@ -663,34 +686,53 @@ const CreateDispatch = () => {
                             />
                           </TableCell>
 
-                          {/* Box Input */}
-                          <TableCell className="px-4 py-3 min-w-[150px] align-top">
-                            <div className="space-y-1">
-                              <Input
-                                ref={(el) =>
-                                  (boxInputRefs.current[rowIndex] = el)
-                                }
-                                className="bg-white border border-gray-300 w-full text-xs"
-                                value={row.dispatch_sub_box}
-                                onChange={(e) =>
-                                  handlePaymentChange(
-                                    e,
-                                    rowIndex,
-                                    "dispatch_sub_box"
-                                  )
-                                }
-                                placeholder="Qty"
-                                type="number"
-                              />
-                              {row.item_brand && (
-                                <div className="text-xs text-gray-600">
-                                  <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
-                                    {row.item_brand}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
+                          {singlebranch == "Yes" && (
+                            <TableCell className="px-4 py-3 min-w-[150px] align-top">
+                              <div className="space-y-1">
+                                <Input
+                                  ref={(el) =>
+                                    (boxInputRefs.current[rowIndex] = el)
+                                  }
+                                  className="bg-white border border-gray-300 w-full text-xs"
+                                  value={row.dispatch_sub_box}
+                                  onChange={(e) =>
+                                    handlePaymentChange(
+                                      e,
+                                      rowIndex,
+                                      "dispatch_sub_box"
+                                    )
+                                  }
+                                  placeholder="Qty"
+                                />
+                                {!editId && row.item_brand && (
+                                  <div className="text-xs text-gray-600">
+                                    <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
+                                      {row.item_brand}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
+
+                          {doublebranch == "Yes" && (
+                            <TableCell className="px-4 py-3 min-w-[150px] align-top">
+                              <div className="space-y-1">
+                                <Input
+                                  className="bg-white border border-gray-300 w-full text-xs"
+                                  value={row.dispatch_sub_piece}
+                                  onChange={(e) =>
+                                    handlePaymentChange(
+                                      e,
+                                      rowIndex,
+                                      "dispatch_sub_piece"
+                                    )
+                                  }
+                                  placeholder="Piece"
+                                />
+                              </div>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -805,7 +847,7 @@ const CreateDispatch = () => {
                         <label
                           className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
                         >
-                          Ref No<span className="text-red-500">*</span>
+                          Ref No <span className="text-red-500">*</span>
                         </label>
 
                         <MemoizedSelect
@@ -863,7 +905,9 @@ const CreateDispatch = () => {
                       />
                     </div>
                   </div>
-                  <div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-1">
                     <div>
                       <label
                         className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
@@ -880,9 +924,7 @@ const CreateDispatch = () => {
                       />
                     </div>
                   </div>
-                </div>
-                <div>
-                  <div>
+                  <div className="md:col-span-3">
                     <label
                       className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
                     >
@@ -922,11 +964,16 @@ const CreateDispatch = () => {
                           <span className="text-red-500 ml-1 text-xs">*</span>
                         </TableHead>
 
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
-                          Box
-                          <span className="text-red-500 ml-1 text-xs">*</span>
-                        </TableHead>
-
+                        {singlebranch == "Yes" && (
+                          <TableHead className="text-sm font-semibold text-gray-700 py-3 px-4">
+                            Box<span className="text-red-500 ml-1">*</span>
+                          </TableHead>
+                        )}
+                        {doublebranch == "Yes" && (
+                          <TableHead className="text-sm font-semibold text-gray-700 py-3 px-4">
+                            Piece<span className="text-red-500 ml-1">*</span>
+                          </TableHead>
+                        )}
                         <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
                           <div className="flex justify-center items-center gap-2">
                             Action
@@ -965,7 +1012,7 @@ const CreateDispatch = () => {
                                 }
                                 placeholder="Select Item"
                               />
-                              {row.item_size && (
+                              {!editId && row.item_size && (
                                 <div className="text-xs text-gray-700">
                                   • {row.item_size}
                                 </div>
@@ -993,7 +1040,7 @@ const CreateDispatch = () => {
                                 }
                                 placeholder="Select Godown"
                               />
-                              {row.item_brand && (
+                              {!editId && row.item_brand && (
                                 <div className="text-xs text-gray-700">
                                   • {row.item_brand}
                                 </div>
@@ -1001,41 +1048,61 @@ const CreateDispatch = () => {
                             </div>
                           </TableCell>
 
-                          {/* Box Column */}
-                          <TableCell className="px-4 py-3 align-top min-w-28">
-                            <div className="flex flex-col gap-1">
-                              <Input
-                                className="bg-white border border-gray-300 text-sm"
-                                value={row.dispatch_sub_box}
-                                onChange={(e) =>
-                                  handlePaymentChange(
-                                    e,
-                                    rowIndex,
-                                    "dispatch_sub_box"
-                                  )
-                                }
-                                placeholder="Enter Box"
-                                type="number"
-                              />
-                              {row.dispatch_sub_box && (
-                                <div className="text-xs text-gray-700">
-                                  • Available Box: {row.avaiable_box}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
+                          {singlebranch == "Yes" && (
+                            <TableCell className="px-4 py-3 align-top min-w-28">
+                              <div className="flex flex-col gap-1">
+                                <Input
+                                  className="bg-white border border-gray-300 text-sm"
+                                  value={row.dispatch_sub_box}
+                                  onChange={(e) =>
+                                    handlePaymentChange(
+                                      e,
+                                      rowIndex,
+                                      "dispatch_sub_box"
+                                    )
+                                  }
+                                  placeholder="Enter Box"
+                                />
 
+                                {!editId && row.dispatch_sub_box && (
+                                  <div className="text-xs text-gray-700">
+                                    • Available Box: {row.avaiable_box}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
+
+                          {doublebranch == "Yes" && (
+                            <TableCell className="px-4 py-3 align-top min-w-28">
+                              <div className="flex flex-col gap-1">
+                                <Input
+                                  className="bg-white border border-gray-300 text-sm"
+                                  value={row.dispatch_sub_piece}
+                                  onChange={(e) =>
+                                    handlePaymentChange(
+                                      e,
+                                      rowIndex,
+                                      "dispatch_sub_piece"
+                                    )
+                                  }
+                                  placeholder="Enter Piece"
+                                />
+                              </div>
+                            </TableCell>
+                          )}
                           {/* Delete Button */}
                           <TableCell className="p-2 align-middle">
                             {row.id ? (
                               userType == 2 && (
-                                <button
-                                  type="button"
+                                <Button
+                                  variant="ghost"
                                   onClick={() => handleDeleteRow(row.id)}
-                                  className={`rounded-full  bg-red-200 text-red-500 items-center`}
+                                  className="text-red-500"
+                                  type="button"
                                 >
                                   <Trash2 className="h-4 w-4" />
-                                </button>
+                                </Button>
                               )
                             ) : (
                               <Button

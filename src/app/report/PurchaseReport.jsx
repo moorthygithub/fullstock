@@ -16,6 +16,7 @@ import { useMemo, useRef, useState } from "react";
 import { RiFileExcel2Line } from "react-icons/ri";
 import { useReactToPrint } from "react-to-print";
 import Page from "../dashboard/page";
+import usetoken from "@/api/usetoken";
 const PurchaseReport = () => {
   const containerRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ const PurchaseReport = () => {
     purchase_buyer: "",
   });
   const { toast } = useToast();
+  const token = usetoken()
 
   const handleInputChange = (field, e) => {
     const value = e.target ? e.target.value : e;
@@ -37,7 +39,6 @@ const PurchaseReport = () => {
   };
 
   const PurchaseStock = async () => {
-    const token = localStorage.getItem("token");
     const response = await axios.post(
       `${PURCHASE_REPORT}`,
       { ...formData },

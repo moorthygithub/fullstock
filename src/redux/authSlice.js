@@ -9,6 +9,8 @@ const initialState = {
   token_expire_time: null,
   version: null,
   whatsapp_number: null,
+  branch_d_unit: null,
+  branch_s_unit: null,
 };
 
 const authSlice = createSlice({
@@ -24,6 +26,8 @@ const authSlice = createSlice({
       state.token_expire_time = action.payload.token_expire_time;
       state.version = action.payload.version;
       state.whatsapp_number = action.payload.whatsapp_number;
+      state.branch_d_unit = action.payload.branch_d_unit;
+      state.branch_s_unit = action.payload.branch_s_unit;
     },
     logout: () => {
       return initialState;

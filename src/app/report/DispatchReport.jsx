@@ -1,4 +1,4 @@
-import { SALES_REPORT } from "@/api";
+import { DISPATCH_REPORT } from "@/api";
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
 import Loader from "@/components/loader/Loader";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { useRef, useState } from "react";
 import { RiFileExcel2Line } from "react-icons/ri";
 import { useReactToPrint } from "react-to-print";
 import Page from "../dashboard/page";
+import apiClient from "@/api/axios";
+import usetoken from "@/api/usetoken";
 const DispatchReport = () => {
   const containerRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -24,6 +26,7 @@ const DispatchReport = () => {
     sale_buyer: "",
   });
   const { toast } = useToast();
+  const token = usetoken();
 
   const handleInputChange = (field, e) => {
     const value = e.target ? e.target.value : e;
@@ -37,9 +40,8 @@ const DispatchReport = () => {
   };
 
   const DispatchStock = async () => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${SALES_REPORT}`,
+    const response = await apiClient.post(
+      `${DISPATCH_REPORT}`,
       { ...formData },
       {
         headers: {
@@ -56,7 +58,7 @@ const DispatchReport = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["salesdata", formData],
+    queryKey: ["dispatchreportdata", formData],
     queryFn: DispatchStock,
     enabled: false,
   });
@@ -87,7 +89,7 @@ const DispatchReport = () => {
     `,
   });
   const downloadExcel = async () => {
-    if (reportData?.sales?.length == 0) {
+    if (reportData?.dispatch?.length == 0) {
       toast({
         title: "No Data",
         description: "No data available to export",
@@ -121,14 +123,14 @@ const DispatchReport = () => {
     });
 
     // Add transactions
-    reportData?.sales?.forEach((transaction) => {
+    reportData?.dispatch?.forEach((transaction) => {
       worksheet.addRow([
-        transaction.sales_ref_no,
-        moment(transaction.sales_date).format("DD MMM YYYY"),
-        transaction.sales_buyer_name,
-        transaction.sales_vehicle_no,
+        transaction.dispatch_ref_no,
+        moment(transaction.dispatch_date).format("DD MMM YYYY"),
+        transaction.buyer_name,
+        transaction.dispatch_vehicle_no,
 
-        transaction.sum_sales_sub_box,
+        transaction.sum_dispatch_sub_box,
       ]);
     });
 
@@ -174,7 +176,7 @@ const DispatchReport = () => {
       );
     }
 
-    if (reportData?.sales?.length > 0) {
+    if (reportData?.dispatch?.length > 0) {
       return (
         <div ref={containerRef} className="mt-4">
           <div className="bg-white rounded-lg shadow-sm p-0 md:p-4">
@@ -212,23 +214,25 @@ const DispatchReport = () => {
                 </thead>
                 <tbody>
                   {/* Transactions */}
-                  {reportData?.sales?.map((transaction, index) => (
+                  {reportData?.dispatch?.map((transaction, index) => (
                     <tr key={index}>
                       <td className="border border-gray-300 px-2 py-1 text-center border-l border-r">
-                        {transaction?.sales_ref_no}
+                        {transaction?.dispatch_ref_no}
                       </td>
                       <td className="border border-gray-300 px-2 py-1 font-medium">
-                        {moment(transaction?.sales_date).format("DD MMM YYYY")}
+                        {moment(transaction?.dispatch_date).format(
+                          "DD MMM YYYY"
+                        )}
                       </td>
                       <td className="border border-gray-300 px-2 py-1">
                         {transaction?.buyer_name}
                       </td>
 
                       <td className="border border-gray-300 px-2 py-1 text-right">
-                        {transaction?.sales_vehicle_no}
+                        {transaction?.dispatch_vehicle_no}
                       </td>
                       <td className="border border-gray-300 px-2 py-1 text-right font-medium">
-                        {transaction?.sum_sales_sub_box}
+                        {transaction?.sum_dispatch_sub_box}
                       </td>
                     </tr>
                   ))}
@@ -242,7 +246,7 @@ const DispatchReport = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-gray-500">
         <Search className="h-12 w-12 mb-2 opacity-30" />
-        <p className="text-md">Search for an item to view sales details</p>
+        <p className="text-md">Search for an item to view dispatch details</p>
       </div>
     );
   };

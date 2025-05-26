@@ -25,13 +25,23 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, Edit, Search, SquarePlus } from "lucide-react";
+import { ChevronDown, Edit, Search, SquarePlus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   fetchPurchaseById,
   navigateToPurchaseEdit,
+  PURCHASE_EDIT_LIST,
   PURCHASE_LIST,
 } from "@/api";
 import apiClient from "@/api/axios";
@@ -48,6 +58,8 @@ import {
 import { ButtonConfig } from "@/config/ButtonConfig";
 import moment from "moment";
 import { RiWhatsappFill } from "react-icons/ri";
+import { useToast } from "@/hooks/use-toast";
+import { useSelector } from "react-redux";
 
 const PurchaseList = () => {
   const token = usetoken();
@@ -68,22 +80,74 @@ const PurchaseList = () => {
   });
 
   // State for table management
-
+  const { toast } = useToast();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState(null);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const UserId = localStorage.getItem("userType");
+  const UserId = useSelector((state) => state.auth.user_type);
   const queryClient = useQueryClient();
-  const whatsapp = localStorage.getItem("whatsapp-number");
+  const whatsapp = useSelector((state) => state.auth.whatsapp_number);
   const navigate = useNavigate();
+  const handleDeleteRow = (productId) => {
+    setDeleteItemId(productId);
+    setDeleteConfirmOpen(true);
+  };
+  const confirmDelete = async () => {
+    try {
+      const response = await apiClient.delete(
+        `${PURCHASE_EDIT_LIST}/${deleteItemId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
+      const data = response.data;
+      console.log(data, "data");
+      if (data.code == 200) {
+        toast({
+          title: "Success",
+          description: data.msg,
+        });
+        refetch();
+      } else if (data.code == 400) {
+        toast({
+          title: "Duplicate Entry",
+          description: data.msg,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.msg || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Unexpected Error",
+        description:
+          error?.response?.data?.msg ||
+          error.message ||
+          "Something unexpected happened.",
+        variant: "destructive",
+      });
+      console.error("Failed to delete product:", error);
+    } finally {
+      setDeleteConfirmOpen(false);
+      setDeleteItemId(null);
+    }
+  };
   const handleFetchPurchaseById = async (purchaseId) => {
     try {
       const data = await queryClient.fetchQuery({
         queryKey: ["purchaseByid", purchaseId],
-        queryFn: () => fetchPurchaseById(purchaseId),
+        queryFn: () => fetchPurchaseById(purchaseId, token),
       });
 
       if (data?.purchase && data?.purchaseSub) {
@@ -220,7 +284,25 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                 </Tooltip>
               </TooltipProvider>
             )}
-
+            {UserId != 1 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleDeleteRow(purchaseId)}
+                      className="text-red-500"
+                      type="button"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete Purchase</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -541,7 +623,6 @@ ${itemLines.map((line) => "  " + line).join("\n")}
               />
             </div>
 
-            {/* Dropdown Menu & Sales Button */}
             <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -663,6 +744,26 @@ ${itemLines.map((line) => "  " + line).join("\n")}
           </div>
         </div>
       </div>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              purchase.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className={`${ButtonConfig.backgroundColor}  ${ButtonConfig.textColor} text-black hover:bg-red-600`}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Page>
   );
 };

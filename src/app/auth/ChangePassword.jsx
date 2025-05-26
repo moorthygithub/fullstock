@@ -1,3 +1,4 @@
+import usetoken from "@/api/usetoken";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,10 +15,12 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 const ChangePassword = ({ open, setOpen }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState();
-  const username = localStorage.getItem("name");
+  const username = useSelector((state) => state.auth.name);
+  const token = usetoken();
   const [formData, setFormData] = useState({
     name: username,
     currentPassword: "",
@@ -58,7 +61,6 @@ const ChangePassword = ({ open, setOpen }) => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
       const response = await axios.post(
         `${BASE_URL}/api/change-password`,
         formData,

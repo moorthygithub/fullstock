@@ -21,7 +21,7 @@ import { ChevronDown } from "lucide-react";
 import Loader from "@/components/loader/Loader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const SalesBarChart = ({
+const DispatchBarChart = ({
   dispatch,
   isLoadingdashboord,
   isErrordashboord,
@@ -149,4 +149,4 @@ const SalesBarChart = ({
   );
 };
 
-export default SalesBarChart;
+export default DispatchBarChart;

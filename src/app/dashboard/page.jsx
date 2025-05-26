@@ -36,7 +36,6 @@ export default function Page({ children }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  // Get user data from localStorage
 
   const nameL = useSelector((state) => state?.auth.name);
   const emailL = useSelector((state) => state?.auth.email);
@@ -162,7 +161,7 @@ export default function Page({ children }) {
                       </span>
                     </span>
                     <span className="flex items-center gap-1 font-semibold">
-                      Updated on :21/05/2025
+                      Updated on :26/05/2025
                     </span>
                   </div>
                 </div>

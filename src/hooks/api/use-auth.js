@@ -10,8 +10,6 @@ const useAuth = () => {
   const email = useSelector((state) => state.auth.email);
   const id = useSelector((state) => state.auth.id);
   useEffect(() => {
-    // const token = localStorage.getItem("token");
-
     const userData = {
       id: id,
       name: name,

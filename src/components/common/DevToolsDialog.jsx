@@ -1,14 +1,15 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react"; 
+import { AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ButtonConfig } from "@/config/ButtonConfig";
 
 const DevToolsDialog = ({ open }) => {
   const navigate = useNavigate();
 
   const handleHomeRedirect = () => {
     navigate("/");
-    window.location.reload(); 
+    window.location.reload();
   };
 
   return (
@@ -36,8 +37,9 @@ const DevToolsDialog = ({ open }) => {
           </p>
 
           <Button
+            type="button"
             onClick={handleHomeRedirect}
-            className="mt-4 w-full sm:w-auto"
+            className={`mt-4 w-full sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} cursor-pointer`}
           >
             Go to Home
           </Button>

@@ -1,14 +1,26 @@
 import {
-  fetchPurchaseById,
-  PURCHASE_CREATE,
-  PURCHASE_EDIT_LIST,
-  PURCHASE_SUB_DELETE,
+  fetchPurchaseReturnById,
+  PURCHASE_RETURN_CREATE,
+  PURCHASE_RETURN_EDIT_LIST,
+  PURCHASE_RETURN_SUB_DELETE,
 } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import Page from "@/app/dashboard/page";
+import { decryptId } from "@/components/common/Encryption";
 import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
+import Loader from "@/components/loader/Loader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,8 +39,9 @@ import {
   useFetchBuyers,
   useFetchGoDown,
   useFetchItems,
-  useFetchPurchaseRef,
+  useFetchPurchaseReturnRef,
 } from "@/hooks/useApi";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Loader2,
@@ -39,24 +52,11 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import BuyerForm from "../master/buyer/CreateBuyer";
 import CreateItem from "../master/item/CreateItem";
-import { useQuery } from "@tanstack/react-query";
-import { decryptId } from "@/components/common/Encryption";
-import Loader from "@/components/loader/Loader";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useSelector } from "react-redux";
-const CreatePurchase = () => {
+const CreatePurchaseReturn = () => {
   const { id } = useParams();
   const decryptedId = decryptId(id);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -126,7 +126,7 @@ const CreatePurchase = () => {
     refetch,
   } = useQuery({
     queryKey: ["purchaseByid", id],
-    queryFn: () => fetchPurchaseById(id, token),
+    queryFn: () => fetchPurchaseReturnById(id, token),
     enabled: !!id,
   });
   useEffect(() => {
@@ -160,8 +160,8 @@ const CreatePurchase = () => {
             {
               purchase_sub_item_id: "",
               purchase_sub_box: "",
-              purchase_sub_piece: "",
               item_brand: "",
+              purchase_sub_piece: "",
               item_size: "",
               purchase_sub_item: "",
               purchase_sub_weight: "",
@@ -177,7 +177,8 @@ const CreatePurchase = () => {
   const { data: buyerData, isLoading: loadingbuyer } = useFetchBuyers();
   const { data: itemsData, isLoading: loadingitem } = useFetchItems();
   const { data: godownData, isLoading: loadinggodown } = useFetchGoDown();
-  const { data: purchaseRef, isLoading: loadingref } = useFetchPurchaseRef();
+  const { data: purchaseRef, isLoading: loadingref } =
+    useFetchPurchaseReturnRef();
 
   const handlePaymentChange = (selectedValue, rowIndex, fieldName) => {
     let value;
@@ -241,6 +242,7 @@ const CreatePurchase = () => {
         missingFields.push(`Row ${index + 1}: Go Down`);
       if (!row.purchase_sub_item_id)
         missingFields.push(`Row ${index + 1}: Item`);
+
       if (singlebranch == "Yes") {
         if (
           row.purchase_sub_box === null ||
@@ -292,8 +294,8 @@ const CreatePurchase = () => {
       }
 
       const url = editId
-        ? `${PURCHASE_EDIT_LIST}/${decryptedId}`
-        : PURCHASE_CREATE;
+        ? `${PURCHASE_RETURN_EDIT_LIST}/${decryptedId}`
+        : PURCHASE_RETURN_CREATE;
       const method = editId ? "put" : "post";
 
       const response = await apiClient[method](url, payload, {
@@ -306,7 +308,7 @@ const CreatePurchase = () => {
           title: "Success",
           description: response.data.msg,
         });
-        navigate("/purchase");
+        navigate("/purchase-return");
       } else {
         toast({
           title: "Error",
@@ -332,7 +334,7 @@ const CreatePurchase = () => {
   const handleDelete = async () => {
     try {
       const response = await apiClient.delete(
-        `${PURCHASE_SUB_DELETE}/${deleteItemId}`,
+        `${PURCHASE_RETURN_SUB_DELETE}/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -404,19 +406,21 @@ const CreatePurchase = () => {
               <div className="flex items-center px-4 py-5 relative z-10">
                 <button
                   type="button"
-                  onClick={() => navigate("/purchase")}
+                  onClick={() => navigate("/purchase-return")}
                   className="p-1.5 bg-white/20 rounded-full text-white mr-3 shadow-sm hover:bg-white/30 transition-colors"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div className="flex flex-col">
                   <h1 className="text-lg font-bold tracking-wide">
-                    {editId ? "Update Purchase" : "Create  Purchase"}
+                    {editId
+                      ? "Update Purchase Return"
+                      : "Create  Purchase Return"}
                   </h1>
                   <p className="text-xs text-yellow-100 mt-0.5 opacity-90">
                     {editId
-                      ? "Update new purchase details"
-                      : "Add new purchase details"}
+                      ? "Update new purchase return details"
+                      : "Add new purchase return details"}
                   </p>
                 </div>
               </div>
@@ -682,6 +686,7 @@ const CreatePurchase = () => {
                                     )
                                   }
                                   placeholder="Qty"
+                                  type="number"
                                 />
                                 {!editId && row.item_brand && (
                                   <div className="text-xs text-gray-600">
@@ -693,6 +698,7 @@ const CreatePurchase = () => {
                               </div>
                             </TableCell>
                           )}
+
                           {doublebranch == "Yes" && (
                             <TableCell className="px-4 py-3 min-w-[150px] align-top">
                               <div className="space-y-1">
@@ -720,7 +726,7 @@ const CreatePurchase = () => {
                 {/* Item count  */}
                 <div className="mt-2 text-xs text-gray-500 flex items-center">
                   <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                  Total Items: {invoiceData.length}
+                  Total purchase return: {invoiceData.length}
                   {invoiceData.some((row) => row.purchase_sub_box) && (
                     <div className="flex items-center text-sm text-gray-700">
                       <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
@@ -745,9 +751,9 @@ const CreatePurchase = () => {
                       {editId ? "Updating..." : "Creating..."}
                     </>
                   ) : editId ? (
-                    "Update Purchase"
+                    "Update Purchase Return"
                   ) : (
-                    "Create Purchase"
+                    "Create Purchase Return"
                   )}
                 </Button>
               </div>
@@ -762,7 +768,9 @@ const CreatePurchase = () => {
             >
               <div className="flex-1">
                 <h1 className="text-lg font-bold text-gray-800">
-                  {editId ? "Update Purchase" : "Create New Purchase"}
+                  {editId
+                    ? "Update Purchase Return"
+                    : "Create New Purchase Return"}
                 </h1>
               </div>
             </div>{" "}
@@ -924,6 +932,7 @@ const CreatePurchase = () => {
                           Godown
                           <span className="text-red-500 ml-1 text-xs">*</span>
                         </TableHead>
+
                         {singlebranch == "Yes" && (
                           <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
                             Box
@@ -936,6 +945,7 @@ const CreatePurchase = () => {
                             <span className="text-red-500 ml-1 text-xs">*</span>
                           </TableHead>
                         )}
+
                         <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
                           <div className="flex justify-center items-center gap-2">
                             Action
@@ -1009,6 +1019,7 @@ const CreatePurchase = () => {
                               )}
                             </div>
                           </TableCell>
+
                           {singlebranch == "Yes" && (
                             <TableCell className="px-4 py-3 align-top min-w-28">
                               <div className="flex flex-col gap-1">
@@ -1050,6 +1061,7 @@ const CreatePurchase = () => {
                               </div>
                             </TableCell>
                           )}
+
                           {/* Delete Button */}
                           <TableCell className="p-2 align-middle">
                             {row.id ? (
@@ -1094,16 +1106,16 @@ const CreatePurchase = () => {
                     {editId ? "Updating..." : "Creating..."}
                   </>
                 ) : editId ? (
-                  "Update Purchase"
+                  "Update Purchase Return"
                 ) : (
-                  "Create Purchase"
+                  "Create Purchase Return"
                 )}{" "}
               </Button>
 
               <Button
                 type="button"
                 onClick={() => {
-                  navigate("/purchase");
+                  navigate("/purchase-return");
                 }}
                 className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center mt-2`}
               >
@@ -1119,7 +1131,7 @@ const CreatePurchase = () => {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              purchase.
+              purchase return.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1137,4 +1149,4 @@ const CreatePurchase = () => {
   );
 };
 
-export default CreatePurchase;
+export default CreatePurchaseReturn;

@@ -31,11 +31,19 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, Edit, Search, SquarePlus, View } from "lucide-react";
+import {
+  ChevronDown,
+  Edit,
+  Search,
+  SquarePlus,
+  Trash2,
+  View,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  DISPATCH_EDIT_LIST,
   DISPATCH_LIST,
   fetchDispatchById,
   navigateTODispatchEdit,
@@ -50,11 +58,21 @@ import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import moment from "moment";
 import { RiWhatsappFill } from "react-icons/ri";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useSelector } from "react-redux";
 const DispatchList = () => {
   const token = usetoken();
   const {
-    data: sales,
+    data: dispatch,
     isLoading,
     isError,
     refetch,
@@ -75,23 +93,75 @@ const DispatchList = () => {
   const [rowSelection, setRowSelection] = useState({});
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const UserId = localStorage.getItem("userType");
-  const { toast } = useToast();
-  const whatsapp = localStorage.getItem("whatsapp-number");
+  const UserId = useSelector((state) => state.auth.user_type);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState(null);
+  const whatsapp = useSelector((state) => state.auth.whatsapp_number);
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(
     moment().format("YYYY-MM-DD")
   );
+  const { toast } = useToast();
+  const handleDeleteRow = (productId) => {
+    setDeleteItemId(productId);
+    setDeleteConfirmOpen(true);
+  };
+  const confirmDelete = async () => {
+    try {
+      const response = await apiClient.delete(
+        `${DISPATCH_EDIT_LIST}/${deleteItemId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  const handleFetchSalesById = async (salesId) => {
+      const data = response.data;
+
+      if (data.code == 200) {
+        toast({
+          title: "Success",
+          description: data.msg,
+        });
+        refetch();
+      } else if (data.code == 400) {
+        toast({
+          title: "Duplicate Entry",
+          description: data.msg,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.msg || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Unexpected Error",
+        description:
+          error?.response?.data?.msg ||
+          error.message ||
+          "Something unexpected happened.",
+        variant: "destructive",
+      });
+      console.error("Failed to delete product:", error);
+    } finally {
+      setDeleteConfirmOpen(false);
+      setDeleteItemId(null);
+    }
+  };
+  const handleFetchDispatchById = async (dispatchId) => {
     try {
       const data = await queryClient.fetchQuery({
-        queryKey: ["salesByid", salesId],
-        queryFn: () => fetchDispatchById(salesId),
+        queryKey: ["dispatchByid", dispatchId],
+        queryFn: () => fetchDispatchById(dispatchId, token),
       });
 
-      if (data?.sales && data?.salesSub) {
-        handleSendWhatsApp(data.sales, data.salesSub, data.buyer);
+      if (data?.dispatch && data?.dispatchSub) {
+        handleSendWhatsApp(data.dispatch, data.dispatchSub, data.buyer);
       } else {
         console.error("Incomplete data received");
       }
@@ -99,30 +169,30 @@ const DispatchList = () => {
       console.error("Failed to fetch dispatch data or send WhatsApp:", error);
     }
   };
-  const handleSendWhatsApp = (sales, salesSub, buyer) => {
-    const { sales_ref_no, sales_date, sales_vehicle_no } = sales;
+  const handleSendWhatsApp = (dispatch, dispatchSub, buyer) => {
+    const { dispatch_ref, dispatch_date, dispatch_vehicle_no } = dispatch;
     const { buyer_name, buyer_city } = buyer;
-    const salesNo = sales_ref_no?.split("-").pop();
-    const itemLines = salesSub.map((item) => {
+    const salesNo = dispatch_ref?.split("-").pop();
+    const itemLines = dispatchSub.map((item) => {
       const name = item.item_name.padEnd(25, " ");
-      const box = `(${String(item.sales_sub_box).replace(/\D/g, "")})`.padStart(
-        4,
-        " "
-      );
+      const box = `(${String(item.dispatch_sub_box).replace(
+        /\D/g,
+        ""
+      )})`.padStart(4, " ");
       return `${name}   ${box}`;
     });
 
-    const totalQty = salesSub.reduce((sum, item) => {
-      const qty = parseInt(item.sales_sub_box, 10) || 0;
+    const totalQty = dispatchSub.reduce((sum, item) => {
+      const qty = parseInt(item.dispatch_sub_box, 10) || 0;
       return sum + qty;
     }, 0);
 
     const message = `=== DispatchList ===
   No.        : ${salesNo}
-  Date       : ${moment(sales_date).format("DD-MM-YYYY")}
+  Date       : ${moment(dispatch_date).format("DD-MM-YYYY")}
   Party      : ${buyer_name}
   City       : ${buyer_city}
-  VEHICLE NO : ${sales_vehicle_no}
+  VEHICLE NO : ${dispatch_vehicle_no}
   ======================
   Product    [SIZE]   (QTY)
   ======================
@@ -204,7 +274,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
-        const salesId = row.original.id;
+        const DispatchId = row.original.id;
 
         return (
           <div className="flex flex-row space-x-2">
@@ -216,7 +286,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        navigateTODispatchEdit(navigate, salesId);
+                        navigateTODispatchEdit(navigate, DispatchId);
                       }}
                     >
                       <Edit />
@@ -236,7 +306,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      navigateTODispatchView(navigate, salesId);
+                      navigateTODispatchView(navigate, DispatchId);
                     }}
                   >
                     <View />
@@ -247,13 +317,33 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-
+            {UserId != 1 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleDeleteRow(DispatchId)}
+                      className="text-red-500"
+                      type="button"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete Purchase</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    onClick={() => handleFetchSalesById(encryptId(salesId))}
+                    onClick={() =>
+                      handleFetchDispatchById(encryptId(DispatchId))
+                    }
                     className="text-green-500"
                     type="button"
                   >
@@ -272,9 +362,9 @@ ${itemLines.map((line) => "  " + line).join("\n")}
   ];
 
   const filteredItem = useMemo(() => {
-    if (!sales) return [];
+    if (!dispatch) return [];
 
-    return sales.filter((item) => {
+    return dispatch.filter((item) => {
       const itemDate = moment(item.sales_date).format("YYYY-MM-DD");
       const matchesDate = !selectedDate || itemDate === selectedDate;
       const matchesSearch = item.buyer_name
@@ -283,7 +373,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
 
       return matchesDate && matchesSearch;
     });
-  }, [sales, selectedDate, searchQuery]);
+  }, [dispatch, selectedDate, searchQuery]);
 
   const table = useReactTable({
     data: filteredItem || [],
@@ -434,7 +524,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
                           variant="ghost"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleFetchSalesById(encryptId(item.id));
+                            handleFetchDispatchById(encryptId(item.id));
                           }}
                           className="text-green-500"
                           type="button"
@@ -680,6 +770,26 @@ ${itemLines.map((line) => "  " + line).join("\n")}
           </div>
         </div>
       </div>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              dispatch.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className={`${ButtonConfig.backgroundColor}  ${ButtonConfig.textColor} text-black hover:bg-red-600`}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Page>
   );
 };

@@ -14,6 +14,8 @@ import moment from "moment";
 import { Input } from "@/components/ui/input";
 import { STOCK_REPORT } from "@/api";
 import Loader from "@/components/loader/Loader";
+import apiClient from "@/api/axios";
+import usetoken from "@/api/usetoken";
 
 const Stock = () => {
   const containerRef = useRef();
@@ -21,11 +23,10 @@ const Stock = () => {
     from_date: moment().startOf("month").format("YYYY-MM-DD"),
     to_date: moment().format("YYYY-MM-DD"),
   });
-  const { toast } = useToast();
+  const token = usetoken();
 
   const fetchBuyerData = async () => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
+    const response = await apiClient.post(
       `${STOCK_REPORT}`,
       { ...formData },
       {
@@ -172,10 +173,10 @@ const Stock = () => {
   return (
     <Page>
       <div className="p-0 md:p-4">
-
-
         <div className="sm:hidden">
-          <div className={`sm:sticky relative top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-3 mb-2`}>
+          <div
+            className={`sm:sticky relative top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-3 mb-2`}
+          >
             <div className="flex flex-col md:flex-row md:items-center gap-2 sm:gap-4">
               {/* Title Section */}
               <div className="flex-1 text-center md:text-left">
@@ -187,7 +188,9 @@ const Stock = () => {
               {/* Date Inputs */}
               <div className="flex  flex-row items-center gap-2 w-full md:w-auto">
                 <div className="w-full sm:w-auto">
-                  <label className={`block ${ButtonConfig.cardLabel} text-xs mb-1 font-medium`}>
+                  <label
+                    className={`block ${ButtonConfig.cardLabel} text-xs mb-1 font-medium`}
+                  >
                     From Date <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -200,7 +203,9 @@ const Stock = () => {
                 </div>
 
                 <div className="w-full sm:w-auto">
-                  <label className={`block ${ButtonConfig.cardLabel} text-xs mb-1 font-medium`}>
+                  <label
+                    className={`block ${ButtonConfig.cardLabel} text-xs mb-1 font-medium`}
+                  >
                     To Date <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -219,18 +224,16 @@ const Stock = () => {
                   className={` sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-bl-2xl `}
                   onClick={handlePrintPdf}
                 >
-                  <Printer className="h-3 w-3 " /> 
+                  <Printer className="h-3 w-3 " />
                 </button>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div className="hidden sm:block">
           <BranchHeader />
-
         </div>
-
 
         <div
           className="overflow-x-auto text-[11px] grid grid-cols-1"
@@ -307,7 +310,6 @@ const Stock = () => {
             )}
           </table>
         </div>
-
       </div>
     </Page>
   );
