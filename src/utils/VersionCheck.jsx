@@ -52,35 +52,6 @@ const VersionCheck = () => {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    const checkVersion = async () => {
-      try {
-        const statusRes = await apiClient.get(`${PANEL_CHECK}`);
-        const serverVer = statusRes?.data?.version?.version_panel;
-        if (token && statusRes.data?.msg == "success") {
-          dispatch(
-            setShowUpdateDialog({
-              showUpdateDialog: false,
-              version: serverVer,
-            })
-          );
-
-          if (localVersion !== serverVer) {
-            dispatch(
-              setShowUpdateDialog({
-                showUpdateDialog: true,
-                version: serverVer,
-              })
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Panel status check failed:", error);
-      }
-    };
-
-    checkVersion();
-  }, [navigate]);
 
   useEffect(() => {
     if (retryPopup) {

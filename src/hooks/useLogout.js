@@ -15,7 +15,6 @@ const useLogout = () => {
       localStorage.clear();
       dispatch(logout());
       navigate("/");
-
       setTimeout(() => persistor.purge(), 1000);
     } catch (error) {
       console.error("Logout failed:", error);
