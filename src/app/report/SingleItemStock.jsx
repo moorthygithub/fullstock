@@ -108,7 +108,6 @@ const SingleItemStock = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Single Item Stock");
 
-    // Add title and metadata
     const stock = reportData.stock[0];
     worksheet.addRow([`Stock Report - ${stock.item_name}`]);
     worksheet.addRow([
@@ -118,7 +117,6 @@ const SingleItemStock = () => {
     ]);
     worksheet.addRow([]);
 
-    // Add headers
     const headers = ["Date", "Reference", "Inward", "Outward", "Balance"];
     const headerRow = worksheet.addRow(headers);
     headerRow.eachCell((cell) => {
@@ -131,7 +129,6 @@ const SingleItemStock = () => {
       cell.alignment = { horizontal: "center" };
     });
 
-    // Add opening stock row
     worksheet.addRow([
       moment(formData.from_date).format("DD MMM YYYY"),
       "Opening Stock",
@@ -140,7 +137,6 @@ const SingleItemStock = () => {
       openingStock,
     ]);
 
-    // Add transactions
     transactions.forEach((transaction) => {
       worksheet.addRow([
         moment(transaction.date).format("DD MMM YYYY"),
@@ -151,19 +147,17 @@ const SingleItemStock = () => {
       ]);
     });
 
-    // Add closing stock row
     const closingRow = worksheet.addRow([
       moment(formData.to_date).format("DD MMM YYYY"),
       "Closing Stock",
       "",
       "",
-      closingStock,
+      total,
     ]);
     closingRow.eachCell((cell) => {
       cell.font = { bold: true };
     });
 
-    // Generate and download Excel file
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -177,65 +171,122 @@ const SingleItemStock = () => {
     link.click();
     URL.revokeObjectURL(url);
   };
-  // Calculate opening and closing stock
-  const { openingStock, closingStock, transactions } = useMemo(() => {
-    if (!reportData)
-      return { openingStock: 0, closingStock: 0, transactions: [] };
 
-    const stock = reportData?.stock[0];
-    const openingStock =
-      parseInt(stock?.openpurch) - parseInt(stock?.closesale);
-
-    // Process transactions -- ui things
-    const purchaseTransactions = reportData.purchase.map((p) => {
-      const refParts = p?.purchase_ref.split("-");
-      const simpleRef = refParts[refParts.length - 1];
-      return {
-        date: p?.purchase_date,
-        ref: `P-${simpleRef}`,
-        boxes: parseInt(p.purchase_sub_box),
-        type: "purchase",
-        rawDate: new Date(p.purchase_date),
-      };
-    });
-
-    const saleTransactions = reportData.sale.map((s) => {
-      const refParts = s?.sales_ref.split("-");
-      const simpleRef = refParts[refParts.length - 1];
-      return {
-        date: s.sales_date,
-        ref: `S-${simpleRef}`,
-        boxes: parseInt(s?.sales_sub_box),
-        type: "sale",
-        rawDate: new Date(s?.sales_date),
-      };
-    });
-
-    // Combine and sort transactions by date
-    const allTransactions = [...purchaseTransactions, ...saleTransactions].sort(
-      (a, b) => a.rawDate - b.rawDate
-    );
-
-    // Calculate running balance
-    let runningBalance = openingStock;
-    const transactionsWithBalance = allTransactions.map((t) => {
-      if (t.type === "purchase") {
-        runningBalance += t.boxes;
-      } else {
-        runningBalance -= t.boxes;
+  const { openingStock, closingStock, transactions, itemDetails, total } =
+    useMemo(() => {
+      if (!reportData) {
+        return {
+          openingStock: 0,
+          closingStock: 0,
+          transactions: [],
+          itemDetails: null,
+        };
       }
-      return { ...t, balance: runningBalance };
-    });
+      const stock = reportData?.stock[0];
+      const itemPiece = Number(stock.item_piece) || 1;
+      const openingPurch =
+        Number(stock.openpurch) * itemPiece + Number(stock.openpurch_piece);
+      const openingSale =
+        Number(stock.closesale) * itemPiece + Number(stock.closesale_piece);
+      const openingPurchR =
+        Number(stock.openpurchR) * itemPiece + Number(stock.openpurchR_piece);
+      const openingSaleR =
+        Number(stock.closesaleR) * itemPiece + Number(stock.closesaleR_piece);
 
-    const closingStock = runningBalance;
+      const openingStock =
+        openingPurch - openingSale - openingPurchR + openingSaleR;
+      const purchase =
+        Number(stock.purch) * itemPiece + Number(stock.purch_piece);
+      const purchaseR =
+        Number(stock.purchR) * itemPiece + Number(stock.purchR_piece);
+      const sale = Number(stock.sale) * itemPiece + Number(stock.sale_piece);
+      const saleR = Number(stock.saleR) * itemPiece + Number(stock.saleR_piece);
 
-    return {
-      openingStock,
-      closingStock,
-      transactions: transactionsWithBalance,
-      itemDetails: stock,
-    };
-  }, [reportData]);
+      const total = openingStock + purchase - purchaseR - sale + saleR;
+
+      const purchaseTransactions =
+        reportData?.purchase?.map((p) => ({
+          date: p?.purchase_date,
+          ref: `P-${(p?.purchase_ref || "").split("-").pop() || ""}`,
+          boxes: parseInt(p?.purchase_sub_box || 0),
+          type: "purchase",
+          rawDate: new Date(p?.purchase_date),
+        })) || [];
+
+      const purchaseReturnTransactions =
+        reportData?.purchaseR?.map((p) => ({
+          date: p?.purchase_date,
+          ref: `PR-${(p?.purchase_ref || "").split("-").pop() || ""}`,
+          boxes: parseInt(p?.purchase_sub_box || 0),
+          type: "purchasereturn",
+          rawDate: new Date(p?.purchase_date),
+        })) || [];
+
+      const saleTransactions =
+        reportData?.sale?.map((s) => ({
+          date: s?.dispatch_date,
+          ref: `S-${(s?.dispatch_ref || "").split("-").pop() || ""}`,
+          boxes: parseInt(s?.dispatch_sub_box || 0),
+          type: "sale",
+          rawDate: new Date(s?.dispatch_date),
+        })) || [];
+
+      const saleReturnTransactions =
+        reportData?.saleR?.map((s) => ({
+          date: s?.dispatch_date,
+          ref: `SR-${(s?.dispatch_ref || "").split("-").pop() || ""}`,
+          boxes: parseInt(s?.dispatch_sub_box || 0),
+          type: "salereturn",
+          rawDate: new Date(s?.dispatch_date),
+        })) || [];
+
+      // Combine all transactions
+      const allTransactions = [
+        ...purchaseTransactions,
+        ...purchaseReturnTransactions,
+        ...saleTransactions,
+        ...saleReturnTransactions,
+      ].sort((a, b) => a.rawDate - b.rawDate);
+
+      // Filter dates from formData
+      const fromDate = new Date(formData.from_date);
+      const toDate = new Date(formData.to_date);
+
+      let runningBalance = openingStock;
+
+      allTransactions.forEach((t) => {
+        if (t.rawDate < fromDate) {
+          if (t.type === "purchase" || t.type === "salereturn") {
+            runningBalance += t.boxes;
+          } else if (t.type === "purchasereturn" || t.type === "sale") {
+            runningBalance -= t.boxes;
+          }
+        }
+      });
+
+      // Process transactions inside date range
+      const filteredTransactions = [];
+
+      allTransactions.forEach((t) => {
+        if (t.rawDate >= fromDate && t.rawDate <= toDate) {
+          if (t.type == "purchase" || t.type == "salereturn") {
+            runningBalance += t.boxes;
+          } else if (t.type == "purchasereturn" || t.type == "sale") {
+            runningBalance -= t.boxes;
+          }
+          filteredTransactions.push({ ...t, balance: runningBalance });
+        }
+      });
+
+      const closingStock = runningBalance;
+      return {
+        openingStock,
+        closingStock,
+        total,
+        transactions: filteredTransactions,
+        itemDetails: stock,
+      };
+    }, [reportData, formData.from_date, formData.to_date]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -287,7 +338,7 @@ const SingleItemStock = () => {
                     </th>
                     <th
                       className="border border-gray-300 px-2 py-2 text-center"
-                      colSpan="2"
+                      colSpan="4"
                     >
                       Transaction
                     </th>
@@ -301,8 +352,15 @@ const SingleItemStock = () => {
                     <th className="border border-gray-300 px-2 py-2 text-right border-l border-r">
                       Inward
                     </th>
+                    <th className="border border-gray-300 px-2 py-2">
+                      Inward Return
+                    </th>
                     <th className="border border-gray-300 px-2 py-2 text-right">
                       Outward
+                    </th>
+                    <th className="border border-gray-300 px-2 py-2">
+                      {" "}
+                      Outward Return
                     </th>
                     <th className="border border-gray-300 px-2 py-2"></th>
                   </tr>
@@ -316,7 +374,9 @@ const SingleItemStock = () => {
                     <td className="border border-gray-300 px-2 py-1">
                       Opening Stock
                     </td>
-                    <td className="border border-gray-300 px-2 py-1 text-right border-l border-r"></td>
+                    <td className="border border-gray-300 px-2 py-1 text-right"></td>
+                    <td className="border border-gray-300 px-2 py-1 text-right"></td>
+                    <td className="border border-gray-300 px-2 py-1 text-right"></td>
                     <td className="border border-gray-300 px-2 py-1 text-right"></td>
                     <td className="border border-gray-300 px-2 py-1 text-right font-medium">
                       {openingStock}
@@ -330,18 +390,29 @@ const SingleItemStock = () => {
                         {moment(transaction.date).format("DD MMM YYYY")}
                       </td>
                       <td className="border border-gray-300 px-2 py-1">
-                        {transaction?.ref}
+                        {transaction.ref}
                       </td>
-                      <td className="border border-gray-300 px-2 py-1 text-right border-l border-r">
+
+                      <td className="border border-gray-300 px-2 py-1 text-right">
                         {transaction.type === "purchase"
-                          ? transaction?.boxes
+                          ? transaction.boxes
                           : ""}
                       </td>
                       <td className="border border-gray-300 px-2 py-1 text-right">
-                        {transaction?.type === "sale" ? transaction?.boxes : ""}
+                        {transaction.type === "purchasereturn"
+                          ? transaction.boxes
+                          : ""}
+                      </td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">
+                        {transaction.type === "sale" ? transaction.boxes : ""}
+                      </td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">
+                        {transaction.type === "salereturn"
+                          ? transaction.boxes
+                          : ""}
                       </td>
                       <td className="border border-gray-300 px-2 py-1 text-right font-medium">
-                        {transaction?.balance}
+                        {transaction.balance}
                       </td>
                     </tr>
                   ))}
@@ -354,10 +425,12 @@ const SingleItemStock = () => {
                     <td className="border border-gray-300 px-2 py-1">
                       Closing Stock
                     </td>
-                    <td className="border border-gray-300 px-2 py-1 text-right border-l border-r"></td>
+                    <td className="border border-gray-300 px-2 py-1 text-right"></td>
+                    <td className="border border-gray-300 px-2 py-1 text-right"></td>
+                    <td className="border border-gray-300 px-2 py-1 text-right"></td>
                     <td className="border border-gray-300 px-2 py-1 text-right"></td>
                     <td className="border border-gray-300 px-2 py-1 text-right font-bold">
-                      {closingStock}
+                      {total}
                     </td>
                   </tr>
                 </tbody>

@@ -1,74 +1,50 @@
-// import { useEffect, useState } from "react";
-// import DevToolsDialog from "./DevToolsDialog";
-
-// const DevToolsBlocker = () => {
-//   const [devToolsDetected, setDevToolsDetected] = useState(false);
-
-//   useEffect(() => {
-//     let devtoolsOpen = false;
-
-//     function detectDevTools() {
-//       const threshold = 160;
-//       const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-//       const heightThreshold =
-//         window.outerHeight - window.innerHeight > threshold;
-//       return widthThreshold || heightThreshold;
-//     }
-
-//     const interval1 = setInterval(() => {
-//       const isOpen = detectDevTools();
-//       if (isOpen && !devtoolsOpen) {
-//         devtoolsOpen = true;
-//         setDevToolsDetected(true);
-//       }
-//     }, 1000);
-
-//     function detectDebugger() {
-//       const start = performance.now();
-//       debugger;
-//       const end = performance.now();
-//       return end - start > 100;
-
-//     }
-
-//     const interval2 = setInterval(() => {
-//       if (detectDebugger()) {
-//         setDevToolsDetected(true);
-//       }
-//     }, 2000);
-
-//     return () => {
-//       clearInterval(interval1);
-//       clearInterval(interval2);
-//     };
-//   }, []);
-
-//   return <DevToolsDialog open={devToolsDetected} />;
-// };
-
-// export default DevToolsBlocker;
 import { useEffect, useState } from "react";
 import DevToolsDialog from "./DevToolsDialog";
-import devtools from "devtools-detect";
 
 const DevToolsBlocker = () => {
   const [devToolsDetected, setDevToolsDetected] = useState(false);
 
   useEffect(() => {
-    const handleChange = () => {
-      if (devtools.isOpen) {
+    let devtoolsOpen = false;
+
+    function detectDevTools() {
+      const threshold = 160;
+
+      // Check for window size manipulation
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold =
+        window.outerHeight - window.innerHeight > threshold;
+
+      // Check for debugger statement
+      let debuggerDetected = false;
+      const start = performance.now();
+      debugger; // This will pause execution if DevTools is open
+      const end = performance.now();
+      if (end - start > 100) {
+        debuggerDetected = true;
+      }
+
+      return widthThreshold || heightThreshold || debuggerDetected;
+    }
+
+    const interval1 = setInterval(() => {
+      const isOpen = detectDevTools();
+      if (isOpen && !devtoolsOpen) {
+        devtoolsOpen = true;
         setDevToolsDetected(true);
       }
-    };
-
-    window.addEventListener("devtoolschange", handleChange);
+    }, 1000);
 
     return () => {
-      window.removeEventListener("devtoolschange", handleChange);
+      clearInterval(interval1);
     };
   }, []);
 
-  return <DevToolsDialog open={devToolsDetected} />;
+  if (devToolsDetected) {
+    return <DevToolsDialog />;
+  }
+
+  return null;
 };
 
 export default DevToolsBlocker;

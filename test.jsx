@@ -236,7 +236,7 @@ const Stock = () => {
         </div>
 
         <div
-          className="overflow-x-auto text-[11px] grid grid-cols-1 p-6 print:p-4"
+          className="overflow-x-auto text-[11px] grid grid-cols-1"
           ref={containerRef}
         >
           <div className="hidden print:block">
@@ -391,7 +391,6 @@ const Stock = () => {
               <tbody>
                 {buyerData.map((buyer, index) => {
                   const itemPiece = Number(buyer.item_piece) || 1;
-
                   const openingPurch =
                     Number(buyer.openpurch) * itemPiece +
                     Number(buyer.openpurch_piece);
@@ -420,18 +419,6 @@ const Stock = () => {
 
                   const total = opening + purchase - purchaseR - sale + saleR;
 
-                  const toBoxPiece = (val) => ({
-                    box: Math.floor(val / itemPiece),
-                    piece: val % itemPiece,
-                  });
-
-                  const openingBP = toBoxPiece(opening);
-                  const purchaseBP = toBoxPiece(purchase);
-                  const purchaseRBP = toBoxPiece(purchaseR);
-                  const saleBP = toBoxPiece(sale);
-                  const saleRBP = toBoxPiece(saleR);
-                  const totalBP = toBoxPiece(total);
-
                   return (
                     <tr
                       key={buyer.id || buyer.item_name}
@@ -440,73 +427,24 @@ const Stock = () => {
                       <td className="border border-black px-2 py-2">
                         {buyer.item_name}
                       </td>
-
-                      {singlebranch === "Yes" && doublebranch === "Yes" ? (
-                        <>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {openingBP.box}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {openingBP.piece}
-                          </td>
-
-                          <td className="border border-black px-2 py-2 text-right">
-                            {purchaseBP.box}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {purchaseBP.piece}
-                          </td>
-
-                          <td className="border border-black px-2 py-2 text-right">
-                            {purchaseRBP.box}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {purchaseRBP.piece}
-                          </td>
-
-                          <td className="border border-black px-2 py-2 text-right">
-                            {saleBP.box}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {saleBP.piece}
-                          </td>
-
-                          <td className="border border-black px-2 py-2 text-right">
-                            {saleRBP.box}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {saleRBP.piece}
-                          </td>
-
-                          <td className="border border-black px-2 py-2 text-right">
-                            {totalBP.box}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {totalBP.piece}
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {opening}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {purchase}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {purchaseR}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {sale}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {saleR}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {total}
-                          </td>
-                        </>
-                      )}
+                      <td className="border border-black px-2 py-2 text-right">
+                        {opening}
+                      </td>
+                      <td className="border border-black px-2 py-2 text-right">
+                        {purchase}
+                      </td>
+                      <td className="border border-black px-2 py-2 text-right">
+                        {purchaseR}
+                      </td>
+                      <td className="border border-black px-2 py-2 text-right">
+                        {sale}
+                      </td>
+                      <td className="border border-black px-2 py-2 text-right">
+                        {saleR}
+                      </td>
+                      <td className="border border-black px-2 py-2 text-right">
+                        {total}
+                      </td>
                     </tr>
                   );
                 })}

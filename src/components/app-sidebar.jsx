@@ -121,6 +121,10 @@ export function AppSidebar({ ...props }) {
             title: "Stock",
             url: "/report/stock",
           },
+          {
+            title: "GoDown Stock",
+            url: "/report/godown-stock",
+          },
           ...(id != 1
             ? [
                 {

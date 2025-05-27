@@ -32,6 +32,7 @@ import PurchaseReport from "@/app/report/PurchaseReport";
 import SingleItemStock from "@/app/report/SingleItemStock";
 import Stock from "@/app/report/Stock";
 import ValidationWrapper from "@/utils/ValidationWrapper";
+import StockGoDown from "@/app/report/StockGoDown";
 
 function AppRoutes() {
   return (
@@ -88,6 +89,7 @@ function AppRoutes() {
             path="/report/single-item-stock"
             element={<SingleItemStock />}
           />
+          <Route path="/report/godown-stock" element={<StockGoDown />} />
           <Route path="/report/purchase" element={<PurchaseReport />} />
           <Route path="/report/dispatch" element={<DispatchReport />} />
         </Route>

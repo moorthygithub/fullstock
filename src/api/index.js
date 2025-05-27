@@ -70,6 +70,7 @@ export const GODOWN_UPDATE = `/godown`;
 export const BUYER_REPORT = `/report-buyer-data`;
 export const BUYER_DOWNLOAD = `/download-buyer-data`;
 export const STOCK_REPORT = `/stock`;
+export const STOCK_GODOWN_REPORT = `/stock-godown`;
 export const SINGLE_ITEM_STOCK_REPORT = `/item-stock`;
 export const PURCHASE_REPORT = `/report-purchases-data`;
 export const DISPATCH_REPORT = `/report-dispatch-data`;

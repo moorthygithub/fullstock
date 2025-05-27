@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, Download, Printer, Search } from "lucide-react";
 import Page from "../dashboard/page";
 import Loader from "@/components/loader/Loader";
+import { useSelector } from "react-redux";
 
 function StockTableSection({
   title,
@@ -32,6 +33,48 @@ function StockTableSection({
   loading,
 }) {
   const { toast } = useToast();
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+  const totals = filteredItems.reduce(
+    (acc, item) => {
+      if (singlebranch === "Yes" && doublebranch === "Yes") {
+        const total =
+          Number(item.openpurch) -
+          Number(item.closesale) +
+          (Number(item.purch) - Number(item.sale)) * Number(item.item_piece) +
+          Number(item.openpurch_piece) -
+          Number(item.closesale_piece) +
+          (Number(item.purch_piece) - Number(item.sale_piece));
+
+        const itemPiece = Number(item.item_piece) || 1;
+        const box = Math.floor(total / itemPiece);
+        const piece = total % itemPiece;
+        acc.box += box;
+        acc.piece += piece;
+      }
+      return acc;
+    },
+    { box: 0, piece: 0 }
+  );
+
+  const convertPiecesToBoxes = (boxTotal, pieceTotal, piecePerBox) => {
+    if (!piecePerBox) return { boxTotal, pieceTotal };
+    return {
+      boxTotal: boxTotal,
+      pieceTotal: pieceTotal,
+    };
+  };
+
+  const piecePerBox = filteredItems[0]?.item_piece
+    ? Number(filteredItems[0].item_piece)
+    : 1;
+
+  const totalBoxesAndPieces = convertPiecesToBoxes(
+    totals.box,
+    totals.piece,
+    piecePerBox
+  );
+
   return (
     <Card className="shadow-sm border-0">
       <CardHeader className="px-3 py-2 border-b">
@@ -166,7 +209,7 @@ function StockTableSection({
         <CardContent className="p-2">
           {filteredItems?.length ? (
             <div
-              className="overflow-x-auto text-[11px] grid grid-cols-1"
+              className="overflow-x-auto text-[11px] grid grid-cols-1 p-6 print:p-4"
               ref={containerRef}
             >
               <div className="hidden print:block">
@@ -181,73 +224,201 @@ function StockTableSection({
                 </div>
               </div>
 
-              <table className="w-full border-collapse border border-black">
+              <table className="w-full border border-black border-collapse">
                 <thead className="bg-gray-100 sticky top-0 z-10">
                   <tr>
-                    <th className="border border-black px-2 py-2 text-center">
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
                       Item Name
                     </th>
-                    <th className="border border-black px-2 py-2 text-center">
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
                       Category
                     </th>
-                    {/* Show size only if present in items */}
                     {filteredItems[0]?.item_size !== undefined && (
-                      <th className="hidden print:block border border-black px-2 py-2 text-center">
+                      <th
+                        className="hidden print:table-cell border border-black px-2 py-2 text-center"
+                        rowSpan={2}
+                      >
                         Size
                       </th>
                     )}
-                    <th className="border border-black px-2 py-2 text-center">
-                      Available
-                    </th>
+
+                    {(singlebranch === "Yes" && doublebranch === "No") ||
+                    (singlebranch === "No" && doublebranch === "Yes") ? (
+                      <th
+                        className="border border-black px-2 py-2 text-center"
+                        rowSpan={2}
+                      >
+                        Available
+                      </th>
+                    ) : null}
+
+                    {singlebranch === "Yes" && doublebranch === "Yes" && (
+                      <th
+                        className="border border-black px-2 py-2 text-center"
+                        colSpan={2}
+                      >
+                        Available
+                      </th>
+                    )}
                   </tr>
+                  {singlebranch == "Yes" && doublebranch == "Yes" && (
+                    <tr>
+                      <th className="border border-black px-2 py-2 text-center">
+                        Box
+                      </th>
+                      <th className="border border-black px-2 py-2 text-center">
+                        Piece
+                      </th>
+                    </tr>
+                  )}
                 </thead>
 
                 <tbody>
-                  {filteredItems.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="border border-black px-2 py-2">
-                        {item.item_name}
-                      </td>
-                      <td className="border border-black px-2 py-2 text-right">
-                        {item.item_category}
-                      </td>
-                      {item.item_size !== undefined && (
-                        <td className="hidden print:block border border-black px-2 py-2 text-right">
-                          {item.item_size}
+                  {filteredItems.map((item, index) => {
+                    const itemPiece = Number(item.item_piece) || 1;
+
+                    const openingPurch =
+                      Number(item.openpurch) * itemPiece +
+                      Number(item.openpurch_piece);
+                    const openingSale =
+                      Number(item.closesale) * itemPiece +
+                      Number(item.closesale_piece);
+                    const openingPurchR =
+                      Number(item.openpurchR) * itemPiece +
+                      Number(item.openpurchR_piece);
+                    const openingSaleR =
+                      Number(item.closesaleR) * itemPiece +
+                      Number(item.closesaleR_piece);
+                    const opening =
+                      openingPurch - openingSale - openingPurchR + openingSaleR;
+
+                    const purchase =
+                      Number(item.purch) * itemPiece + Number(item.purch_piece);
+                    const purchaseR =
+                      Number(item.purchR) * itemPiece +
+                      Number(item.purchR_piece);
+                    const sale =
+                      Number(item.sale) * itemPiece + Number(item.sale_piece);
+                    const saleR =
+                      Number(item.saleR) * itemPiece + Number(item.saleR_piece);
+
+                    const total = opening + purchase - purchaseR - sale + saleR;
+                    const box = Math.floor(total / itemPiece);
+                    const piece = total % itemPiece;
+
+                    return (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="border border-black px-2 py-2">
+                          {item.item_name}
                         </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {item.item_category}
+                        </td>
+
+                        {item.item_size !== undefined && (
+                          <td className="hidden print:table-cell border border-black px-2 py-2 text-right">
+                            {item.item_size}
+                          </td>
+                        )}
+
+                        {(singlebranch === "Yes" && doublebranch === "No") ||
+                        (singlebranch === "No" && doublebranch === "Yes") ? (
+                          <td className="border border-black px-2 py-2 text-right">
+                            {total}
+                          </td>
+                        ) : null}
+
+                        {singlebranch === "Yes" && doublebranch === "Yes" && (
+                          <>
+                            <td className="border border-black px-2 py-2 text-center">
+                              {box}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-center">
+                              {piece}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })}
+
+                  {(title === "Stock" || title === "Stock View") && (
+                    <tr className="font-bold bg-gray-200">
+                      <td
+                        className="border border-black px-2 py-2 text-right"
+                        colSpan={2}
+                      >
+                        Total:
+                      </td>
+
+                      {filteredItems[0]?.item_size !== undefined && (
+                        <td className="hidden print:table-cell border border-black px-2 py-2 text-right" />
                       )}
-                      <td className="border border-black px-2 py-2 text-right">
-                        {(
-                          item.openpurch -
-                          item.closesale +
-                          (item.purch - item.sale)
-                        ).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                  {title == "Stock" ||
-                    (title == "Stock View" && (
-                      <tr className="font-bold">
-                        <td
-                          colSpan="2"
-                          className="border border-black px-2 py-2 text-right"
-                        >
-                          Total:
-                        </td>
+
+                      {(singlebranch === "Yes" && doublebranch === "No") ||
+                      (singlebranch === "No" && doublebranch === "Yes") ? (
                         <td className="border border-black px-2 py-2 text-right">
                           {filteredItems
                             .reduce((total, item) => {
+                              const itemPiece = Number(item.item_piece) || 1;
+                              const openingPurch =
+                                Number(item.openpurch) * itemPiece +
+                                Number(item.openpurch_piece);
+                              const openingSale =
+                                Number(item.closesale) * itemPiece +
+                                Number(item.closesale_piece);
+                              const openingPurchR =
+                                Number(item.openpurchR) * itemPiece +
+                                Number(item.openpurchR_piece);
+                              const openingSaleR =
+                                Number(item.closesaleR) * itemPiece +
+                                Number(item.closesaleR_piece);
+                              const opening =
+                                openingPurch -
+                                openingSale -
+                                openingPurchR +
+                                openingSaleR;
+
+                              const purchase =
+                                Number(item.purch) * itemPiece +
+                                Number(item.purch_piece);
+                              const purchaseR =
+                                Number(item.purchR) * itemPiece +
+                                Number(item.purchR_piece);
+                              const sale =
+                                Number(item.sale) * itemPiece +
+                                Number(item.sale_piece);
+                              const saleR =
+                                Number(item.saleR) * itemPiece +
+                                Number(item.saleR_piece);
+
                               return (
                                 total +
-                                (item.openpurch -
-                                  item.closesale +
-                                  (item.purch - item.sale))
+                                (opening + purchase - purchaseR - sale + saleR)
                               );
                             }, 0)
                             .toLocaleString()}
                         </td>
-                      </tr>
-                    ))}
+                      ) : null}
+
+                      {singlebranch === "Yes" && doublebranch === "Yes" && (
+                        <>
+                          <td className="border border-black px-2 py-2 text-center">
+                            {totalBoxesAndPieces.boxTotal}
+                          </td>
+                          <td className="border border-black px-2 py-2 text-center">
+                            {totalBoxesAndPieces.pieceTotal}
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

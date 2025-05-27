@@ -10,6 +10,9 @@ import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import Page from "../dashboard/page";
 import StockTableSection from "../home/StockTableSection";
+import { useSelector } from "react-redux";
+import { useToast } from "@/hooks/use-toast";
+import downloadExcel from "@/components/common/downloadExcel";
 
 const StockView = () => {
   const containerRef = useRef();
@@ -19,8 +22,10 @@ const StockView = () => {
   const [categories, setCategories] = useState(["All Categories"]);
   const [brands, setBrands] = useState(["All Brands"]);
   const [selectedBrands, setSelectedBrands] = useState("All Brands");
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
   const token = usetoken();
-
+  const { toast } = useToast();
   const fetchStockData = async () => {
     const response = await apiClient.post(
       `${STOCK_REPORT}`,
@@ -85,97 +90,113 @@ const StockView = () => {
     content: () => containerRef.current,
     documentTitle: "Stock",
     pageStyle: `
-            @page {
-          size: A4 portrait;
-               margin: 5mm;
-            }
-            @media print {
-              body {
-                font-size: 10px; 
-                margin: 0mm;
-                padding: 0mm;
-              }
-              table {
-                font-size: 11px;
-              }
-              .print-hide {
-                display: none;
-              }
-            }
-          `,
+      @page {
+        size: A4;
+        margin: 5mm;
+      }
+    
+        @media print {
+          body {
+            font-size: 10px;
+            margin: 0;
+            padding: 0;
+          }
+    
+          table {
+            font-size: 11px;
+            border-collapse: collapse;
+            width: 100%;
+          }
+    
+          .print-hide {
+            display: none !important;
+          }
+    
+          th, td {
+            border: 1px solid black;
+            padding: 4px;
+            text-align: center;
+          }
+    
+          thead {
+            background-color: #f0f0f0;
+          }
+        }
+      `,
   });
 
-  const downloadCSV = async (stockData) => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Stock Summary");
-
-    // Add headers
-    const headers = ["Item Name", "Category", "Size", "Available"];
-    const headerRow = worksheet.addRow(headers);
-    headerRow.eachCell((cell) => {
-      cell.font = {
-        bold: true,
-        color: { argb: "000000" },
-      };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFF00" }, // Yellow background
-      };
-      cell.alignment = { horizontal: "center" };
-    });
-
-    // Add data rows
-    filteredItems.forEach((item) => {
-      const row = [
-        item.item_name,
-        item.item_category,
-        item.item_size,
-        (
-          item.openpurch -
-          item.closesale +
-          (item.purch - item.sale)
-        ).toLocaleString(),
-      ];
-      worksheet.addRow(row);
-    });
-    const totalAvailable = filteredItems.reduce(
-      (total, item) =>
-        total + (item.openpurch - item.closesale + (item.purch - item.sale)),
-      0
-    );
-
-    // Add total row
-    const totalRow = worksheet.addRow([
-      "",
-      "",
-      "Total Available:",
-      totalAvailable,
-    ]);
-    totalRow.eachCell((cell, colNumber) => {
-      if (colNumber >= 3) {
-        cell.font = { bold: true };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "D9EAD3" },
-        };
+  const downloadCSV = (filteredItems, toast) => {
+    if (!filteredItems || filteredItems.length === 0) {
+      if (toast) {
+        toast({
+          title: "No Data",
+          description: "No data available to export",
+          variant: "destructive",
+        });
       }
+      return;
+    }
+
+    // 1. Determine headers
+    const headers = ["Item Name", "Category", "Size"];
+    let showAvailable = false;
+    let showBoxPiece = false;
+
+    if (
+      (singlebranch == "Yes" && doublebranch == "No") ||
+      (singlebranch == "No" && doublebranch == "Yes")
+    ) {
+      headers.push("Available");
+      showAvailable = true;
+    } else if (singlebranch === "Yes" && doublebranch === "Yes") {
+      headers.push("Available Box", "Available Piece");
+      showBoxPiece = true;
+    }
+
+    // 2. Define row data logic
+    const getRowData = (item) => {
+      const itemPiece = Number(item.item_piece) || 1;
+      const total =
+        Number(item.openpurch) -
+        Number(item.closesale) +
+        (Number(item.purch) - Number(item.sale)) * itemPiece +
+        Number(item.openpurch_piece) -
+        Number(item.closesale_piece) +
+        (Number(item.purch_piece) - Number(item.sale_piece));
+
+      const box = Math.floor(total / itemPiece);
+      const piece = total % itemPiece;
+
+      const row = [
+        item.item_name || "",
+        item.item_category || "",
+        item.item_size || "",
+      ];
+
+      if (showAvailable) {
+        row.push(total);
+      } else if (showBoxPiece) {
+        row.push(box, piece);
+      }
+
+      return row;
+    };
+
+    downloadExcel({
+      data: filteredItems,
+      sheetName: "Stock Summary",
+      headers,
+      getRowData,
+      fileNamePrefix: "stock_summary",
+      toast,
+      emptyDataCallback: () => ({
+        title: "No Data",
+        description: "No data available to export",
+        variant: "destructive",
+      }),
     });
-    // Generate and download Excel file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `stock_summary_${getTodayDate()}.xlsx`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
-  // Render error state
   if (isErrorStock) {
     return (
       <Page>
