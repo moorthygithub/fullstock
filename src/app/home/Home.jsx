@@ -15,10 +15,11 @@ import { useReactToPrint } from "react-to-print";
 import DispatchBarChart from "./DispatchBarChart";
 import StockTableBoth from "./StockTableBoth";
 import StockTableSection from "./StockTableSection";
+import { useSelector } from "react-redux";
 const tabs = [
   { value: "stock-view", label: "Stock View" },
-  { value: "purchase", label: "Stock < 0" },
-  { value: "dispatch", label: "Stock < 100" },
+  // { value: "purchase", label: "Stock < 0" },
+  // { value: "dispatch", label: "Stock < 100" },
   { value: "graph", label: "Graph" },
 ];
 
@@ -54,6 +55,8 @@ const Home = () => {
   const currentMonthIndex = currentDates.getMonth();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [selectedMonth, setSelectedMonth] = useState(months[currentMonthIndex]);
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
   const getYears = () => {
     const startYear = 2025;
     const currentYear = new Date().getFullYear();
@@ -214,21 +217,68 @@ const Home = () => {
         }
       `,
   });
-  const downloadCSV = (stockData, toast) => {
-    downloadExcel({
-      data: stockData,
-      sheetName: "Stock Summary",
-      headers: ["Item Name", "Category", "Size", "Available"],
-      getRowData: (item) => [
-        item.item_name,
-        item.item_category,
-        item.item_size,
+  const downloadCSV = (filteredItems, toast) => {
+    if (!filteredItems || filteredItems.length === 0) {
+      if (toast) {
+        toast({
+          title: "No Data",
+          description: "No data available to export",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // 1. Determine headers
+    const headers = ["Item Name", "Category", "Size"];
+    let showAvailable = false;
+    let showBoxPiece = false;
+
+    if (
+      (singlebranch == "Yes" && doublebranch == "No") ||
+      (singlebranch == "No" && doublebranch == "Yes")
+    ) {
+      headers.push("Available");
+      showAvailable = true;
+    } else if (singlebranch === "Yes" && doublebranch === "Yes") {
+      headers.push("Available Box", "Available Piece");
+      showBoxPiece = true;
+    }
+
+    // 2. Define row data logic
+    const getRowData = (item) => {
+      const itemPiece = Number(item.item_piece) || 1;
+      const total =
         Number(item.openpurch) -
-          Number(item.closesale) +
-          (Number(item.purch) - Number(item.sale)) -
-          Number(item.purchR) +
-          Number(item.saleR),
-      ],
+        Number(item.closesale) +
+        (Number(item.purch) - Number(item.sale)) * itemPiece +
+        Number(item.openpurch_piece) -
+        Number(item.closesale_piece) +
+        (Number(item.purch_piece) - Number(item.sale_piece));
+
+      const box = Math.floor(total / itemPiece);
+      const piece = total % itemPiece;
+
+      const row = [
+        item.item_name || "",
+        item.item_category || "",
+        item.item_size || "",
+      ];
+
+      if (showAvailable) {
+        row.push(total);
+      } else if (showBoxPiece) {
+        row.push(box, piece);
+      }
+
+      return row;
+    };
+
+    downloadExcel({
+      data: filteredItems,
+      sheetName: "Stock Summary",
+      headers,
+      getRowData,
       fileNamePrefix: "stock_summary",
       toast,
       emptyDataCallback: () => ({
@@ -311,7 +361,7 @@ const Home = () => {
       <div className=" w-full p-0  md:p-4 sm:grid grid-cols-1">
         <>
           <Tabs defaultValue="stock-view" className="sm:hidden">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2">
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value}>
                   {tab.label}
@@ -335,7 +385,7 @@ const Home = () => {
                 loading={isLoadingStock}
               />
             </TabsContent>
-            <TabsContent value="purchase">
+            {/* <TabsContent value="purchase">
               <StockTableSection
                 title="Stock < 0"
                 selectedCategory={selectedCategoryZero}
@@ -367,7 +417,7 @@ const Home = () => {
                 currentDate={currentDate}
                 loading={isLoadingStock}
               />
-            </TabsContent>
+            </TabsContent> */}
             <TabsContent value="graph">
               <DispatchBarChart
                 title="Monthly Dispatch"

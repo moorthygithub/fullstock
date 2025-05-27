@@ -15,8 +15,8 @@ function App() {
   console.log(location?.pathname);
   return (
     <>
-      <DevToolsBlocker />
-      <DisabledRightClick />
+      {/* <DevToolsBlocker /> */}
+      {/* <DisabledRightClick /> */}
       <VersionCheck />
       <Toaster />
       <SessionTimeoutTracker expiryTime={time} onLogout={handleLogout} />
