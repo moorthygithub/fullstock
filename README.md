@@ -1,8 +1,8 @@
-# Stock-New CRM
+# Full Stock-New CRM
 
 ## 📌 Project Overview
 
-This is a **Customer Relationship Management (CRM) system** developed for **Stock Ceramics**. The project is built using **React (Vite)** with **Tailwind CSS** and Material UI for a responsive and modern UI. It integrates authentication, dashboard management, master data management, reports, and utility features to provide a seamless CRM experience.
+This is a **Customer Relationship Management (CRM) system** developed for **Full Stock Ceramics**. The project is built using **React (Vite)** with **Tailwind CSS** and Material UI for a responsive and modern UI. It integrates authentication, dashboard management, master data management, reports, and utility features to provide a seamless CRM experience.
 
 ## 🚀 Tech Stack
 
@@ -15,7 +15,7 @@ This is a **Customer Relationship Management (CRM) system** developed for **Stoc
 ## 📁 Project Structure
 
 ```
-ag-solutions-bangalore-stock-crm/
+ag-solutions-bangalore-Full Stock-crm/
 ├── public/                 # Static assets
 ├── src/                    # Source code
 │   ├── app/                # Main application logic
@@ -23,7 +23,7 @@ ag-solutions-bangalore-stock-crm/
 │   │   ├── dashboard/      # Dashboard views
 │   │   ├── home/           # Home page
 │   │   ├── master/         # Master data management (buyers, categories, items, purchases, dispatch)
-│   │   └── report/         # Reports section (Buyer Report, Stock Report)
+│   │   └── report/         # Reports section (Buyer Report, Full Stock Report)
 │   ├── assets/             # Static assets (letterheads, signatures)
 │   ├── components/         # Reusable UI components
 │   │   ├── nav/            # Navigation components
@@ -51,7 +51,7 @@ ag-solutions-bangalore-stock-crm/
 ✅ **Authentication** - Login, Logout, Session tracking  
 ✅ **Dashboard** - Overview of CRM activities  
 ✅ **Master Data Management** - Buyers, Categories, Items, Purchases, Dispatch  
-✅ **Reports** - Generate and view reports on Buyers and Stock  
+✅ **Reports** - Generate and view reports on Buyers and Full Stock  
 ✅ **Responsive Design** - Optimized for mobile and desktop  
 ✅ **User Role Management** - Access control for different roles  
 ✅ **Custom UI Components** - Modals, Forms, Tables, and more  
@@ -65,8 +65,8 @@ Follow these steps to set up the project locally:
 1. **Clone the repository:**
 
    ```sh
-   git clone https://github.com/AG-Solutions-Bangalore/stock-crm
-   cd stock-crm
+   git clone https://github.com/AG-Solutions-Bangalore/Full Stock-crm
+   cd Full Stock-crm
    ```
 
 2. **Install dependencies:**

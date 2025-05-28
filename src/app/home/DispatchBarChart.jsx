@@ -1,30 +1,99 @@
 import React from "react";
-import moment from "moment";
+import { Bar } from "react-chartjs-2";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
   Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
   Legend,
-} from "recharts";
+} from "chart.js";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronDown } from "lucide-react";
+import moment from "moment";
+import { useSelector } from "react-redux";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
 import Loader from "@/components/loader/Loader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const DispatchBarChart = ({
-  dispatch,
-  isLoadingdashboord,
-  isErrordashboord,
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const transformStockData = (stock) => {
+  if (!Array.isArray(stock)) return [];
+
+  return stock.map((item) => ({
+    item_name: moment(item.date).format("DD"),
+    Purchase: Number(item.total_p || 0),
+    Purchased_boxes: Number(item.total_p_box || 0),
+    Purchased_pcs: Number(item.total_p_piece || 0),
+
+    Dispatch: Number(item.total_d || 0),
+    Sold_boxes: Number(item.total_d_box || 0),
+    Sold_pcs: Number(item.total_d_piece || 0),
+
+    PurchaseReturn: Number(item.total_pr || 0),
+    PurchaseReturned_boxes: Number(item.total_pr_box || 0),
+    PurchaseReturned_pcs: Number(item.total_pr_piece || 0),
+
+    DispatchReturn: Number(item.total_dr || 0),
+    DispatchReturned_boxes: Number(item.total_dr_box || 0),
+    DispatchReturned_pcs: Number(item.total_dr_piece || 0),
+  }));
+};
+
+const transformStockSingleBranch = (stock) => {
+  if (!Array.isArray(stock)) return [];
+
+  return stock.map((item) => ({
+    item_name: moment(item.date).format("DD"),
+    Purchase: Number(item.total_p_box || 0),
+    Purchased_boxes: Number(item.total_p_box || 0),
+
+    Dispatch: Number(item.total_d_box || 0),
+    Sold_boxes: Number(item.total_d_box || 0),
+
+    PurchaseReturn: Number(item.total_pr_box || 0),
+    PurchaseReturned_boxes: Number(item.total_pr_box || 0),
+
+    DispatchReturn: Number(item.total_dr_box || 0),
+    DispatchReturned_boxes: Number(item.total_dr_box || 0),
+  }));
+};
+const transformDoubleBranch = (stock) => {
+  if (!Array.isArray(stock)) return [];
+
+  return stock.map((item) => ({
+    item_name: moment(item.date).format("DD"),
+    Purchase: Number(item.total_p_piece || 0),
+    Purchased_pcs: Number(item.total_p_piece || 0),
+
+    Dispatch: Number(item.total_d_piece || 0),
+    Sold_pcs: Number(item.total_d_piece || 0),
+
+    PurchaseReturn: Number(item.total_pr_piece || 0),
+    PurchaseReturned_pcs: Number(item.total_pr_piece || 0),
+
+    DispatchReturn: Number(item.total_dr_piece || 0),
+    DispatchReturned_pcs: Number(item.total_dr_piece || 0),
+  }));
+};
+
+const StockBarChart = ({
+  stock = [],
+  title = "Stock Overview",
   selectedYear,
   selectedMonth,
   years,
@@ -32,121 +101,256 @@ const DispatchBarChart = ({
   handleChange,
   currentYear,
   currentMonthIndex,
-  refetch,
-  title = "Graph",
+  isLoadingdashboord,
+  isErrordashboord,
+  refetchdashboord,
 }) => {
-  const maxValue = Math.max(
-    ...(dispatch?.map((item) => Number(item.total_box)) || [0])
-  );
-  const yMax = Math.ceil(maxValue / 100) * 100 + 100;
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+  let data = [];
 
+  if (singlebranch === "Yes" && doublebranch === "No") {
+    data = transformStockSingleBranch(stock?.results);
+  } else if (singlebranch === "Yes" && doublebranch === "Yes") {
+    data = transformStockData(stock?.results);
+  } else if (singlebranch === "No" && doublebranch === "Yes") {
+    data = transformDoubleBranch(stock?.results);
+  }
+
+  // Chart.js dataset preparation
+  const labels = data.map((d) => d.item_name);
+
+  const datasets = [
+    {
+      label: "Purchase",
+      data: data.map((d) => d.Purchase),
+      backgroundColor: "#34D399",
+      borderRadius: 4,
+    },
+    {
+      label: "Dispatch",
+      data: data.map((d) => d.Dispatch),
+      backgroundColor: "#60A5FA",
+      borderRadius: 4,
+    },
+    {
+      label: "Purchase Return",
+      data: data.map((d) => d.PurchaseReturn),
+      backgroundColor: "#7B3FBF",
+      borderRadius: 4,
+    },
+    {
+      label: "Dispatch Return",
+      data: data.map((d) => d.DispatchReturn),
+      backgroundColor: "#F87171",
+      borderRadius: 4,
+    },
+  ];
+
+  const tooltipCallbacks = {
+    label: function (context) {
+      const datasetLabel = context.dataset.label;
+      const index = context.dataIndex;
+      const itemData = data[index];
+      let result = "";
+
+      if (singlebranch === "Yes" && doublebranch === "Yes") {
+        let boxKey = "";
+        let pcsKey = "";
+
+        switch (datasetLabel) {
+          case "Purchase":
+            boxKey = "Purchased_boxes";
+            pcsKey = "Purchased_pcs";
+            break;
+          case "Dispatch":
+            boxKey = "Sold_boxes";
+            pcsKey = "Sold_pcs";
+            break;
+          case "PurchaseReturn":
+            boxKey = "PurchaseReturned_boxes";
+            pcsKey = "PurchaseReturned_pcs";
+            break;
+          case "DispatchReturn":
+            boxKey = "DispatchReturned_boxes";
+            pcsKey = "DispatchReturned_pcs";
+            break;
+          default:
+            boxKey = "";
+            pcsKey = "";
+        }
+
+        result = `${datasetLabel}: ${itemData[boxKey] ?? 0} boxes and ${
+          itemData[pcsKey] ?? 0
+        } pieces`;
+      } else if (singlebranch === "Yes" && doublebranch === "No") {
+        let boxKey = "";
+
+        switch (datasetLabel) {
+          case "Purchase":
+            boxKey = "Purchased_boxes";
+            break;
+          case "Dispatch":
+            boxKey = "Sold_boxes";
+            break;
+          case "PurchaseReturn":
+            boxKey = "PurchaseReturned_boxes";
+            break;
+          case "DispatchReturn":
+            boxKey = "DispatchReturned_boxes";
+            break;
+          default:
+            boxKey = "";
+        }
+
+        result = `${datasetLabel}: ${itemData[boxKey] ?? 0} boxes`;
+      } else if (singlebranch === "No" && doublebranch === "Yes") {
+        let pcsKey = "";
+
+        switch (datasetLabel) {
+          case "Purchase":
+            pcsKey = "Purchased_pcs";
+            break;
+          case "Dispatch":
+            pcsKey = "Sold_pcs";
+            break;
+          case "PurchaseReturn":
+            pcsKey = "PurchaseReturned_pcs";
+            break;
+          case "DispatchReturn":
+            pcsKey = "DispatchReturned_pcs";
+            break;
+          default:
+            pcsKey = "";
+        }
+
+        result = `${datasetLabel}: ${itemData[pcsKey] ?? 0} pieces`;
+      }
+      return result;
+    },
+  };
+
+  console.log(datasets, "datasets");
+  const maxY = Math.max(...datasets.flatMap((d) => d.data)) || 0;
+  console.log(maxY, "maxY");
   return (
-    <div className="md:p-4">
-      <div className="flex flex-col md:flex-row items-center md:justify-between mb-4 space-y-2 md:space-y-0 md:space-x-4">
-        <CardTitle className="text-lg font-semibold text-black">
-          {title}
-        </CardTitle>
+    <Card className="p-4">
+      <CardHeader>
+        <div className="flex flex-col md:flex-row items-center md:justify-between mb-4 space-y-2 md:space-y-0 md:space-x-4">
+          <CardTitle className="text-lg font-semibold text-black">
+            {title}
+          </CardTitle>
 
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-32 truncate">
-                <span>{selectedYear}</span>
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {years?.map((year) => (
-                <DropdownMenuItem
-                  key={year}
-                  onSelect={() => handleChange(year, selectedMonth)}
-                >
-                  {year}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-32 truncate">
-                <span>{selectedMonth}</span>
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {months?.map((month, index) => {
-                const isDisabled =
-                  Number(selectedYear) === currentYear &&
-                  index > currentMonthIndex;
-                return (
-                  <DropdownMenuItem
-                    key={month}
-                    disabled={isDisabled}
-                    onSelect={() => handleChange(selectedYear, month)}
-                  >
-                    {month}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      <div className="w-full h-[400px] min-h-[400px]">
-        {isLoadingdashboord ? (
-          <div className="flex justify-center items-center min-h-80">
-            <Loader />
-          </div>
-        ) : isErrordashboord ? (
-          <div className="text-center text-red-500 min-h-80">
-            <Card className="w-full max-w-md mx-auto mt-10">
-              <CardHeader>
-                <CardTitle className="text-destructive">
-                  Error Fetching Graph
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => refetch()} variant="outline">
-                  Try Again
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-32 truncate">
+                  <span>{selectedYear}</span>
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
-              </CardContent>
-            </Card>{" "}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {years?.map((year) => (
+                  <DropdownMenuItem
+                    key={year}
+                    onSelect={() => handleChange(year, selectedMonth)}
+                  >
+                    {year}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-32 truncate">
+                  <span>{selectedMonth}</span>
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {months?.map((month, index) => {
+                  const isDisabled =
+                    Number(selectedYear) === currentYear &&
+                    index > currentMonthIndex;
+                  return (
+                    <DropdownMenuItem
+                      key={month}
+                      disabled={isDisabled}
+                      onSelect={() => handleChange(selectedYear, month)}
+                    >
+                      {month}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        ) : !dispatch || dispatch.length === 0 ? (
-          <div className="text-center text-gray-500 mt-10 min-h-full">
-            No Data Available
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        {isLoadingdashboord ? (
+          <Loader />
+        ) : isErrordashboord ? (
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <p className="text-red-600">Failed to load data.</p>
+            <Button onClick={refetchdashboord}>Retry</Button>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={dispatch}
-              margin={{ top: 20, right: 10, left: -10, bottom: 40 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="dispatch_date"
-                tickFormatter={(date) => moment(date).format("DD")}
-              />
-              <YAxis
-                domain={[0, yMax]}
-                tickFormatter={(value) => `${value.toLocaleString()}`}
-              />
-              <Tooltip
-                formatter={(value) => [`${value} Boxes`, "Total"]}
-                labelFormatter={(label) =>
-                  `Date: ${moment(label).format("DD-MM-YYYY")}`
-                }
-              />
-              <Legend formatter={() => "Total Sales"} />
-              <Bar dataKey="total_box" fill="#6366F1" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <Bar
+            data={{
+              labels,
+              datasets,
+            }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: {
+                mode: "index",
+                intersect: false,
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: maxY + maxY * 0.1,
+                  ticks: {
+                    stepSize: Math.ceil((maxY + maxY * 0.1) / 5),
+                  },
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: "Date",
+                    font: { size: 14 },
+                  },
+                },
+              },
+
+              plugins: {
+                tooltip: {
+                  callbacks: tooltipCallbacks,
+                },
+                legend: {
+                  position: "top",
+                  labels: {
+                    usePointStyle: true,
+                  },
+                },
+                title: {
+                  display: false,
+                },
+              },
+              animation: {
+                duration: 500,
+              },
+            }}
+            height={300}
+          />
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
-export default DispatchBarChart;
+export default StockBarChart;

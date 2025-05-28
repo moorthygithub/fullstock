@@ -221,7 +221,7 @@ const StockView = () => {
       <Card className="shadow-sm border-0">
         <CardContent className="p-2">
           <StockTableSection
-            title="Stock View"
+            title="Stock View "
             selectedCategory={selectedCategory}
             selectedBrands={selectedBrands}
             setSelectedBrands={setSelectedBrands}

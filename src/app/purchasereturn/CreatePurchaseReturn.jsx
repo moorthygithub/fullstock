@@ -1,4 +1,5 @@
 import {
+  fetchAvaiableItem,
   fetchPurchaseReturnById,
   PURCHASE_RETURN_CREATE,
   PURCHASE_RETURN_EDIT_LIST,
@@ -87,11 +88,15 @@ const CreatePurchaseReturn = () => {
       id: editId ? "" : null,
       purchase_sub_item_id: "",
       purchase_sub_godown_id: "",
-      purchase_sub_box: "",
+      purchase_sub_box: 0,
       item_brand: "",
       item_size: "",
-      avaiable_box: "",
-      purchase_sub_piece: "",
+      purchase_sub_piece: 0,
+      stockData: {
+        total: 0,
+        total_box: 0,
+        total_piece: 0,
+      },
     },
   ]);
 
@@ -101,8 +106,8 @@ const CreatePurchaseReturn = () => {
       {
         purchase_sub_item_id: "",
         purchase_sub_godown_id: "",
-        purchase_sub_box: "",
-        purchase_sub_piece: "",
+        purchase_sub_box: 0,
+        purchase_sub_piece: 0,
       },
     ]);
   }, []);
@@ -148,8 +153,8 @@ const CreatePurchaseReturn = () => {
         ? purchaseByid.purchaseSub.map((sub) => ({
             id: sub.id || "",
             purchase_sub_item_id: sub.purchase_sub_item_id || "",
-            purchase_sub_box: sub.purchase_sub_box || "",
-            purchase_sub_piece: sub.purchase_sub_piece || "",
+            purchase_sub_box: sub.purchase_sub_box || 0,
+            purchase_sub_piece: sub.purchase_sub_piece || 0,
             item_brand: sub.item_brand || "",
             item_size: sub.item_size || "",
             purchase_sub_item: sub.item_name || "",
@@ -166,7 +171,6 @@ const CreatePurchaseReturn = () => {
               purchase_sub_item: "",
               purchase_sub_weight: "",
               purchase_sub_godown_id: "",
-              avaiable_box: "",
             },
           ];
 
@@ -180,43 +184,105 @@ const CreatePurchaseReturn = () => {
   const { data: purchaseRef, isLoading: loadingref } =
     useFetchPurchaseReturnRef();
 
-  const handlePaymentChange = (selectedValue, rowIndex, fieldName) => {
-    let value;
+  const fetchAndSetStock = async (rowIndex, itemId, godownId, updatedData) => {
+    if (!itemId || !godownId) return;
 
-    if (selectedValue && selectedValue.target) {
-      value = selectedValue.target.value;
-    } else {
-      value = selectedValue;
+    try {
+      const response = await fetchAvaiableItem(itemId, godownId, token);
+      const buyer = response?.stock?.[0];
+
+      const itemPiece = Number(buyer?.item_piece || 1);
+      const safeNumber = (val) => Number(val) || 0;
+
+      const openingPurch =
+        safeNumber(buyer?.openpurch) * itemPiece +
+        safeNumber(buyer?.openpurch_piece);
+      const openingSale =
+        safeNumber(buyer?.closesale) * itemPiece +
+        safeNumber(buyer?.closesale_piece);
+      const openingPurchR =
+        safeNumber(buyer?.openpurchR) * itemPiece +
+        safeNumber(buyer?.openpurchR_piece);
+      const openingSaleR =
+        safeNumber(buyer?.closesaleR) * itemPiece +
+        safeNumber(buyer?.closesaleR_piece);
+
+      const opening = openingPurch - openingSale - openingPurchR + openingSaleR;
+
+      const purchase =
+        safeNumber(buyer?.purch) * itemPiece + safeNumber(buyer?.purch_piece);
+      const purchaseR =
+        safeNumber(buyer?.purchR) * itemPiece + safeNumber(buyer?.purchR_piece);
+      const sale =
+        safeNumber(buyer?.sale) * itemPiece + safeNumber(buyer?.sale_piece);
+      const saleR =
+        safeNumber(buyer?.saleR) * itemPiece + safeNumber(buyer?.saleR_piece);
+
+      const total = opening + purchase - purchaseR - sale + saleR;
+
+      const toBoxPiece = (val) => ({
+        box: Math.floor(val / itemPiece),
+        piece: val % itemPiece,
+      });
+
+      const totalBP = toBoxPiece(total);
+
+      updatedData[rowIndex].stockData = {
+        total,
+        total_box: totalBP.box,
+        total_piece: totalBP.piece,
+      };
+    } catch (err) {
+      console.error("Stock fetch error:", err);
+      updatedData[rowIndex].stockData = {
+        total: 0,
+        total_box: 0,
+        total_piece: 0,
+      };
     }
+
+    setInvoiceData([...updatedData]);
+  };
+  useEffect(() => {
+    invoiceData.forEach((row, index) => {
+      const { purchase_sub_item_id, purchase_sub_godown_id } = row;
+      if (purchase_sub_item_id && purchase_sub_godown_id) {
+        fetchAndSetStock(index, purchase_sub_item_id, purchase_sub_godown_id, [
+          ...invoiceData,
+        ]);
+      }
+    });
+  }, [
+    invoiceData
+      .map(
+        (row) => row?.purchase_sub_item_id + "-" + row?.purchase_sub_godown_id
+      )
+      .join(","),
+  ]);
+  const handlePaymentChange = (selectedValue, rowIndex, fieldName) => {
+    let value = selectedValue?.target?.value ?? selectedValue;
     const updatedData = [...invoiceData];
 
-    if (fieldName == "purchase_sub_item_id") {
+    if (fieldName === "purchase_sub_item_id") {
       updatedData[rowIndex][fieldName] = value;
-      const selectedItem = itemsData?.items?.find((item) => item.id == value);
-      console.log(selectedItem, "selectedItem");
+      const selectedItem = itemsData?.items?.find((item) => item.id === value);
       if (selectedItem) {
         updatedData[rowIndex]["item_size"] = selectedItem.item_size;
         updatedData[rowIndex]["item_brand"] = selectedItem.item_brand;
-        updatedData[rowIndex]["avaiable_box"] =
-          Number(selectedItem.openpurch) -
-          Number(selectedItem.closesale) +
-          (Number(selectedItem.purch) - Number(selectedItem.sale));
       }
-
       focusBoxInput(rowIndex);
-
-      setInvoiceData(updatedData);
     } else {
-      if (["purchase_sub_box", "purchase_sub_piece"].includes(fieldName)) {
-        if (!/^\d*$/.test(value)) {
-          console.log("Invalid input. Only digits are allowed.");
-          return;
-        }
+      if (
+        ["purchase_sub_box", "purchase_sub_piece"].includes(fieldName) &&
+        !/^\d*$/.test(value)
+      ) {
+        console.log("Invalid input. Only digits are allowed.");
+        return;
       }
-
       updatedData[rowIndex][fieldName] = value;
-      setInvoiceData(updatedData);
     }
+
+    setInvoiceData(updatedData);
   };
 
   const handleInputChange = (e, field) => {
@@ -472,7 +538,7 @@ const CreatePurchaseReturn = () => {
                   />
                 </div>
                 {!editId && (
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="mb-4">
                     <div>
                       <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
                         <span className="w-1 h-4 bg-yellow-500 rounded-full mr-2"></span>
@@ -649,24 +715,33 @@ const CreatePurchaseReturn = () => {
 
                           {/* Godown Select */}
                           <TableCell className="px-4 py-3 min-w-[150px] align-top">
-                            <MemoizedProductSelect
-                              value={row.purchase_sub_godown_id}
-                              onChange={(e) =>
-                                handlePaymentChange(
-                                  e,
-                                  rowIndex,
-                                  "purchase_sub_godown_id"
-                                )
-                              }
-                              options={
-                                godownData?.godown?.map((godown) => ({
-                                  value: godown.id,
-                                  label: godown.godown,
-                                })) || []
-                              }
-                              placeholder="Select Godown"
-                              className="text-xs"
-                            />
+                            <div className="space-y-1">
+                              <MemoizedProductSelect
+                                value={row.purchase_sub_godown_id}
+                                onChange={(e) =>
+                                  handlePaymentChange(
+                                    e,
+                                    rowIndex,
+                                    "purchase_sub_godown_id"
+                                  )
+                                }
+                                options={
+                                  godownData?.godown?.map((godown) => ({
+                                    value: godown.id,
+                                    label: godown.godown,
+                                  })) || []
+                                }
+                                placeholder="Select Godown"
+                                className="text-xs"
+                              />
+                              {!editId && row.item_brand && (
+                                <div className="text-xs text-gray-600 ">
+                                  <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
+                                    {row.item_brand}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
 
                           {singlebranch == "Yes" && (
@@ -688,13 +763,15 @@ const CreatePurchaseReturn = () => {
                                   placeholder="Qty"
                                   type="number"
                                 />
-                                {!editId && row.item_brand && (
-                                  <div className="text-xs text-gray-600">
-                                    <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
-                                      {row.item_brand}
-                                    </span>
-                                  </div>
-                                )}
+                                {!editId &&
+                                  row?.purchase_sub_godown_id &&
+                                  row?.purchase_sub_item_id && (
+                                    <div className="text-xs text-gray-600">
+                                      <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
+                                        {row.stockData?.total_box}
+                                      </span>
+                                    </div>
+                                  )}
                               </div>
                             </TableCell>
                           )}
@@ -714,6 +791,15 @@ const CreatePurchaseReturn = () => {
                                   }
                                   placeholder="Piece"
                                 />
+                                {!editId &&
+                                  row?.purchase_sub_godown_id &&
+                                  row?.purchase_sub_item_id && (
+                                    <div className="text-xs text-gray-600">
+                                      <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
+                                        {row.stockData?.total_piece}
+                                      </span>
+                                    </div>
+                                  )}
                               </div>
                             </TableCell>
                           )}
@@ -1035,11 +1121,14 @@ const CreatePurchaseReturn = () => {
                                   }
                                   placeholder="Enter Box"
                                 />
-                                {!editId && row.purchase_sub_box && (
-                                  <div className="text-xs text-gray-700">
-                                    • Available Box: {row.avaiable_box}
-                                  </div>
-                                )}
+                                {!editId &&
+                                  row?.purchase_sub_godown_id &&
+                                  row?.purchase_sub_item_id && (
+                                    <div className="text-xs text-gray-700">
+                                      • Available Box:{" "}
+                                      {row?.stockData?.total_box ?? 0}
+                                    </div>
+                                  )}
                               </div>
                             </TableCell>
                           )}
@@ -1059,6 +1148,14 @@ const CreatePurchaseReturn = () => {
                                   placeholder="Enter Piece"
                                 />
                               </div>
+                              {!editId &&
+                                row?.purchase_sub_godown_id &&
+                                row?.purchase_sub_item_id && (
+                                  <div className="text-xs text-gray-700">
+                                    • Available Piece:{" "}
+                                    {row?.stockData?.total_piece ?? 0}
+                                  </div>
+                                )}
                             </TableCell>
                           )}
 
