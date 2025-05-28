@@ -35,6 +35,8 @@ export const DISPATCH_RETURN_LIST = `/dispatch-return-list`;
 export const DISPATCH_RETURN_EDIT_LIST = `/dispatch-return`;
 export const DISPATCH_RETURN_CREATE = `/dispatch-return`;
 export const DISPATCH_RETURN_SUB_DELETE = `/dispatch-return-sub`;
+//ITEM-AVAIABLE
+export const ITEM_AVAIABLEE = `/available-items`;
 
 //DASHBOARD
 export const DASHBOARD_LIST = `/dashboard`;
@@ -162,6 +164,24 @@ export const fetchDispatchReturnById = async (encryptedId, token) => {
       },
     });
     // console.log("res data", response.data);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch purchase details"
+    );
+  }
+};
+export const fetchAvaiableItem = async (itemid, godown, token) => {
+  try {
+    const response = await apiClient.get(
+      `${ITEM_AVAIABLEE}/${itemid}/${godown}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.log(error);

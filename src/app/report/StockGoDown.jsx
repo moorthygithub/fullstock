@@ -16,6 +16,7 @@ import { useReactToPrint } from "react-to-print";
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
 import { useFetchGoDown, useFetchItems } from "@/hooks/useApi";
 import { RiFileExcel2Line } from "react-icons/ri";
+import { useSelector } from "react-redux";
 
 const StockGoDown = () => {
   const containerRef = useRef();
@@ -26,7 +27,8 @@ const StockGoDown = () => {
     godown_id: "",
   });
   const token = usetoken();
-
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
   const fetchGodownData = async () => {
     const response = await apiClient.post(
       `${STOCK_GODOWN_REPORT}`,
@@ -263,7 +265,18 @@ const StockGoDown = () => {
       </div>
     </div>
   );
-
+  const toBoxPiece = (val, itemPiece = 1) => ({
+    box: Math.floor(val / itemPiece),
+    piece: val % itemPiece,
+  });
+  const grand = {
+    opening: processedStock.reduce((sum, g) => sum + g.opening, 0),
+    purchase: processedStock.reduce((sum, g) => sum + g.purchase, 0),
+    purchaseR: processedStock.reduce((sum, g) => sum + g.purchaseR, 0),
+    sale: processedStock.reduce((sum, g) => sum + g.sale, 0),
+    saleR: processedStock.reduce((sum, g) => sum + g.saleR, 0),
+    total: processedStock.reduce((sum, g) => sum + g.total, 0),
+  };
   return (
     <Page>
       <div className="p-0 md:p-4">
@@ -395,39 +408,155 @@ const StockGoDown = () => {
           <table className="w-full border-collapse border border-black">
             <thead className="bg-gray-100 ">
               <tr>
-                <th className="border border-black px-2 py-2 text-center">
+                <th
+                  className="border border-black px-2 py-2 text-center"
+                  rowSpan={2}
+                >
                   Item Name
                 </th>
-                <th className="border border-black px-2 py-2 text-center">
-                  Open Balance
-                </th>
-                <th className="border border-black px-2 py-2 text-center">
-                  Purchase
-                </th>
-                <th className="border border-black px-2 py-2 text-center">
-                  Purchase Return
-                </th>
-                <th className="border border-black px-2 py-2 text-center">
-                  Dispatch
-                </th>
-                <th className="border border-black px-2 py-2 text-center">
-                  Dispatch Return
-                </th>
-                <th className="border border-black px-2 py-2 text-center">
-                  Close Balance
-                </th>
+
+                {singlebranch === "Yes" && doublebranch === "Yes" ? (
+                  <>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      colSpan={2}
+                    >
+                      Open Balance
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      colSpan={2}
+                    >
+                      Purchase
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      colSpan={2}
+                    >
+                      Purchase Return
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      colSpan={2}
+                    >
+                      Dispatch
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      colSpan={2}
+                    >
+                      Dispatch Return
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      colSpan={2}
+                    >
+                      Close Balance
+                    </th>
+                  </>
+                ) : (
+                  <>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
+                      Open Balance
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
+                      Purchase
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
+                      Purchase Return
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
+                      Dispatch
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
+                      Dispatch Return
+                    </th>
+                    <th
+                      className="border border-black px-2 py-2 text-center"
+                      rowSpan={2}
+                    >
+                      Close Balance
+                    </th>
+                  </>
+                )}
               </tr>
+
+              {singlebranch === "Yes" && doublebranch === "Yes" && (
+                <tr>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Box
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Piece
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Box
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Piece
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Box
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Piece
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Box
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Piece
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Box
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Piece
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Box
+                  </th>
+                  <th className="border border-black px-2 py-2 text-center">
+                    Piece
+                  </th>
+                </tr>
+              )}
             </thead>
+
             <tbody>
               {processedStock.map((godown) => (
                 <React.Fragment key={godown.godown_id}>
                   <tr className="bg-blue-100">
-                    <td
-                      className="border border-black px-2 py-2 font-bold text-left"
-                      colSpan={7}
-                    >
-                      {godown.godown_name}
-                    </td>
+                    {singlebranch === "Yes" && doublebranch === "Yes" ? (
+                      <td
+                        className="border border-black px-2 py-2 font-bold text-left"
+                        colSpan={14}
+                      >
+                        {godown.godown_name}
+                      </td>
+                    ) : (
+                      <td
+                        className="border border-black px-2 py-2 font-bold text-left"
+                        colSpan={7}
+                      >
+                        {godown.godown_name}
+                      </td>
+                    )}
                   </tr>
 
                   {godown.items.map((item) => {
@@ -462,84 +591,240 @@ const StockGoDown = () => {
                       Number(item.sale_return_piece);
 
                     const total = opening + purchase - purchaseR - sale + saleR;
+                    const toBoxPiece = (val) => ({
+                      box: Math.floor(val / itemPiece),
+                      piece: val % itemPiece,
+                    });
+
+                    const openingBP = toBoxPiece(opening);
+                    const purchaseBP = toBoxPiece(purchase);
+                    const purchaseRBP = toBoxPiece(purchaseR);
+                    const saleBP = toBoxPiece(sale);
+                    const saleRBP = toBoxPiece(saleR);
+                    const totalBP = toBoxPiece(total);
 
                     return (
                       <tr key={item.item_id} className="hover:bg-gray-50">
                         <td className="border border-black px-2 py-2">
                           {item.item_name}
                         </td>
-                        <td className="border border-black px-2 py-2 text-right">
-                          {opening}
-                        </td>
-                        <td className="border border-black px-2 py-2 text-right">
-                          {purchase}
-                        </td>
-                        <td className="border border-black px-2 py-2 text-right">
-                          {purchaseR}
-                        </td>
-                        <td className="border border-black px-2 py-2 text-right">
-                          {sale}
-                        </td>
-                        <td className="border border-black px-2 py-2 text-right">
-                          {saleR}
-                        </td>
-                        <td className="border border-black px-2 py-2 text-right">
-                          {total}
-                        </td>
+
+                        {singlebranch === "Yes" && doublebranch === "Yes" ? (
+                          <>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {openingBP.box}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {openingBP.piece}
+                            </td>
+
+                            <td className="border border-black px-2 py-2 text-right">
+                              {purchaseBP.box}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {purchaseBP.piece}
+                            </td>
+
+                            <td className="border border-black px-2 py-2 text-right">
+                              {purchaseRBP.box}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {purchaseRBP.piece}
+                            </td>
+
+                            <td className="border border-black px-2 py-2 text-right">
+                              {saleBP.box}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {saleBP.piece}
+                            </td>
+
+                            <td className="border border-black px-2 py-2 text-right">
+                              {saleRBP.box}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {saleRBP.piece}
+                            </td>
+
+                            <td className="border border-black px-2 py-2 text-right">
+                              {totalBP.box}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {totalBP.piece}
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {opening}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {purchase}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {purchaseR}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {sale}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {saleR}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right">
+                              {total}
+                            </td>
+                          </>
+                        )}
                       </tr>
                     );
                   })}
 
-                  {/* Per-godown total row */}
                   <tr className="bg-yellow-100 font-semibold">
                     <td className="border border-black px-2 py-2 text-right">
                       Total:
                     </td>
-                    <td className="border border-black px-2 py-2 text-right">
-                      {godown.opening}
-                    </td>
-                    <td className="border border-black px-2 py-2 text-right">
-                      {godown.purchase}
-                    </td>
-                    <td className="border border-black px-2 py-2 text-right">
-                      {godown.purchaseR}
-                    </td>
-                    <td className="border border-black px-2 py-2 text-right">
-                      {godown.sale}
-                    </td>
-                    <td className="border border-black px-2 py-2 text-right">
-                      {godown.saleR}
-                    </td>
-                    <td className="border border-black px-2 py-2 text-right">
-                      {godown.total}
-                    </td>
+
+                    {singlebranch === "Yes" && doublebranch === "Yes" ? (
+                      <>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.opening).box}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.opening).piece}
+                        </td>
+
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.purchase).box}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.purchase).piece}
+                        </td>
+
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.purchaseR).box}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.purchaseR).piece}
+                        </td>
+
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.sale).box}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.sale).piece}
+                        </td>
+
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.saleR).box}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.saleR).piece}
+                        </td>
+
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.total).box}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {toBoxPiece(godown.total).piece}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {godown.opening}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {godown.purchase}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {godown.purchaseR}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {godown.sale}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {godown.saleR}
+                        </td>
+                        <td className="border border-black px-2 py-2 text-right">
+                          {godown.total}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 </React.Fragment>
               ))}
 
-              {/* Grand Total Row */}
               <tr className="bg-green-200 font-bold">
                 <td className="border border-black px-2 py-2 text-right">
                   Grand Total:
                 </td>
-                <td className="border border-black px-2 py-2 text-right">
-                  {processedStock.reduce((sum, g) => sum + g.opening, 0)}
-                </td>
-                <td className="border border-black px-2 py-2 text-right">
-                  {processedStock.reduce((sum, g) => sum + g.purchase, 0)}
-                </td>
-                <td className="border border-black px-2 py-2 text-right">
-                  {processedStock.reduce((sum, g) => sum + g.purchaseR, 0)}
-                </td>
-                <td className="border border-black px-2 py-2 text-right">
-                  {processedStock.reduce((sum, g) => sum + g.sale, 0)}
-                </td>
-                <td className="border border-black px-2 py-2 text-right">
-                  {processedStock.reduce((sum, g) => sum + g.saleR, 0)}
-                </td>
-                <td className="border border-black px-2 py-2 text-right">
-                  {processedStock.reduce((sum, g) => sum + g.total, 0)}
-                </td>
+
+                {singlebranch === "Yes" && doublebranch === "Yes" ? (
+                  <>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.opening).box}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.opening).piece}
+                    </td>
+
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.purchase).box}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.purchase).piece}
+                    </td>
+
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.purchaseR).box}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.purchaseR).piece}
+                    </td>
+
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.sale).box}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.sale).piece}
+                    </td>
+
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.saleR).box}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.saleR).piece}
+                    </td>
+
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.total).box}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {toBoxPiece(grand.total).piece}
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {grand.opening}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {grand.purchase}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {grand.purchaseR}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {grand.sale}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {grand.saleR}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-right">
+                      {grand.total}
+                    </td>
+                  </>
+                )}
               </tr>
             </tbody>
           </table>

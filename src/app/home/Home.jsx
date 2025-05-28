@@ -18,7 +18,7 @@ import StockTableSection from "./StockTableSection";
 import { useSelector } from "react-redux";
 const tabs = [
   { value: "stock-view", label: "Stock View" },
-  // { value: "purchase", label: "Stock < 0" },
+  { value: "outofstock", label: "Out of Stock" },
   // { value: "dispatch", label: "Stock < 100" },
   { value: "graph", label: "Graph" },
 ];
@@ -44,12 +44,9 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedCategoryZero, setSelectedCategoryZero] =
     useState("All Categories");
-  const [selectedCategoryHundered, setSelectedCategoryHundered] =
-    useState("All Categories");
   const [categories, setCategories] = useState(["All Categories"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchQueryZero, setSearchQueryZero] = useState("");
-  const [searchQueryHundered, setSearchQueryHundered] = useState("");
   const currentDates = new Date();
   const currentYear = currentDates.getFullYear();
   const currentMonthIndex = currentDates.getMonth();
@@ -57,6 +54,7 @@ const Home = () => {
   const [selectedMonth, setSelectedMonth] = useState(months[currentMonthIndex]);
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+  // const doublebranch ="No"
   const getYears = () => {
     const startYear = 2025;
     const currentYear = new Date().getFullYear();
@@ -160,11 +158,8 @@ const Home = () => {
 
       return matchesSearch && matchesCategory;
     }) || [];
-  //THIS IS >0 FILTER DATA
+
   const filteredItemsZero = (stockData || []).filter((item) => {
-    const available =
-      item?.openpurch - item?.closesale + (item.purch - item.sale);
-    if (available >= 0) return false;
     const searchLower = searchQueryZero.toLowerCase();
     const matchesSearch =
       item?.item_name?.toLowerCase().includes(searchLower) ||
@@ -173,23 +168,6 @@ const Home = () => {
     const matchesCategory =
       selectedCategoryZero === "All Categories" ||
       item.item_category === selectedCategoryZero;
-
-    return matchesSearch && matchesCategory;
-  });
-  //THIS IS >100 FILTER DATA
-  const filteredItemsHundered = (stockData || []).filter((item) => {
-    const available =
-      item.openpurch - item.closesale + (item.purch - item.sale);
-
-    if (available >= 100) return false;
-    const searchLower = searchQueryHundered.toLowerCase();
-    const matchesSearch =
-      item?.item_name?.toLowerCase().includes(searchLower) ||
-      item?.item_category?.toLowerCase().includes(searchLower) ||
-      available?.toString().toLowerCase().includes(searchLower);
-    const matchesCategory =
-      selectedCategoryHundered == "All Categories" ||
-      item.item_category === selectedCategoryHundered;
 
     return matchesSearch && matchesCategory;
   });
@@ -229,7 +207,6 @@ const Home = () => {
       return;
     }
 
-    // 1. Determine headers
     const headers = ["Item Name", "Category", "Size"];
     let showAvailable = false;
     let showBoxPiece = false;
@@ -288,46 +265,91 @@ const Home = () => {
       }),
     });
   };
-
-  const downloadLessThanZeroExcel = (filteredItemsZero, toast) => {
-    downloadExcel({
-      data: filteredItemsZero,
-      sheetName: "Stock < 0 Report",
-      headers: ["Item Name", "Category", "Available"],
-      getRowData: (transaction) => [
-        transaction.item_name,
-        transaction.item_category,
-        Number(transaction.openpurch) -
-          Number(transaction.closesale) +
-          (Number(transaction.purch) - Number(transaction.sale)) -
-          Number(transaction.purchR) +
-          Number(transaction.saleR),
-      ],
-      fileNamePrefix: "Stock_Report_Less_Than_Zero",
-      toast,
-      emptyDataCallback: () => ({
+  const downloadourofstockCSV = (filteredItemsZero, toast) => {
+    if (!filteredItemsZero || filteredItemsZero.length === 0) {
+      toast?.({
         title: "No Data",
         description: "No data available to export",
         variant: "destructive",
-      }),
-    });
-  };
+      });
+      return;
+    }
 
-  const downloadLessThanHunderedExcel = (filteredItemsHundered, toast) => {
+    const headers = ["Item Name", "Category"];
+    let showAvailable = false;
+    let showBoxPiece = false;
+
+    if (
+      (singlebranch === "Yes" && doublebranch === "No") ||
+      (singlebranch === "No" && doublebranch === "Yes")
+    ) {
+      headers.push("Minimum Stock", "Available");
+      showAvailable = true;
+    } else if (singlebranch === "Yes" && doublebranch === "Yes") {
+      headers.push(
+        "Minimum Box",
+        "Minimum Piece",
+        "Available Box",
+        "Available Piece"
+      );
+      showBoxPiece = true;
+    }
+
+    const getRowData = (item) => {
+      const itemPiece = Number(item?.item_piece) || 1;
+      const minimumStock = Number(item?.item_minimum_stock) || 0;
+
+      const openingPurch =
+        Number(item.openpurch) * itemPiece + Number(item.openpurch_piece || 0);
+      const openingSale =
+        Number(item.closesale) * itemPiece + Number(item.closesale_piece || 0);
+      const openingPurchR =
+        Number(item.openpurchR) * itemPiece +
+        Number(item.openpurchR_piece || 0);
+      const openingSaleR =
+        Number(item.closesaleR) * itemPiece +
+        Number(item.closesaleR_piece || 0);
+      const opening = openingPurch - openingSale - openingPurchR + openingSaleR;
+
+      const purchase =
+        Number(item.purch) * itemPiece + Number(item.purch_piece || 0);
+      const purchaseR =
+        Number(item.purchR) * itemPiece + Number(item.purchR_piece || 0);
+      const sale = Number(item.sale) * itemPiece + Number(item.sale_piece || 0);
+      const saleR =
+        Number(item.saleR) * itemPiece + Number(item.saleR_piece || 0);
+
+      const total = opening + purchase - purchaseR - sale + saleR;
+
+      if (total < minimumStock) {
+        const minimumBox = Math.round(minimumStock / itemPiece);
+        const minimumPiece = minimumStock % itemPiece;
+
+        const availableBox = Math.round(total / itemPiece);
+        const availablePiece = total % itemPiece;
+
+        const row = [item.item_name || "", item.item_category || ""];
+
+        if (showAvailable) {
+          row.push(minimumStock, total);
+        } else if (showBoxPiece) {
+          row.push(minimumBox, minimumPiece, availableBox, availablePiece);
+        }
+        // console.log(row,"row data")
+        return row;
+      }
+
+      // return row;
+    };
+    console.log("downloadExcel data:", filteredItemsZero);
+    console.log("downloadExcel getRowData:", getRowData);
+
     downloadExcel({
-      data: filteredItemsHundered,
-      sheetName: "Stock < 100 Report",
-      headers: ["Item Name", "Category", "Available"],
-      getRowData: (transaction) => [
-        transaction.item_name,
-        transaction.item_category,
-        Number(transaction.openpurch) -
-          Number(transaction.closesale) +
-          (Number(transaction.purch) - Number(transaction.sale)) -
-          Number(transaction.purchR) +
-          Number(transaction.saleR),
-      ],
-      fileNamePrefix: "Stock_Report_Less_Than_Hundred",
+      data: filteredItemsZero,
+      sheetName: "Out of Stock",
+      headers,
+      getRowData,
+      fileNamePrefix: "out_of_stock_summary",
       toast,
       emptyDataCallback: () => ({
         title: "No Data",
@@ -361,7 +383,7 @@ const Home = () => {
       <div className=" w-full p-0  md:p-4 sm:grid grid-cols-1">
         <>
           <Tabs defaultValue="stock-view" className="sm:hidden">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value}>
                   {tab.label}
@@ -385,9 +407,9 @@ const Home = () => {
                 loading={isLoadingStock}
               />
             </TabsContent>
-            {/* <TabsContent value="purchase">
-              <StockTableSection
-                title="Stock < 0"
+            <TabsContent value="outofstock">
+              <StockTableBoth
+                title="Out of Stock"
                 selectedCategory={selectedCategoryZero}
                 setSelectedCategory={setSelectedCategoryZero}
                 searchQuery={searchQueryZero}
@@ -395,41 +417,25 @@ const Home = () => {
                 filteredItems={filteredItemsZero}
                 categories={categories}
                 containerRef={containerRef}
-                // handlePrintPdf={handlePrintPdf}
-                print="false"
-                downloadCSV={downloadLessThanZeroExcel}
+                handlePrintPdf={handlePrintPdf}
+                print="true"
+                downloadCSV={downloadourofstockCSV}
                 currentDate={currentDate}
                 loading={isLoadingStock}
               />
             </TabsContent>
-            <TabsContent value="dispatch">
-              <StockTableSection
-                title="Stock < 100"
-                selectedCategory={selectedCategoryHundered}
-                setSelectedCategory={setSelectedCategoryHundered}
-                searchQuery={searchQueryHundered}
-                setSearchQuery={setSearchQueryHundered}
-                filteredItems={filteredItemsHundered}
-                categories={categories}
-                containerRef={containerRef}
-                print="false"
-                downloadCSV={downloadLessThanHunderedExcel}
-                currentDate={currentDate}
-                loading={isLoadingStock}
-              />
-            </TabsContent> */}
             <TabsContent value="graph">
               <DispatchBarChart
-                title="Monthly Dispatch"
-                dispatch={dashbordstock?.dispatch}
-                isLoadingdashboord={isLoadingdashboord}
-                isErrordashboord={isErrordashboord}
+                title="Monthly Calendar"
+                stock={dashbordstock}
                 selectedYear={selectedYear}
                 selectedMonth={selectedMonth}
                 years={years}
                 months={months}
                 handleChange={handleChange}
                 currentYear={currentYear}
+                isLoadingdashboord={isLoadingdashboord}
+                isErrordashboord={isErrordashboord}
                 refetch={refetchdashboord}
                 currentMonthIndex={currentMonthIndex}
               />
@@ -440,32 +446,37 @@ const Home = () => {
         <>
           <div className="hidden sm:block rounded-md border max-h-[500px] overflow-y-auto mb-4">
             <DispatchBarChart
-              title="Monthly Dispatch"
-              dispatch={dashbordstock?.dispatch}
-              isLoadingdashboord={isLoadingdashboord}
-              isErrordashboord={isErrordashboord}
+              title="Monthly Calendar"
+              stock={dashbordstock}
               selectedYear={selectedYear}
               selectedMonth={selectedMonth}
               years={years}
               months={months}
               handleChange={handleChange}
               currentYear={currentYear}
+              isLoadingdashboord={isLoadingdashboord}
+              isErrordashboord={isErrordashboord}
               refetch={refetchdashboord}
               currentMonthIndex={currentMonthIndex}
             />
           </div>
-
-          <StockTableBoth
-            title="Stock Less Than 0"
-            data={filteredItemsZero}
-            onDownload={downloadLessThanZeroExcel}
-          />
-
-          <StockTableBoth
-            title="Stock Less Than 100"
-            data={filteredItemsHundered}
-            onDownload={downloadLessThanHunderedExcel}
-          />
+          <div className="hidden sm:block rounded-md  border max-h-[500px] overflow-y-auto mb-4">
+            <StockTableBoth
+              title="Out of Stock"
+              selectedCategory={selectedCategoryZero}
+              setSelectedCategory={setSelectedCategoryZero}
+              searchQuery={searchQueryZero}
+              setSearchQuery={setSearchQueryZero}
+              filteredItems={filteredItemsZero}
+              categories={categories}
+              containerRef={containerRef}
+              handlePrintPdf={handlePrintPdf}
+              print="true"
+              downloadCSV={downloadourofstockCSV}
+              currentDate={currentDate}
+              loading={isLoadingStock}
+            />
+          </div>
         </>
       </div>
     </Page>

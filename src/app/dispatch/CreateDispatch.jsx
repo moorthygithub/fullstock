@@ -2,6 +2,7 @@ import {
   DISPATCH_CREATE,
   DISPATCH_EDIT_LIST,
   DISPATCH_SUB_DELETE,
+  fetchAvaiableItem,
   fetchDispatchById,
 } from "@/api";
 import apiClient from "@/api/axios";
@@ -88,11 +89,15 @@ const CreateDispatch = () => {
       id: editId ? "" : null,
       dispatch_sub_item_id: "",
       dispatch_sub_godown_id: "",
-      dispatch_sub_box: "",
+      dispatch_sub_box: 0,
       item_brand: "",
       item_size: "",
-      avaiable_box: "",
-      dispatch_sub_piece: "",
+      dispatch_sub_piece: 0,
+      stockData: {
+        total: 0,
+        total_box: 0,
+        total_piece: 0,
+      },
     },
   ]);
 
@@ -102,8 +107,8 @@ const CreateDispatch = () => {
       {
         dispatch_sub_item_id: "",
         dispatch_sub_godown_id: "",
-        dispatch_sub_box: "",
-        dispatch_sub_piece: "",
+        dispatch_sub_box: 0,
+        dispatch_sub_piece: 0,
       },
     ]);
   }, []);
@@ -148,8 +153,8 @@ const CreateDispatch = () => {
         ? dispatchByid.dispatchSub.map((sub) => ({
             id: sub.id || "",
             dispatch_sub_item_id: sub.dispatch_sub_item_id || "",
-            dispatch_sub_box: sub.dispatch_sub_box || "",
-            dispatch_sub_piece: sub.dispatch_sub_piece || "",
+            dispatch_sub_box: sub.dispatch_sub_box || 0,
+            dispatch_sub_piece: sub.dispatch_sub_piece || 0,
             item_brand: sub.item_brand || "",
             item_size: sub.item_size || "",
             dispatch_sub_godown_id: sub.dispatch_sub_godown_id,
@@ -162,7 +167,6 @@ const CreateDispatch = () => {
               item_size: "",
               dispatch_sub_piece: "",
               dispatch_sub_godown_id: "",
-              avaiable_box: "",
             },
           ];
 
@@ -175,42 +179,105 @@ const CreateDispatch = () => {
   const { data: godownData, isLoading: loadinggodown } = useFetchGoDown();
   const { data: dispatchRef, isLoading: loadingref } = useFetchDispatchRef();
 
-  const handlePaymentChange = (selectedValue, rowIndex, fieldName) => {
-    let value;
+  const fetchAndSetStock = async (rowIndex, itemId, godownId, updatedData) => {
+    if (!itemId || !godownId) return;
 
-    if (selectedValue && selectedValue.target) {
-      value = selectedValue.target.value;
-    } else {
-      value = selectedValue;
+    try {
+      const response = await fetchAvaiableItem(itemId, godownId, token);
+      const buyer = response?.stock?.[0];
+
+      const itemPiece = Number(buyer?.item_piece || 1);
+      const safeNumber = (val) => Number(val) || 0;
+
+      const openingPurch =
+        safeNumber(buyer?.openpurch) * itemPiece +
+        safeNumber(buyer?.openpurch_piece);
+      const openingSale =
+        safeNumber(buyer?.closesale) * itemPiece +
+        safeNumber(buyer?.closesale_piece);
+      const openingPurchR =
+        safeNumber(buyer?.openpurchR) * itemPiece +
+        safeNumber(buyer?.openpurchR_piece);
+      const openingSaleR =
+        safeNumber(buyer?.closesaleR) * itemPiece +
+        safeNumber(buyer?.closesaleR_piece);
+
+      const opening = openingPurch - openingSale - openingPurchR + openingSaleR;
+
+      const purchase =
+        safeNumber(buyer?.purch) * itemPiece + safeNumber(buyer?.purch_piece);
+      const purchaseR =
+        safeNumber(buyer?.purchR) * itemPiece + safeNumber(buyer?.purchR_piece);
+      const sale =
+        safeNumber(buyer?.sale) * itemPiece + safeNumber(buyer?.sale_piece);
+      const saleR =
+        safeNumber(buyer?.saleR) * itemPiece + safeNumber(buyer?.saleR_piece);
+
+      const total = opening + purchase - purchaseR - sale + saleR;
+
+      const toBoxPiece = (val) => ({
+        box: Math.floor(val / itemPiece),
+        piece: val % itemPiece,
+      });
+
+      const totalBP = toBoxPiece(total);
+
+      updatedData[rowIndex].stockData = {
+        total,
+        total_box: totalBP.box,
+        total_piece: totalBP.piece,
+      };
+    } catch (err) {
+      console.error("Stock fetch error:", err);
+      updatedData[rowIndex].stockData = {
+        total: 0,
+        total_box: 0,
+        total_piece: 0,
+      };
     }
+
+    setInvoiceData([...updatedData]);
+  };
+  useEffect(() => {
+    invoiceData.forEach((row, index) => {
+      const { dispatch_sub_item_id, dispatch_sub_godown_id } = row;
+      if (dispatch_sub_item_id && dispatch_sub_godown_id) {
+        fetchAndSetStock(index, dispatch_sub_item_id, dispatch_sub_godown_id, [
+          ...invoiceData,
+        ]);
+      }
+    });
+  }, [
+    invoiceData
+      .map(
+        (row) => row?.dispatch_sub_item_id + "-" + row?.dispatch_sub_godown_id
+      )
+      .join(","),
+  ]);
+  const handlePaymentChange = (selectedValue, rowIndex, fieldName) => {
+    let value = selectedValue?.target?.value ?? selectedValue;
     const updatedData = [...invoiceData];
 
     if (fieldName == "dispatch_sub_item_id") {
       updatedData[rowIndex][fieldName] = value;
-      const selectedItem = itemsData?.items?.find((item) => item.id == value);
+      const selectedItem = itemsData?.items?.find((item) => item.id === value);
       if (selectedItem) {
         updatedData[rowIndex]["item_size"] = selectedItem.item_size;
         updatedData[rowIndex]["item_brand"] = selectedItem.item_brand;
-        updatedData[rowIndex]["avaiable_box"] =
-          Number(selectedItem.openpurch) -
-          Number(selectedItem.closesale) +
-          (Number(selectedItem.purch) - Number(selectedItem.sale));
       }
-
       focusBoxInput(rowIndex);
-
-      setInvoiceData(updatedData);
     } else {
-      if (["dispatch_sub_box", "dispatch_sub_piece"].includes(fieldName)) {
-        if (!/^\d*$/.test(value)) {
-          console.log("Invalid input. Only digits are allowed.");
-          return;
-        }
+      if (
+        ["dispatch_sub_box", "dispatch_sub_piece"].includes(fieldName) &&
+        !/^\d*$/.test(value)
+      ) {
+        console.log("Invalid input. Only digits are allowed.");
+        return;
       }
-
       updatedData[rowIndex][fieldName] = value;
-      setInvoiceData(updatedData);
     }
+
+    setInvoiceData(updatedData);
   };
 
   const handleInputChange = (e, field) => {
@@ -666,24 +733,33 @@ const CreateDispatch = () => {
 
                           {/* Godown Select */}
                           <TableCell className="px-4 py-3 min-w-[150px] align-top">
-                            <MemoizedProductSelect
-                              value={row.dispatch_sub_godown_id}
-                              onChange={(e) =>
-                                handlePaymentChange(
-                                  e,
-                                  rowIndex,
-                                  "dispatch_sub_godown_id"
-                                )
-                              }
-                              options={
-                                godownData?.godown?.map((godown) => ({
-                                  value: godown.id,
-                                  label: godown.godown,
-                                })) || []
-                              }
-                              placeholder="Select Godown"
-                              className="text-xs"
-                            />
+                            <div className="space-y-1">
+                              <MemoizedProductSelect
+                                value={row.dispatch_sub_godown_id}
+                                onChange={(e) =>
+                                  handlePaymentChange(
+                                    e,
+                                    rowIndex,
+                                    "dispatch_sub_godown_id"
+                                  )
+                                }
+                                options={
+                                  godownData?.godown?.map((godown) => ({
+                                    value: godown.id,
+                                    label: godown.godown,
+                                  })) || []
+                                }
+                                placeholder="Select Godown"
+                                className="text-xs"
+                              />
+                              {!editId && row.item_brand && (
+                                <div className="text-xs text-gray-600">
+                                  <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
+                                    {row.item_brand}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
 
                           {singlebranch == "Yes" && (
@@ -704,13 +780,15 @@ const CreateDispatch = () => {
                                   }
                                   placeholder="Qty"
                                 />
-                                {!editId && row.item_brand && (
-                                  <div className="text-xs text-gray-600">
-                                    <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
-                                      {row.item_brand}
-                                    </span>
-                                  </div>
-                                )}
+                                {!editId &&
+                                  row?.dispatch_sub_godown_id &&
+                                  row?.dispatch_sub_item_id && (
+                                    <div className="text-xs text-gray-600">
+                                      <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
+                                        {row.stockData?.total_box}
+                                      </span>
+                                    </div>
+                                  )}
                               </div>
                             </TableCell>
                           )}
@@ -730,6 +808,15 @@ const CreateDispatch = () => {
                                   }
                                   placeholder="Piece"
                                 />
+                                {!editId &&
+                                  row?.dispatch_sub_godown_id &&
+                                  row?.dispatch_sub_item_id && (
+                                    <div className="text-xs text-gray-600">
+                                      <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
+                                        {row.stockData?.total_piece}
+                                      </span>
+                                    </div>
+                                  )}
                               </div>
                             </TableCell>
                           )}
@@ -743,14 +830,6 @@ const CreateDispatch = () => {
                 <div className="mt-2 text-xs text-gray-500 flex items-center">
                   <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
                   Total Items: {invoiceData.length}
-                  {invoiceData.some((row) => row.dispatch_sub_box) && (
-                    <div className="flex items-center text-sm text-gray-700">
-                      <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                      Available Box:&nbsp;
-                      {invoiceData.find((row) => row.dispatch_sub_box)
-                        ?.avaiable_box || 0}
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -1064,11 +1143,14 @@ const CreateDispatch = () => {
                                   placeholder="Enter Box"
                                 />
 
-                                {!editId && row.dispatch_sub_box && (
-                                  <div className="text-xs text-gray-700">
-                                    • Available Box: {row.avaiable_box}
-                                  </div>
-                                )}
+                                {!editId &&
+                                  row?.dispatch_sub_godown_id &&
+                                  row?.dispatch_sub_item_id && (
+                                    <div className="text-xs text-gray-700">
+                                      • Available Box:{" "}
+                                      {row?.stockData?.total_box ?? 0}
+                                    </div>
+                                  )}
                               </div>
                             </TableCell>
                           )}
@@ -1088,6 +1170,14 @@ const CreateDispatch = () => {
                                   }
                                   placeholder="Enter Piece"
                                 />
+                                {!editId &&
+                                  row?.dispatch_sub_godown_id &&
+                                  row?.dispatch_sub_item_id && (
+                                    <div className="text-xs text-gray-700">
+                                      • Available Piece:{" "}
+                                      {row?.stockData?.total_piece ?? 0}
+                                    </div>
+                                  )}
                               </div>
                             </TableCell>
                           )}

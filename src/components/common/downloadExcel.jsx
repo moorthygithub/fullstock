@@ -86,7 +86,7 @@ const downloadExcel = async ({
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FFFF00" }, // Yellow
+      fgColor: { argb: "FFFF00" }, 
     };
     cell.alignment = { horizontal: "center" };
     cell.border = {
@@ -100,6 +100,7 @@ const downloadExcel = async ({
   // Data rows
   data.forEach((item) => {
     const rowData = getRowData(item);
+    if (!Array.isArray(rowData)) return;
     worksheet.addRow(rowData);
 
     rowData.forEach((val, i) => {
@@ -125,7 +126,7 @@ const downloadExcel = async ({
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "D9EAD3" }, 
+      fgColor: { argb: "D9EAD3" },
     };
   });
 
