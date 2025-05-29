@@ -176,43 +176,6 @@ const CreateDispatchReturnForm = () => {
   const { data: dispatchRef, isLoading: loadingref } =
     useFetchDispatchReturnRef();
 
-  // const handlePaymentChange = (selectedValue, rowIndex, fieldName) => {
-  //   let value;
-
-  //   if (selectedValue && selectedValue.target) {
-  //     value = selectedValue.target.value;
-  //   } else {
-  //     value = selectedValue;
-  //   }
-  //   const updatedData = [...invoiceData];
-
-  //   if (fieldName == "dispatch_sub_item_id") {
-  //     updatedData[rowIndex][fieldName] = value;
-  //     const selectedItem = itemsData?.items?.find((item) => item.id == value);
-  //     if (selectedItem) {
-  //       updatedData[rowIndex]["item_size"] = selectedItem.item_size;
-  //       updatedData[rowIndex]["item_brand"] = selectedItem.item_brand;
-  //       updatedData[rowIndex]["avaiable_box"] =
-  //         Number(selectedItem.openpurch) -
-  //         Number(selectedItem.closesale) +
-  //         (Number(selectedItem.purch) - Number(selectedItem.sale));
-  //     }
-
-  //     focusBoxInput(rowIndex);
-
-  //     setInvoiceData(updatedData);
-  //   } else {
-  //     if (["dispatch_sub_box", "dispatch_sub_piece"].includes(fieldName)) {
-  //       if (!/^\d*$/.test(value)) {
-  //         console.log("Invalid input. Only digits are allowed.");
-  //         return;
-  //       }
-  //     }
-
-  //     updatedData[rowIndex][fieldName] = value;
-  //     setInvoiceData(updatedData);
-  //   }
-  // };
   const fetchAndSetStock = async (rowIndex, itemId, godownId, updatedData) => {
     if (!itemId || !godownId) return;
 
@@ -752,18 +715,34 @@ const CreateDispatchReturnForm = () => {
                             </div>
 
                             {/* Delete Row Button */}
-                            <button
-                              type="button"
-                              onClick={() => removeRow(rowIndex)}
-                              disabled={invoiceData.length === 1}
-                              className={`absolute top-2 right-2 rounded-full p-1 ${
-                                invoiceData.length === 1
-                                  ? "bg-gray-200 text-gray-400"
-                                  : "bg-red-100 text-red-500"
-                              }`}
-                            >
-                              <MinusCircle className="h-4 w-4" />
-                            </button>
+                            {row.id ? (
+                              userType == 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  className={`absolute top-2 right-2 rounded-full p-1 ${
+                                    invoiceData.length === 1
+                                      ? "bg-gray-200 text-gray-400"
+                                      : "bg-red-100 text-red-500"
+                                  }`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeRow(rowIndex)}
+                                disabled={invoiceData.length === 1}
+                                className={`absolute top-2 right-2 rounded-full p-1 ${
+                                  invoiceData.length === 1
+                                    ? "bg-gray-200 text-gray-400"
+                                    : "bg-red-100 text-red-500"
+                                }`}
+                              >
+                                <MinusCircle className="h-4 w-4" />
+                              </button>
+                            )}
                           </TableCell>
 
                           {/* Godown Select */}

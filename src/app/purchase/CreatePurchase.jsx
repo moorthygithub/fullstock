@@ -703,18 +703,34 @@ const CreatePurchase = () => {
                             </div>
 
                             {/* Delete Row Button */}
-                            <button
-                              type="button"
-                              onClick={() => removeRow(rowIndex)}
-                              disabled={invoiceData.length === 1}
-                              className={`absolute top-2 right-2 rounded-full p-1 ${
-                                invoiceData.length === 1
-                                  ? "bg-gray-200 text-gray-400"
-                                  : "bg-red-100 text-red-500"
-                              }`}
-                            >
-                              <MinusCircle className="h-4 w-4" />
-                            </button>
+                            {row.id ? (
+                              userType == 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  className={`absolute top-2 right-2 rounded-full p-1 ${
+                                    invoiceData.length === 1
+                                      ? "bg-gray-200 text-gray-400"
+                                      : "bg-red-100 text-red-500"
+                                  }`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeRow(rowIndex)}
+                                disabled={invoiceData.length === 1}
+                                className={`absolute top-2 right-2 rounded-full p-1 ${
+                                  invoiceData.length === 1
+                                    ? "bg-gray-200 text-gray-400"
+                                    : "bg-red-100 text-red-500"
+                                }`}
+                              >
+                                <MinusCircle className="h-4 w-4" />
+                              </button>
+                            )}
                           </TableCell>
 
                           {/* Godown Select */}

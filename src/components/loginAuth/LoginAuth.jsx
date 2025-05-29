@@ -136,6 +136,8 @@ export default function LoginAuth() {
                 </span>
               </div>
             </div>
+            {/* <Logo /> */}
+
             <CardTitle
               className={`text-2xl text-center${ButtonConfig.loginText}`}
             >

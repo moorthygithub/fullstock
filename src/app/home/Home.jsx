@@ -222,7 +222,6 @@ const Home = () => {
       showBoxPiece = true;
     }
 
-    // 2. Define row data logic
     const getRowData = (item) => {
       const itemPiece = Number(item.item_piece) || 1;
       const total =
