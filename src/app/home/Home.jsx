@@ -45,6 +45,8 @@ const Home = () => {
   const [selectedCategoryZero, setSelectedCategoryZero] =
     useState("All Categories");
   const [categories, setCategories] = useState(["All Categories"]);
+  const [brands, setBrands] = useState(["All Brands"]);
+  const [selectedBrands, setSelectedBrands] = useState("All Brands");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchQueryZero, setSearchQueryZero] = useState("");
   const currentDates = new Date();
@@ -54,6 +56,8 @@ const Home = () => {
   const [selectedMonth, setSelectedMonth] = useState(months[currentMonthIndex]);
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+  const columnVisibility = useSelector((state) => state.columnVisibility);
+
   // const doublebranch ="No"
   const getYears = () => {
     const startYear = 2025;
@@ -130,12 +134,33 @@ const Home = () => {
     refetchdashboord();
   };
 
+  // useEffect(() => {
+  //   if (stockData && stockData.length > 0) {
+  //     const uniqueCategories = [
+  //       ...new Set(stockData.map((item) => item.item_category)),
+  //     ];
+  //     setCategories(["All Categories", ...uniqueCategories]);
+
+  //   }
+  // }, [stockData]);
   useEffect(() => {
     if (stockData && stockData.length > 0) {
       const uniqueCategories = [
         ...new Set(stockData.map((item) => item.item_category)),
       ];
-      setCategories(["All Categories", ...uniqueCategories]);
+      const uniqueBrands = [
+        ...new Set(stockData.map((item) => item.item_brand)),
+      ];
+      const sortedBrands = uniqueBrands
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+      const sortedCategories = uniqueCategories
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+      setBrands(["All Brands", ...sortedBrands]);
+      setCategories(["All Categories", ...sortedCategories]);
     }
   }, [stockData]);
   //THIS IS STOCK DATA REPORT  IN SMALL SCREEN
@@ -156,7 +181,10 @@ const Home = () => {
         selectedCategory === "All Categories" ||
         item.item_category === selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      const matchesBrand =
+        selectedBrands === "All Brands" || item.item_brand === selectedBrands;
+
+      return matchesSearch && matchesBrand && matchesCategory;
     }) || [];
 
   const filteredItemsZero = (stockData || []).filter((item) => {
@@ -195,56 +223,140 @@ const Home = () => {
         }
       `,
   });
+  // const downloadCSV = (filteredItems, toast) => {
+  //   if (!filteredItems || filteredItems.length === 0) {
+  //     if (toast) {
+  //       toast({
+  //         title: "No Data",
+  //         description: "No data available to export",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //     return;
+  //   }
+
+  //   const headers = ["Item Name", "Category", "Size"];
+  //   let showAvailable = false;
+  //   let showBoxPiece = false;
+
+  //   if (
+  //     (singlebranch == "Yes" && doublebranch == "No") ||
+  //     (singlebranch == "No" && doublebranch == "Yes")
+  //   ) {
+  //     headers.push("Available");
+  //     showAvailable = true;
+  //   } else if (singlebranch === "Yes" && doublebranch === "Yes") {
+  //     headers.push("Available Box", "Available Piece");
+  //     showBoxPiece = true;
+  //   }
+
+  //   const getRowData = (item) => {
+  //     const itemPiece = Number(item.item_piece) || 1;
+  //     const total =
+  //       Number(item.openpurch) -
+  //       Number(item.closesale) +
+  //       (Number(item.purch) - Number(item.sale)) * itemPiece +
+  //       Number(item.openpurch_piece) -
+  //       Number(item.closesale_piece) +
+  //       (Number(item.purch_piece) - Number(item.sale_piece));
+
+  //     const box = Math.floor(total / itemPiece);
+  //     const piece = total % itemPiece;
+
+  //     const row = [
+  //       item.item_name || "",
+  //       item.item_category || "",
+  //       item.item_size || "",
+  //     ];
+
+  //     if (showAvailable) {
+  //       row.push(total);
+  //     } else if (showBoxPiece) {
+  //       row.push(box, piece);
+  //     }
+
+  //     return row;
+  //   };
+
+  //   downloadExcel({
+  //     data: filteredItems,
+  //     sheetName: "Stock Summary",
+  //     headers,
+  //     getRowData,
+  //     fileNamePrefix: "stock_summary",
+  //     toast,
+  //     emptyDataCallback: () => ({
+  //       title: "No Data",
+  //       description: "No data available to export",
+  //       variant: "destructive",
+  //     }),
+  //   });
+  // };
   const downloadCSV = (filteredItems, toast) => {
     if (!filteredItems || filteredItems.length === 0) {
-      if (toast) {
-        toast({
-          title: "No Data",
-          description: "No data available to export",
-          variant: "destructive",
-        });
-      }
+      toast?.({
+        title: "No Data",
+        description: "No data available to export",
+        variant: "destructive",
+      });
       return;
     }
 
-    const headers = ["Item Name", "Category", "Size"];
+    const headers = [];
     let showAvailable = false;
     let showBoxPiece = false;
 
-    if (
-      (singlebranch == "Yes" && doublebranch == "No") ||
-      (singlebranch == "No" && doublebranch == "Yes")
-    ) {
-      headers.push("Available");
-      showAvailable = true;
-    } else if (singlebranch === "Yes" && doublebranch === "Yes") {
-      headers.push("Available Box", "Available Piece");
-      showBoxPiece = true;
+    // Push visible headers
+    if (columnVisibility?.item_name) headers.push("Item Name");
+    if (columnVisibility?.category) headers.push("Category");
+    if (columnVisibility?.size) headers.push("Size");
+
+    // Available logic
+    const isSingleBranchOnly =
+      (singlebranch === "Yes" && doublebranch === "No") ||
+      (singlebranch === "No" && doublebranch === "Yes");
+
+    const isDoubleBranch = singlebranch === "Yes" && doublebranch === "Yes";
+
+    if (columnVisibility.available_box) {
+      if (isSingleBranchOnly) {
+        headers.push("Available");
+        showAvailable = true;
+      } else if (isDoubleBranch) {
+        if (columnVisibility.box) headers.push("Available Box");
+        if (columnVisibility.piece) headers.push("Available Piece");
+        showBoxPiece = true;
+      }
     }
 
     const getRowData = (item) => {
       const itemPiece = Number(item.item_piece) || 1;
-      const total =
-        Number(item.openpurch) -
-        Number(item.closesale) +
-        (Number(item.purch) - Number(item.sale)) * itemPiece +
-        Number(item.openpurch_piece) -
-        Number(item.closesale_piece) +
-        (Number(item.purch_piece) - Number(item.sale_piece));
+
+      const openingPurch =
+        Number(item.openpurch) * itemPiece + Number(item.openpurch_piece);
+      const openingSale =
+        Number(item.closesale) * itemPiece + Number(item.closesale_piece);
+      const purchase =
+        Number(item.purch) * itemPiece + Number(item.purch_piece);
+      const sale = Number(item.sale) * itemPiece + Number(item.sale_piece);
+
+      const total = openingPurch - openingSale + (purchase - sale);
 
       const box = Math.floor(total / itemPiece);
       const piece = total % itemPiece;
 
-      const row = [
-        item.item_name || "",
-        item.item_category || "",
-        item.item_size || "",
-      ];
+      const row = [];
+      if (columnVisibility.item_name) row.push(item.item_name || "");
+      if (columnVisibility.category) row.push(item.item_category || "");
+      if (columnVisibility.size) row.push(item.item_size || "");
 
-      if (showAvailable) {
-        row.push(total);
-      } else if (showBoxPiece) {
-        row.push(box, piece);
+      if (columnVisibility.available_box) {
+        if (showAvailable) {
+          row.push(total);
+        } else if (showBoxPiece) {
+          if (columnVisibility.box) row.push(box);
+          if (columnVisibility.piece) row.push(piece);
+        }
       }
 
       return row;
@@ -264,6 +376,7 @@ const Home = () => {
       }),
     });
   };
+
   const downloadourofstockCSV = (filteredItemsZero, toast) => {
     if (!filteredItemsZero || filteredItemsZero.length === 0) {
       toast?.({
@@ -391,7 +504,7 @@ const Home = () => {
             </TabsList>
             <TabsContent value="stock-view">
               <StockTableSection
-                title="Stock"
+                title="Stock View"
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
                 searchQuery={searchQuery}
@@ -404,6 +517,9 @@ const Home = () => {
                 currentDate={currentDate}
                 print="true"
                 loading={isLoadingStock}
+                selectedBrands={selectedBrands}
+                setSelectedBrands={setSelectedBrands}
+                brands={brands}
               />
             </TabsContent>
             <TabsContent value="outofstock">

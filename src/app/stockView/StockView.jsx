@@ -1,18 +1,16 @@
 import { STOCK_REPORT } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
+import downloadExcel from "@/components/common/downloadExcel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTodayDate } from "@/utils/currentDate";
 import { useQuery } from "@tanstack/react-query";
-import ExcelJS from "exceljs";
 import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { useReactToPrint } from "react-to-print";
 import Page from "../dashboard/page";
 import StockTableSection from "../home/StockTableSection";
-import { useSelector } from "react-redux";
-import { useToast } from "@/hooks/use-toast";
-import downloadExcel from "@/components/common/downloadExcel";
 
 const StockView = () => {
   const containerRef = useRef();
@@ -24,8 +22,10 @@ const StockView = () => {
   const [selectedBrands, setSelectedBrands] = useState("All Brands");
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+  // const doublebranch = "Yes";
+  const columnVisibility = useSelector((state) => state.columnVisibility);
+  console.log(doublebranch, singlebranch);
   const token = usetoken();
-  const { toast } = useToast();
   const fetchStockData = async () => {
     const response = await apiClient.post(
       `${STOCK_REPORT}`,
@@ -52,6 +52,18 @@ const StockView = () => {
     queryFn: fetchStockData,
   });
 
+  // useEffect(() => {
+  //   if (stockData && stockData.length > 0) {
+  //     const uniqueCategories = [
+  //       ...new Set(stockData.map((item) => item.item_category)),
+  //     ];
+  //     const uniqueBrands = [
+  //       ...new Set(stockData.map((item) => item.item_brand)),
+  //     ];
+  //     setBrands(["All Brands", ...uniqueBrands]);
+  //     setCategories(["All Categories", ...uniqueCategories]);
+  //   }
+  // }, [stockData]);
   useEffect(() => {
     if (stockData && stockData.length > 0) {
       const uniqueCategories = [
@@ -60,8 +72,16 @@ const StockView = () => {
       const uniqueBrands = [
         ...new Set(stockData.map((item) => item.item_brand)),
       ];
-      setBrands(["All Brands", ...uniqueBrands]);
-      setCategories(["All Categories", ...uniqueCategories]);
+      const sortedBrands = uniqueBrands
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+      const sortedCategories = uniqueCategories
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+      setBrands(["All Brands", ...sortedBrands]);
+      setCategories(["All Categories", ...sortedCategories]);
     }
   }, [stockData]);
 
@@ -92,7 +112,6 @@ const StockView = () => {
     pageStyle: `
       @page {
         size: A4;
-        margin: 5mm;
       }
     
         @media print {
@@ -127,56 +146,71 @@ const StockView = () => {
 
   const downloadCSV = (filteredItems, toast) => {
     if (!filteredItems || filteredItems.length === 0) {
-      if (toast) {
-        toast({
-          title: "No Data",
-          description: "No data available to export",
-          variant: "destructive",
-        });
-      }
+      toast?.({
+        title: "No Data",
+        description: "No data available to export",
+        variant: "destructive",
+      });
       return;
     }
 
-    // 1. Determine headers
-    const headers = ["Item Name", "Category", "Size"];
+    const headers = [];
     let showAvailable = false;
     let showBoxPiece = false;
 
-    if (
-      (singlebranch == "Yes" && doublebranch == "No") ||
-      (singlebranch == "No" && doublebranch == "Yes")
-    ) {
-      headers.push("Available");
-      showAvailable = true;
-    } else if (singlebranch === "Yes" && doublebranch === "Yes") {
-      headers.push("Available Box", "Available Piece");
-      showBoxPiece = true;
+    // Push visible headers
+    if (columnVisibility?.item_name) headers.push("Item Name");
+    if (columnVisibility?.category) headers.push("Category");
+    if (columnVisibility?.brand) headers.push("Brand");
+    if (columnVisibility?.size) headers.push("Size");
+
+    // Available logic
+    const isSingleBranchOnly =
+      (singlebranch === "Yes" && doublebranch === "No") ||
+      (singlebranch === "No" && doublebranch === "Yes");
+
+    const isDoubleBranch = singlebranch === "Yes" && doublebranch === "Yes";
+
+    if (columnVisibility.available_box) {
+      if (isSingleBranchOnly) {
+        headers.push("Available");
+        showAvailable = true;
+      } else if (isDoubleBranch) {
+        if (columnVisibility.box) headers.push("Available Box");
+        if (columnVisibility.piece) headers.push("Available Piece");
+        showBoxPiece = true;
+      }
     }
 
-    // 2. Define row data logic
     const getRowData = (item) => {
       const itemPiece = Number(item.item_piece) || 1;
-      const total =
-        Number(item.openpurch) -
-        Number(item.closesale) +
-        (Number(item.purch) - Number(item.sale)) * itemPiece +
-        Number(item.openpurch_piece) -
-        Number(item.closesale_piece) +
-        (Number(item.purch_piece) - Number(item.sale_piece));
+
+      const openingPurch =
+        Number(item.openpurch) * itemPiece + Number(item.openpurch_piece);
+      const openingSale =
+        Number(item.closesale) * itemPiece + Number(item.closesale_piece);
+      const purchase =
+        Number(item.purch) * itemPiece + Number(item.purch_piece);
+      const sale = Number(item.sale) * itemPiece + Number(item.sale_piece);
+
+      const total = openingPurch - openingSale + (purchase - sale);
 
       const box = Math.floor(total / itemPiece);
       const piece = total % itemPiece;
 
-      const row = [
-        item.item_name || "",
-        item.item_category || "",
-        item.item_size || "",
-      ];
+      const row = [];
+      if (columnVisibility.item_name) row.push(item.item_name || "");
+      if (columnVisibility.category) row.push(item.item_category || "");
+      if (columnVisibility.brand) row.push(item.item_brand || "");
+      if (columnVisibility.size) row.push(item.item_size || "");
 
-      if (showAvailable) {
-        row.push(total);
-      } else if (showBoxPiece) {
-        row.push(box, piece);
+      if (columnVisibility.available_box) {
+        if (showAvailable) {
+          row.push(total);
+        } else if (showBoxPiece) {
+          if (columnVisibility.box) row.push(box);
+          if (columnVisibility.piece) row.push(piece);
+        }
       }
 
       return row;
@@ -221,7 +255,7 @@ const StockView = () => {
       <Card className="shadow-sm border-0">
         <CardContent className="p-2">
           <StockTableSection
-            title="Stock View "
+            title="Stock View"
             selectedCategory={selectedCategory}
             selectedBrands={selectedBrands}
             setSelectedBrands={setSelectedBrands}

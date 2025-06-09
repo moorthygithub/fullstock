@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import Page from "../dashboard/page";
+import { useSelector } from "react-redux";
 
 const DispatchReturnView = () => {
   const { id } = useParams();
@@ -21,6 +22,8 @@ const DispatchReturnView = () => {
   const [dispatch, setDispatch] = useState({});
   const [buyer, setBuyer] = useState({});
   const [dispatchsubData, setDispatchSubData] = useState([]);
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
   const handlePrintPdf = useReactToPrint({
     content: () => containerRef.current,
     documentTitle: "Dispatch_Return",
@@ -73,6 +76,10 @@ const DispatchReturnView = () => {
   }, [DispatchId]);
   const totalDispatchSubBox = dispatchsubData.reduce(
     (total, row) => total + row.dispatch_sub_box,
+    0
+  );
+  const totalDispatchSubPiece = dispatchsubData.reduce(
+    (total, row) => total + row.dispatch_sub_piece,
     0
   );
   const totalDispatchWeight = dispatchsubData.reduce(
@@ -160,9 +167,34 @@ const DispatchReturnView = () => {
             <tr className="border border-black">
               <th className="p-2 border border-black">ITEM NAME</th>
               <th className="p-2 border border-black">SIZE</th>
-              {/* <th className="p-2 border border-black">BRAND</th> */}
-              <th className="p-2 border border-black">QUANTITY</th>
+              {(singlebranch === "Yes" && doublebranch === "No") ||
+              (singlebranch === "No" && doublebranch === "Yes") ? (
+                <th
+                  className="border border-black px-2 py-2 text-center"
+                  rowSpan={2}
+                >
+                  QUANTITY
+                </th>
+              ) : null}
+              {singlebranch === "Yes" && doublebranch === "Yes" && (
+                <th
+                  className="border border-black px-2 py-2 text-center"
+                  colSpan={2}
+                >
+                  QUANTITY
+                </th>
+              )}{" "}
             </tr>
+            {singlebranch == "Yes" && doublebranch == "Yes" && (
+              <tr>
+                <th className="border border-black px-2 py-2 text-center">
+                  Box
+                </th>
+                <th className="border border-black px-2 py-2 text-center">
+                  Piece
+                </th>
+              </tr>
+            )}
           </thead>
 
           {/* Table Body */}
@@ -171,10 +203,26 @@ const DispatchReturnView = () => {
               <tr key={index} className="border border-black">
                 <td className="p-2 border border-black">{row.item_name}</td>
                 <td className="p-2 border border-black">{row.item_size}</td>
-                {/* <td className="p-2 border border-black">{row.item_brand}</td> */}
                 <td className="p-2 border border-black text-right">
                   {row.dispatch_sub_box}
                 </td>
+                {(singlebranch === "Yes" && doublebranch === "No") ||
+                (singlebranch === "No" && doublebranch === "Yes") ? (
+                  <td className="border border-black px-2 py-2 text-right">
+                    {row.dispatch_sub_box}
+                  </td>
+                ) : null}
+
+                {singlebranch === "Yes" && doublebranch === "Yes" && (
+                  <>
+                    <td className="border border-black px-2 py-2 text-center">
+                      {row.dispatch_sub_box}
+                    </td>
+                    <td className="border border-black px-2 py-2 text-center">
+                      {row.dispatch_sub_piece}
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
 
@@ -182,10 +230,22 @@ const DispatchReturnView = () => {
             <tr className="border border-black bg-gray-200 font-semibold">
               <td className="p-2 border border-black">TOTAL</td>
               <td className="p-2 border border-black"></td>
-              {/* <td className="p-2 border border-black"></td> */}
-              <td className="p-2 border border-black text-right">
-                {totalDispatchSubBox}
-              </td>
+              {(singlebranch === "Yes" && doublebranch === "No") ||
+              (singlebranch === "No" && doublebranch === "Yes") ? (
+                <td className="border border-black px-2 py-2 text-right">
+                  {totalDispatchSubBox}
+                </td>
+              ) : null}
+              {singlebranch === "Yes" && doublebranch === "Yes" && (
+                <>
+                  <td className="border border-black px-2 py-2 text-center">
+                    {totalDispatchSubBox}
+                  </td>
+                  <td className="border border-black px-2 py-2 text-center">
+                    {totalDispatchSubPiece}
+                  </td>
+                </>
+              )}
             </tr>
           </tbody>
         </table>

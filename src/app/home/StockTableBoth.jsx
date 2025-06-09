@@ -231,7 +231,7 @@ function StockTableBoth({
         <CardContent className="p-2">
           {filteredItems?.length ? (
             <div
-              className="text-[11px] grid grid-cols-1 p-6 print:p-4"
+              className="text-[11px] grid grid-cols-1 p-0 md:p-6 print:p-4"
               ref={containerRef}
             >
               <div className="hidden print:block">

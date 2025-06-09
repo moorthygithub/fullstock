@@ -1,6 +1,6 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
-// import pagePermissionReducer from "../slice/permissionSlice";
+import columnVisibilityReducer from "./columnVisibilitySlice";
 import sidebarReducer from "./sidebarSlice";
 import versionReducer from "./versionSlice";
 import storage from "redux-persist/lib/storage";
@@ -13,7 +13,7 @@ const encryptor = encryptTransform({
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"],
+  whitelist: ["auth", "columnVisibility"],
   transforms: [encryptor],
 };
 
@@ -23,6 +23,7 @@ const rootReducer = combineReducers({
   //   permissions: pagePermissionReducer,
   sidebar: sidebarReducer,
   version: versionReducer,
+  columnVisibility: columnVisibilityReducer,
 });
 
 // Persisted reducer

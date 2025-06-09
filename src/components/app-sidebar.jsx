@@ -130,6 +130,10 @@ export function AppSidebar({ ...props }) {
 
         items: [
           {
+            title: "Category Stock",
+            url: "/report/category-stock",
+          },
+          {
             title: "Stock",
             url: "/report/stock",
           },

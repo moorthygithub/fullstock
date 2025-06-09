@@ -904,7 +904,7 @@ const CreateDispatchReturnForm = () => {
                     </div>
                   </div>
                   <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <label
                         className={`text-sm font-medium ${ButtonConfig.cardLabel}`}
                       >
@@ -936,6 +936,23 @@ const CreateDispatchReturnForm = () => {
                       placeholder="Select Buyer"
                       className="bg-white focus:ring-2 focus:ring-yellow-300"
                     />
+                  </div>
+                  <div className="md:col-span-1">
+                    <div>
+                      <label
+                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
+                      >
+                        City
+                      </label>
+                      <Input
+                        className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
+                        value={formData.dispatch_buyer_city}
+                        onChange={(e) =>
+                          handleInputChange(e, "dispatch_buyer_city")
+                        }
+                        placeholder="City"
+                      />
+                    </div>
                   </div>
                   {!editId && (
                     <div>
@@ -984,6 +1001,8 @@ const CreateDispatchReturnForm = () => {
                       />
                     </div>
                   )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div>
                     <div>
                       <label
@@ -998,25 +1017,6 @@ const CreateDispatchReturnForm = () => {
                           handleInputChange(e, "dispatch_vehicle_no")
                         }
                         placeholder="Enter Vehicle No"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="md:col-span-1">
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        City
-                      </label>
-                      <Input
-                        className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                        value={formData.dispatch_buyer_city}
-                        onChange={(e) =>
-                          handleInputChange(e, "dispatch_buyer_city")
-                        }
-                        placeholder="City"
                       />
                     </div>
                   </div>
