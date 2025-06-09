@@ -22,7 +22,7 @@ ag-solutions-bangalore-elgresceramics-crm/
 │   │   ├── auth/           # Authentication components
 │   │   ├── dashboard/      # Dashboard views
 │   │   ├── home/           # Home page
-│   │   ├── master/         # Master data management (buyers, categories, items, purchases, sales)
+│   │   ├── master/         # Master data management (buyers, categories, items, purchases, dipstach)
 │   │   └── report/         # Reports section (Buyer Report, Stock Report)
 │   ├── assets/             # Static assets (letterheads, signatures)
 │   ├── components/         # Reusable UI components

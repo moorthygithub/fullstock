@@ -109,6 +109,10 @@ export function AppBottombar() {
           title: "Stock",
           url: "/report/stock",
         },
+        {
+          title: "Category stock",
+          url: "/report/category-stock",
+        },
         ...(id != 1
           ? [
               {

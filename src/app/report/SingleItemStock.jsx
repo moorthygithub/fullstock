@@ -1120,7 +1120,7 @@ const SingleItemStock = () => {
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <h1 className="text-base font-bold text-gray-800 px-2">
-                  Single Item Stock
+                  Single Item Stock 
                 </h1>
                 <div className="flex gap-[2px]">
                   <button
