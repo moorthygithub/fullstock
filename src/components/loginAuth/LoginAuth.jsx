@@ -128,7 +128,7 @@ export default function LoginAuth() {
           <CardHeader>
             <div className="font-semibold flex items-center space-x-2">
               <div className="flex items-center">
-                <Logo  />
+                <Logo />
               </div>
               <div className="flex flex-col">
                 <span className="text-[1rem] font-bold text-yellow-900 leading-tight">

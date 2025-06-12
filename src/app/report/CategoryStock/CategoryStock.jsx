@@ -30,7 +30,7 @@ const CategoryStock = () => {
   const token = usetoken();
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
-  // const doublebranch = "Yes";
+  // const doublebranch = "No";
   console.log(singlebranch, doublebranch);
   const fetchCategorystockdata = async () => {
     const response = await apiClient.post(
@@ -69,35 +69,6 @@ const CategoryStock = () => {
     refetch();
   };
   const { data: categoryData } = useFetchCategory();
-  // const handlePrintPdf = useReactToPrint({
-  //   if(Categorystockdata.stock.length < 0){
-  //     toast({
-  //       title: "No Data",
-  //       description: "Please search the category data",
-  //       variant: "destructive",
-  //     });
-  //   }
-  //   content: () => containerRef.current,
-  //   // documentTitle: "Category Stock Summary",
-  //   pageStyle: `
-  //     @page {
-  //       size: A4 portrait;
-  //     }
-  //     @media print {
-  //       body {
-  //         font-size: 10px;
-  //         margin: 0;
-  //         padding: 0;
-  //       }
-  //       table {
-  //         font-size: 11px;
-  //       }
-  //       .print-hide {
-  //         display: none;
-  //       }
-  //     }
-  //   `,
-  // });
   const print = useReactToPrint({
     content: () => containerRef.current,
     pageStyle: `
@@ -178,7 +149,6 @@ const CategoryStock = () => {
       [field]: value,
     }));
   };
-
 
   const processedStock =
     Categorystockdata?.stock?.map((item) => {
@@ -315,7 +285,6 @@ const CategoryStock = () => {
     box: Math.floor(val / itemPiece),
     piece: val % itemPiece,
   });
-  console.log(processedStock, "processedStock");
   const grandTotal = processedStock.reduce((acc, item) => acc + item.total, 0);
 
   return (
@@ -544,7 +513,7 @@ const CategoryStock = () => {
                           const total =
                             opening + purchase - purchaseR - sale + saleR;
 
-                          const toBoxPiece = (val) => ({
+                          const toBoxPiece = (val, itemPiece) => ({
                             box: Math.floor(val / itemPiece),
                             piece: val % itemPiece,
                           });
@@ -567,7 +536,7 @@ const CategoryStock = () => {
                                       : NO_IMAGE_URL
                                   }
                                   alt={"Category Image"}
-                                  className="w-full h-40 object-cover"
+                                  className="w-full h-40 object-contain"
                                 />
                               </td>
 
@@ -610,30 +579,6 @@ const CategoryStock = () => {
                         })}
                       </React.Fragment>
 
-                      {/* <tr className=" font-bold">
-                        <td
-                          className="border border-black px-2 py-2 text-center text-lg"
-                          colSpan={2}
-                        >
-                          Total:
-                        </td>
-                        {singlebranch === "Yes" && doublebranch === "Yes" ? (
-                          <>
-                            <td className="border border-black px-2 py-2 text-right  text-lg">
-                              {toBoxPiece(grand.total).box}
-                            </td>
-                            <td className="border border-black px-2 py-2 text-right  text-lg">
-                              {toBoxPiece(grand.total).piece}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="border border-black px-2 py-2 text-right">
-                              {grand.total}
-                            </td>
-                          </>
-                        )}
-                      </tr> */}
                       <tr className="font-bold">
                         <td
                           className="border border-black px-2 py-2 text-center text-lg"
