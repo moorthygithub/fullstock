@@ -1,3 +1,4 @@
+import apiClient from "@/api/axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,47 +9,42 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import BASE_URL from "@/config/BaseUrl";
-import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
+import Logo from "@/json/logo";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import companyname from "../../json/company.json";
-import Logo from "@/json/logo";
-import apiClient from "@/api/axios";
+import AnimatedBackgroundLines from "../common/AnimatedBackgroundLines";
+import StockIllustrationCycle from "../common/stock-illustration.";
 import { PANEL_FORGOT_PASSWORD } from "@/api";
 
-export default function ForgotPassword() {
+export default function LoginAuth() {
   const [email, setEmail] = useState("");
   const [username, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const loadingMessages = [
     "Setting things up for you...",
-    "Preparing your Password...",
+    "Checking your credentials...",
+    "Preparing your dashboard...",
     "Almost there...",
   ];
 
   useEffect(() => {
-    let messageIndex = 0;
+    let index = 0;
     let intervalId;
-
     if (isLoading) {
       setLoadingMessage(loadingMessages[0]);
       intervalId = setInterval(() => {
-        messageIndex = (messageIndex + 1) % loadingMessages.length;
-        setLoadingMessage(loadingMessages[messageIndex]);
-      }, 800);
+        index = (index + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[index]);
+      }, 1000);
     }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
+    return () => intervalId && clearInterval(intervalId);
   }, [isLoading]);
 
   const handleSubmit = async (event) => {
@@ -99,90 +95,58 @@ export default function ForgotPassword() {
       setIsLoading(false);
     }
   };
-
   return (
-    <motion.div
-      className="relative flex flex-col justify-center items-center min-h-screen bg-gray-100"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-100 px-4">
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <AnimatedBackgroundLines />
+      </div>
+
       <motion.div
-        initial={{ opacity: 1, x: 0 }}
-        exit={{
-          opacity: 0,
-          x: -window.innerWidth,
-          transition: { duration: 0.3, ease: "easeInOut" },
-        }}
+        className="flex flex-col md:flex-row shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full bg-white relative z-10"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <Card
-          className={`w-72 md:w-80 max-w-md ${ButtonConfig.loginBackground} ${ButtonConfig.loginText}`}
-        >
-          <CardHeader className="space-y-1">
-            <div className="font-semibold flex items-center space-x-2">
-              <div className="flex items-center">
-                {/* <svg
-                  
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="text-yellow-800"
+        <div className="hidden md:flex flex-col items-center justify-center p-6 w-1/2 bg-yellow-100">
+          <div className="flex justify-center items-center">
+            <StockIllustrationCycle className="w-96 h-64" />
+          </div>
+        </div>
+
+        <div className="w-full md:w-1/2 p-6 md:p-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-none shadow-none">
+              <CardHeader className="mb-4">
+                <div className="flex items-center space-x-3">
+                  <motion.div
+                    animate={{ scale: [1, 1.4, 1] }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 3,
+                      ease: "easeInOut",
+                    }}
                   >
-                    <path
-                      d="M12 2L2 7L12 12L22 7L12 2Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M2 17L12 22L22 17"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M2 12L12 17L22 12"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg> */}
-                <Logo />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[1rem] font-bold text-yellow-900 leading-tight">
-                  {companyname?.CompanyName}
-                </span>
-              </div>
-            </div>
-            <CardTitle
-              className={`text-2xl text-center${ButtonConfig.loginText}`}
-            >
-              Forgot Password
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <div className="flex items-center justify-between">
-                    <Label
-                      htmlFor="username"
-                      className={`${ButtonConfig.loginText}`}
-                    >
+                    <Logo />
+                  </motion.div>{" "}
+                  <span className="text-xl font-bold text-yellow-800">
+                    {companyname?.CompanyName}
+                  </span>
+                </div>
+                <CardTitle className="text-3xl text-yellow-900 mt-4">
+                  Forgot Password
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="username" className="text-yellow-900">
                       Username
                     </Label>
-                  </div>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
                     <Input
                       id="username"
                       type="text"
@@ -190,23 +154,14 @@ export default function ForgotPassword() {
                       value={username}
                       onChange={(e) => setUserName(e.target.value)}
                       required
-                      className="bg-white text-black placeholder-gray-400 border-white"
+                      className="mt-1 bg-white text-black"
                     />
-                  </motion.div>
-                </div>
+                  </div>
 
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="email"
-                    className={`${ButtonConfig.loginText}`}
-                  >
-                    Email
-                  </Label>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
+                  <div>
+                    <Label htmlFor="email" className="text-yellow-900">
+                      Email
+                    </Label>
                     <Input
                       id="email"
                       type="email"
@@ -214,54 +169,49 @@ export default function ForgotPassword() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-white text-black placeholder-gray-400 border-white"
+                      className="mt-1 bg-white text-black"
                     />
-                  </motion.div>
-                </div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <Button
-                    type="submit"
-                    className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} w-full`}
-                    disabled={isLoading}
+                  </div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
                   >
-                    {isLoading ? (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex items-center justify-center"
-                      >
+                    <Button
+                      type="submit"
+                      className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
                         <motion.span
                           key={loadingMessage}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                           className="text-sm"
                         >
                           {loadingMessage}
                         </motion.span>
-                      </motion.span>
-                    ) : (
-                      "Reset Password"
-                    )}
-                  </Button>
-                </motion.div>
-              </div>
-            </form>
-            <CardDescription
-              className={`flex justify-end mt-4 underline ${ButtonConfig.loginText}`}
-            >
-              <span onClick={() => navigate("/")} className="cursor-pointer">
-                {" "}
-                Sign In
-              </span>
-            </CardDescription>
-          </CardContent>
-        </Card>
+                      ) : (
+                        "Reset Password"
+                      )}
+                    </Button>
+                  </motion.div>
+
+                  <CardDescription className="text-right mt-2">
+                    <span
+                      onClick={() => navigate("/")}
+                      className="text-yellow-800 underline cursor-pointer"
+                    >
+                      Sign In
+                    </span>
+                  </CardDescription>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
