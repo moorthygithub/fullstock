@@ -97,6 +97,9 @@ const DispatchList = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
   const whatsapp = useSelector((state) => state.auth.whatsapp_number);
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  // const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+  const doublebranch = "Yes";
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(
     moment().format("YYYY-MM-DD")
@@ -161,7 +164,13 @@ const DispatchList = () => {
       });
 
       if (data?.dispatch && data?.dispatchSub) {
-        handleSendWhatsApp(data.dispatch, data.dispatchSub, data.buyer);
+        handleSendWhatsApp(
+          data.dispatch,
+          data.dispatchSub,
+          data.buyer,
+          singlebranch,
+          doublebranch
+        );
       } else {
         console.error("Incomplete data received");
       }
@@ -169,38 +178,116 @@ const DispatchList = () => {
       console.error("Failed to fetch dispatch data or send WhatsApp:", error);
     }
   };
+  //   const handleSendWhatsApp = (
+  //     dispatch,
+  //     dispatchSub,
+  //     buyer,
+  //     singlebranch,
+  //     doublebranch
+  //   ) => {
+  //     const { dispatch_ref, dispatch_date, dispatch_vehicle_no } = dispatch;
+  //     const { buyer_name, buyer_city } = buyer;
+
+  //     const dispatchNo = dispatch_ref?.split("-").pop();
+
+  //     const NAME_WIDTH = 30;
+  //     const BOX_WIDTH = 10;
+  //     const itemLine = dispatchSub.map((item) => {
+  //       const name = item.item_name.padEnd(NAME_WIDTH, " ");
+  //       const box = `(${String(item.dispatch_sub_box || 0)})`.padEnd(
+  //         BOX_WIDTH,
+  //         " "
+  //       );
+
+  //       const piece = String(item.dispatch_sub_piece || 0);
+  //       return `${name}${box}${piece}`;
+  //     });
+
+  //     const itemLines = dispatchSub.map((item) => {
+  //       const name = item.item_name.padEnd(NAME_WIDTH, " ");
+  //       const box = `(${String(item.dispatch_sub_box || 0)})`;
+  //       return `${name}${box}`;
+  //     });
+
+  //     const totalQty = dispatchSub.reduce(
+  //       (sum, item) => sum + (parseInt(item.dispatch_sub_piece, 10) || 0),
+  //       0
+  //     );
+  //     const totalQtyBox = dispatchSub.reduce(
+  //       (sum, item) => sum + (parseInt(item.dispatch_sub_box, 10) || 0),
+  //       0
+  //     );
+
+  //     const isBothYes = singlebranch == "Yes" && doublebranch == "Yes";
+
+  //     const productHeader = isBothYes
+  //       ? `Product  [SIZE]                (QTY)   (Piece)`
+  //       : `Product  [SIZE]                (QTY)`;
+
+  //     const productBody = isBothYes ? itemLine.join("\n") : itemLines.join("\n");
+
+  //     const totalLine = isBothYes
+  //       ? `*Total QTY: ${totalQtyBox}   ${totalQty}*`
+  //       : `*Total QTY: ${totalQtyBox}*`;
+
+  //     const message = `
+  // === DispatchList ===
+  // No.        : ${dispatchNo}
+  // Date       : ${moment(dispatch_date).format("DD-MM-YYYY")}
+  // Party      : ${buyer_name}
+  // City       : ${buyer_city}
+  // VEHICLE NO : ${dispatch_vehicle_no}
+  // ======================
+  // ${productHeader}
+  // ======================
+  // ${productBody}
+  // ======================
+  // ${totalLine}
+  // ======================
+  // `;
+
+  //     // const phoneNumber = "919360485526";
+  //     const phoneNumber = `${whatsapp}`;
+
+  //     const encodedMessage = encodeURIComponent(message);
+  //     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+  //     window.open(whatsappUrl, "_blank");
+  //   };
   const handleSendWhatsApp = (dispatch, dispatchSub, buyer) => {
     const { dispatch_ref, dispatch_date, dispatch_vehicle_no } = dispatch;
     const { buyer_name, buyer_city } = buyer;
-    const salesNo = dispatch_ref?.split("-").pop();
+
+    const dispatchNo = dispatch_ref?.split("-").pop();
+
+    const NAME_WIDTH = 25;
+
     const itemLines = dispatchSub.map((item) => {
-      const name = item.item_name.padEnd(25, " ");
-      const box = `(${String(item.dispatch_sub_box).replace(
-        /\D/g,
-        ""
-      )})`.padStart(4, " ");
-      return `${name}   ${box}`;
+      let name = item.item_name.slice(0, 20);
+      name = name.padEnd(NAME_WIDTH, " ");
+      const box = `${String(item.dispatch_sub_box || 0)}`;
+      return `${name}${box}`;
     });
 
-    const totalQty = dispatchSub.reduce((sum, item) => {
-      const qty = parseInt(item.dispatch_sub_box, 10) || 0;
-      return sum + qty;
-    }, 0);
+    const totalQty = dispatchSub.reduce(
+      (sum, item) => sum + (parseInt(item.dispatch_sub_box, 10) || 0),
+      0
+    );
 
-    const message = `=== DispatchList ===
-  No.        : ${salesNo}
-  Date       : ${moment(dispatch_date).format("DD-MM-YYYY")}
-  Party      : ${buyer_name}
-  City       : ${buyer_city}
-  VEHICLE NO : ${dispatch_vehicle_no}
-  ======================
-  Product    [SIZE]   (QTY)
-  ======================
-${itemLines.map((line) => "  " + line).join("\n")}
-  ======================
-  *Total QTY: ${totalQty}*
-  ======================`;
-
+    const message = `\`\`\`
+=== DispatchList ===
+No.        : ${dispatchNo}
+Date       : ${moment(dispatch_date).format("DD-MM-YYYY")}
+Party      : ${buyer_name}
+City       : ${buyer_city}
+VEHICLE NO : ${dispatch_vehicle_no}
+======================
+Product [SIZE]          (QTY)
+======================
+${itemLines.join("\n")}
+======================
+Total QTY: ${totalQty}
+======================
+\`\`\``;
     const phoneNumber = `${whatsapp}`;
     // const phoneNumber = "919360485526";
     const encodedMessage = encodeURIComponent(message);
@@ -365,7 +452,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
     if (!dispatch) return [];
 
     return dispatch.filter((item) => {
-      const itemDate = moment(item.sales_date).format("YYYY-MM-DD");
+      const itemDate = moment(item.dispatch_date).format("YYYY-MM-DD");
       const matchesDate = !selectedDate || itemDate === selectedDate;
       const matchesSearch = item.buyer_name
         .toLowerCase()
@@ -641,7 +728,6 @@ ${itemLines.map((line) => "  " + line).join("\n")}
               />
             </div>
 
-            {/* Dropdown Menu & Sales Button */}
             <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
               <Input
                 type="date"
@@ -746,7 +832,7 @@ ${itemLines.map((line) => "  " + line).join("\n")}
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Sales : &nbsp;
+              Total Dispatch : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">

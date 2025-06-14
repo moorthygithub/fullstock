@@ -1,4 +1,11 @@
-import { File, Frame, Package, Settings2, ShoppingBag } from "lucide-react";
+import {
+  File,
+  Frame,
+  GalleryVerticalEnd,
+  Package,
+  Settings2,
+  ShoppingBag,
+} from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -28,6 +35,11 @@ export function AppSidebar({ ...props }) {
       {
         name: `${companyname?.CompanyName}`,
       },
+      // {
+      //   name: `${companyname?.CompanyName}`,
+      //   logo: GalleryVerticalEnd,
+      //   plan: "",
+      // },
     ],
     navMain: [
       {
@@ -117,6 +129,10 @@ export function AppSidebar({ ...props }) {
         icon: File,
 
         items: [
+          {
+            title: "Category Stock",
+            url: "/report/category-stock",
+          },
           {
             title: "Stock",
             url: "/report/stock",

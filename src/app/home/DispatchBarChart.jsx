@@ -230,18 +230,17 @@ const StockBarChart = ({
     },
   };
 
-  console.log(datasets, "datasets");
   const maxY = Math.max(...datasets.flatMap((d) => d.data)) || 0;
   console.log(maxY, "maxY");
   return (
-    <Card className="p-4">
+    <Card className="p-0 md:p-4">
       <CardHeader>
-        <div className="flex flex-col md:flex-row items-center md:justify-between mb-4 space-y-2 md:space-y-0 md:space-x-4">
+        <div className="flex flex-col md:flex-row items-center md:justify-between mb-4 space-y-2 md:space-y-0 md:space-x-4 ">
           <CardTitle className="text-lg font-semibold text-black">
             {title}
           </CardTitle>
 
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto ">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-32 truncate">

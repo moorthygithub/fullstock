@@ -62,7 +62,6 @@ const CreateDispatch = () => {
   const decryptedId = decryptId(id);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
-
   const userType = useSelector((state) => state.auth.user_type);
   const editId = Boolean(id);
   const { toast } = useToast();
@@ -717,18 +716,34 @@ const CreateDispatch = () => {
                             </div>
 
                             {/* Delete Row Button */}
-                            <button
-                              type="button"
-                              onClick={() => removeRow(rowIndex)}
-                              disabled={invoiceData.length === 1}
-                              className={`absolute top-2 right-2 rounded-full p-1 ${
-                                invoiceData.length === 1
-                                  ? "bg-gray-200 text-gray-400"
-                                  : "bg-red-100 text-red-500"
-                              }`}
-                            >
-                              <MinusCircle className="h-4 w-4" />
-                            </button>
+                            {row.id ? (
+                              userType == 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  className={`absolute top-2 right-2 rounded-full p-1 ${
+                                    invoiceData.length === 1
+                                      ? "bg-gray-200 text-gray-400"
+                                      : "bg-red-100 text-red-500"
+                                  }`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeRow(rowIndex)}
+                                disabled={invoiceData.length === 1}
+                                className={`absolute top-2 right-2 rounded-full p-1 ${
+                                  invoiceData.length === 1
+                                    ? "bg-gray-200 text-gray-400"
+                                    : "bg-red-100 text-red-500"
+                                }`}
+                              >
+                                <MinusCircle className="h-4 w-4" />
+                              </button>
+                            )}
                           </TableCell>
 
                           {/* Godown Select */}
@@ -887,7 +902,7 @@ const CreateDispatch = () => {
                     </div>
                   </div>
                   <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <label
                         className={`text-sm font-medium ${ButtonConfig.cardLabel}`}
                       >
@@ -919,6 +934,23 @@ const CreateDispatch = () => {
                       placeholder="Select Buyer"
                       className="bg-white focus:ring-2 focus:ring-yellow-300"
                     />
+                  </div>
+                  <div className="md:col-span-1">
+                    <div>
+                      <label
+                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
+                      >
+                        City
+                      </label>
+                      <Input
+                        className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
+                        value={formData.dispatch_buyer_city}
+                        onChange={(e) =>
+                          handleInputChange(e, "dispatch_buyer_city")
+                        }
+                        placeholder="City"
+                      />
+                    </div>
                   </div>
                   {!editId && (
                     <div>
@@ -967,41 +999,22 @@ const CreateDispatch = () => {
                       />
                     </div>
                   )}
-                  <div>
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        Vehicle No
-                      </label>
-                      <Input
-                        className="bg-white"
-                        value={formData.dispatch_vehicle_no}
-                        onChange={(e) =>
-                          handleInputChange(e, "dispatch_vehicle_no")
-                        }
-                        placeholder="Enter Vehicle No"
-                      />
-                    </div>
-                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="md:col-span-1">
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        City
-                      </label>
-                      <Input
-                        className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                        value={formData.dispatch_buyer_city}
-                        onChange={(e) =>
-                          handleInputChange(e, "dispatch_buyer_city")
-                        }
-                        placeholder="City"
-                      />
-                    </div>
+                  <div>
+                    <label
+                      className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
+                    >
+                      Vehicle No
+                    </label>
+                    <Input
+                      className="bg-white"
+                      value={formData.dispatch_vehicle_no}
+                      onChange={(e) =>
+                        handleInputChange(e, "dispatch_vehicle_no")
+                      }
+                      placeholder="Enter Vehicle No"
+                    />
                   </div>
                   <div className="md:col-span-3">
                     <label

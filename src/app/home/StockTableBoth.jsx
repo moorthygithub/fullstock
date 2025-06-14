@@ -33,11 +33,13 @@ function StockTableBoth({
 }) {
   const { toast } = useToast();
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
-  // const singlebranch = "No";
+  // const doublebranch = "Yes";
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+
+  console.log(singlebranch, doublebranch);
   const totals = filteredItems.reduce(
     (acc, item) => {
-      if (singlebranch === "Yes" && doublebranch === "Yes") {
+      if (singlebranch == "Yes" && doublebranch == "Yes") {
         const total =
           Number(item.openpurch) -
           Number(item.closesale) +
@@ -229,7 +231,7 @@ function StockTableBoth({
         <CardContent className="p-2">
           {filteredItems?.length ? (
             <div
-              className="overflow-x-auto text-[11px] grid grid-cols-1 p-6 print:p-4"
+              className="text-[11px] grid grid-cols-1 p-0 md:p-6 print:p-4"
               ref={containerRef}
             >
               <div className="hidden print:block">
@@ -268,8 +270,8 @@ function StockTableBoth({
                       </th>
                     )}
 
-                    {(singlebranch === "Yes" && doublebranch === "No") ||
-                    (singlebranch === "No" && doublebranch === "Yes") ? (
+                    {(singlebranch == "Yes" && doublebranch == "No") ||
+                    (singlebranch == "No" && doublebranch == "Yes") ? (
                       <>
                         <th
                           className="border border-black px-2 py-2 text-center"
@@ -379,9 +381,14 @@ function StockTableBoth({
 
                         {(singlebranch === "Yes" && doublebranch === "No") ||
                         (singlebranch === "No" && doublebranch === "Yes") ? (
-                          <td className="border border-black px-2 py-2 text-right text-red-600 font-bold">
-                            {total}
-                          </td>
+                          <>
+                            <td className="border border-black px-2 py-2 text-right ">
+                              {minimumBox}
+                            </td>
+                            <td className="border border-black px-2 py-2 text-right text-red-600 font-bold">
+                              {total}
+                            </td>
+                          </>
                         ) : null}
 
                         {singlebranch === "Yes" && doublebranch === "Yes" && (

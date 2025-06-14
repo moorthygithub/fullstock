@@ -36,7 +36,6 @@ export default function Page({ children }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-
   const nameL = useSelector((state) => state?.auth.name);
   const emailL = useSelector((state) => state?.auth.email);
   const id = useSelector((state) => state.auth?.user_type);
@@ -106,6 +105,9 @@ export default function Page({ children }) {
               </span>
             </div>
           </div>
+          {/* <div className="font-semibold flex items-center space-x-2">
+            <Logo showLogo="true" />
+          </div> */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center relative">
@@ -161,7 +163,7 @@ export default function Page({ children }) {
                       </span>
                     </span>
                     <span className="flex items-center gap-1 font-semibold">
-                      Updated on :28/05/2025
+                      Updated on :12/06/2025
                     </span>
                   </div>
                 </div>
