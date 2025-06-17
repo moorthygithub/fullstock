@@ -8,6 +8,8 @@ export const PANEL_CHECK = `/panelCheck`;
 export const PANEL_LOGIN = `/login`;
 //PANEL_FORGOT_PASSWORD
 export const PANEL_FORGOT_PASSWORD = `/forgot-password`;
+//WEB_ENQUIRY
+export const WEB_ENQUIRY = `/createEnquiry`;
 
 //PROFILE
 export const PROFILE = `/fetch-profile`;

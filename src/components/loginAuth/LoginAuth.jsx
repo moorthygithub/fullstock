@@ -1,3 +1,5 @@
+import { PANEL_LOGIN } from "@/api";
+import apiClient from "@/api/axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,27 +10,28 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import BASE_URL from "@/config/BaseUrl";
-import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/json/logo";
 import { loginSuccess } from "@/redux/authSlice";
-import axios from "axios";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import companyname from "../../json/company.json";
-import apiClient from "@/api/axios";
-import { PANEL_LOGIN } from "@/api";
+import AnimatedBackgroundLines from "../common/AnimatedBackgroundLines";
+import StockIllustrationCycle from "../common/stock-illustration.";
+import EnquiryDrawer from "./EnquiryDrawer";
+
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
-  const navigate = useNavigate();
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
+
   const { toast } = useToast();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const loadingMessages = [
     "Setting things up for you...",
@@ -38,20 +41,16 @@ export default function LoginAuth() {
   ];
 
   useEffect(() => {
-    let messageIndex = 0;
+    let index = 0;
     let intervalId;
-
     if (isLoading) {
       setLoadingMessage(loadingMessages[0]);
       intervalId = setInterval(() => {
-        messageIndex = (messageIndex + 1) % loadingMessages.length;
-        setLoadingMessage(loadingMessages[messageIndex]);
-      }, 800);
+        index = (index + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[index]);
+      }, 1000);
     }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
+    return () => intervalId && clearInterval(intervalId);
   }, [isLoading]);
 
   const handleSubmit = async (event) => {
@@ -60,18 +59,11 @@ export default function LoginAuth() {
     const formData = new FormData();
     formData.append("username", email);
     formData.append("password", password);
+
     try {
-      const res = await apiClient.post(`${PANEL_LOGIN}`, formData);
-      if (res.status === 200) {
-        if (!res.data.UserInfo || !res.data.UserInfo.token) {
-          console.warn("⚠️ Login failed: Token missing in response");
-          toast.error("Login Failed: No token received.");
-          setIsLoading(false);
-          return;
-        }
-
+      const res = await apiClient.post(PANEL_LOGIN, formData);
+      if (res.status === 200 && res.data.UserInfo?.token) {
         const { UserInfo } = res.data;
-
         const userData = {
           token: UserInfo.token,
           id: UserInfo.user.id,
@@ -85,80 +77,74 @@ export default function LoginAuth() {
           branch_s_unit: res?.data?.branch?.branch_s_unit,
         };
         dispatch(loginSuccess(userData));
-
-        const redirectPath = window.innerWidth < 768 ? "/home" : "/stock-view";
-        console.log(`✅ Login successful! Redirecting to ${redirectPath}...`);
-        navigate(redirectPath);
+        navigate(window.innerWidth < 768 ? "/home" : "/stock-view");
       } else {
-        console.warn("⚠️ Unexpected API response:", res);
         toast.error("Login Failed: Unexpected response.");
       }
     } catch (error) {
-      console.error("❌ Login Error:", error.response?.data || error.message);
-
       toast({
         variant: "destructive",
         title: "Login Failed",
         description:
           error.response?.data?.message || "Please check your credentials.",
       });
-
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <motion.div
-      className="relative flex flex-col justify-center items-center min-h-screen bg-gray-100"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <motion.div
-        initial={{ opacity: 1, x: 0 }}
-        exit={{
-          opacity: 0,
-          x: -window.innerWidth,
-          transition: { duration: 0.3, ease: "easeInOut" },
-        }}
-      >
-        <Card
-          className={`w-72 md:w-80 max-w-md ${ButtonConfig.loginBackground} ${ButtonConfig.loginText}`}
-        >
-          <CardHeader>
-            <div className="font-semibold flex items-center space-x-2">
-              <div className="flex items-center">
-                <Logo />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[1rem] font-bold text-yellow-900 leading-tight">
-                  {companyname?.CompanyName}
-                </span>
-              </div>
-            </div>
-            {/* <Logo /> */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-100 px-4">
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <AnimatedBackgroundLines />
+      </div>
 
-            <CardTitle
-              className={`text-2xl text-center${ButtonConfig.loginText}`}
-            >
-              Login
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="email"
-                    className={`${ButtonConfig.loginText}`}
-                  >
-                    Username
-                  </Label>
+      <motion.div
+        className="flex flex-col md:flex-row shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full bg-white relative z-10"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <div className="hidden md:flex flex-col items-center justify-center p-6 w-1/2 bg-yellow-100">
+          <div className="flex justify-center items-center">
+            <StockIllustrationCycle className="w-96 h-64" />
+          </div>
+        </div>
+
+        <div className="w-full md:w-1/2 p-6 md:p-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-none shadow-none">
+              <CardHeader className="mb-4">
+                <div className="flex items-center space-x-3">
                   <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
+                    animate={{ scale: [1, 1.4, 1] }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 3,
+                      ease: "easeInOut",
+                    }}
                   >
+                    <Logo />
+                  </motion.div>{" "}
+                  <span className="text-xl font-bold text-yellow-800">
+                    {companyname?.CompanyName}
+                  </span>
+                </div>
+                <CardTitle className="text-3xl text-yellow-900 mt-4">
+                  Sign In
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="email" className="text-yellow-900">
+                      Username
+                    </Label>
                     <Input
                       id="email"
                       type="text"
@@ -166,22 +152,14 @@ export default function LoginAuth() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-white text-black placeholder-gray-400 border-white"
+                      className="mt-1 bg-white text-black"
                     />
-                  </motion.div>
-                </div>
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="password"
-                    className={`${ButtonConfig.loginText}`}
-                  >
-                    Password
-                  </Label>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
+                  </div>
+
+                  <div>
+                    <Label htmlFor="password" className="text-yellow-900">
+                      Password
+                    </Label>
                     <Input
                       id="password"
                       type="password"
@@ -189,51 +167,59 @@ export default function LoginAuth() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="bg-white text-black placeholder-gray-400 border-white"
+                      className="mt-1 bg-white text-black"
                     />
-                  </motion.div>
-                </div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <Button
-                    type="submit"
-                    className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} w-full`}
-                    disabled={isLoading}
+                  </div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
                   >
-                    {isLoading ? (
-                      <motion.span
-                        key={loadingMessage}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="text-sm"
-                      >
-                        {loadingMessage}
-                      </motion.span>
-                    ) : (
-                      "Sign in"
-                    )}
-                  </Button>
-                </motion.div>
-              </div>
-            </form>
-            <CardDescription
-              className={`flex justify-end mt-4 underline ${ButtonConfig.loginText}`}
-            >
-              <span
-                onClick={() => navigate("/forgot-password")}
-                className="cursor-pointer "
-              >
-                {" "}
-                Forgot Password
-              </span>
-            </CardDescription>
-          </CardContent>
-        </Card>
+                    <Button
+                      type="submit"
+                      className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <motion.span
+                          key={loadingMessage}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-sm"
+                        >
+                          {loadingMessage}
+                        </motion.span>
+                      ) : (
+                        "Sign In"
+                      )}
+                    </Button>
+                  </motion.div>
+
+                  <CardDescription className="flex justify-between mt-2">
+                    <span
+                      onClick={() => setDrawerOpen(true)}
+                      className="text-yellow-800 underline cursor-pointer"
+                    >
+                      Web Enquiry
+                    </span>
+                    <span
+                      onClick={() => navigate("/forgot-password")}
+                      className="text-yellow-800 underline cursor-pointer"
+                    >
+                      Forgot Password?
+                    </span>
+                  </CardDescription>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </motion.div>
-    </motion.div>
+      <EnquiryDrawer
+        isDrawerOpen={isDrawerOpen}
+        setDrawerOpen={setDrawerOpen}
+      />
+    </div>
   );
 }
