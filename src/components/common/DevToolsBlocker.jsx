@@ -9,26 +9,30 @@ const DevToolsBlocker = () => {
 
     function detectDevTools() {
       const threshold = 160;
-
-      // Check for window size manipulation
+      const widthInRange = window.innerWidth >= 813 && window.innerWidth <= 815;
       const widthThreshold = window.outerWidth - window.innerWidth > threshold;
       const heightThreshold =
         window.outerHeight - window.innerHeight > threshold;
 
-      // Check for debugger statement
+      // Run debugger detection only if NOT in the 800–815 range
       let debuggerDetected = false;
-      const start = performance.now();
-      debugger; // This will pause execution if DevTools is open
-      const end = performance.now();
-      if (end - start > 100) {
-        debuggerDetected = true;
+      if (!widthInRange) {
+        const start = performance.now();
+        debugger; 
+        const end = performance.now();
+        if (end - start > 100) {
+          debuggerDetected = true;
+        }
       }
 
-      return widthThreshold || heightThreshold || debuggerDetected;
+      return (
+        (widthThreshold || heightThreshold || debuggerDetected) && !widthInRange
+      );
     }
 
-    const interval1 = setInterval(() => {
+    const interval = setInterval(() => {
       const isOpen = detectDevTools();
+
       if (isOpen && !devtoolsOpen) {
         devtoolsOpen = true;
         setDevToolsDetected(true);
@@ -36,7 +40,7 @@ const DevToolsBlocker = () => {
     }, 1000);
 
     return () => {
-      clearInterval(interval1);
+      clearInterval(interval);
     };
   }, []);
 

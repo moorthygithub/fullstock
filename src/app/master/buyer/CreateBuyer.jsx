@@ -202,6 +202,7 @@ const BuyerForm = ({ buyerId = null }) => {
         "/dispatch/create",
         "/purchase/edit",
         "/dispatch-return/create",
+        "/purchase-return/create",
       ].includes(pathname)
     ) {
       return (

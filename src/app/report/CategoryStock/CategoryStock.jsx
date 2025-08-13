@@ -6,21 +6,36 @@ import { MemoizedSelect } from "@/components/common/MemoizedSelect";
 import Loader from "@/components/loader/Loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { IMAGE_URL, NO_IMAGE_URL } from "@/config/BaseUrl";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useFetchCategory } from "@/hooks/useApi";
+import { toggleCategoryColumn } from "@/redux/categoryColumnVisibilitySlice";
 import { useQuery } from "@tanstack/react-query";
 import html2pdf from "html2pdf.js";
-import { ArrowDownToLine, Printer, Search } from "lucide-react";
+import { ArrowDownToLine, ChevronDown, Printer, Search } from "lucide-react";
 import moment from "moment";
-import React, { useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useReactToPrint } from "react-to-print";
 
 const CategoryStock = () => {
   const containerRef = useRef();
+  const dispatch = useDispatch();
+  const columnVisibility = useSelector(
+    (state) => state.categorycolumnVisibility
+  );
+  console.log(columnVisibility);
+  const handleToggle = (key) => {
+    dispatch(toggleCategoryColumn(key));
+  };
   const [formData, setFormData] = useState({
     from_date: moment().startOf("month").format("YYYY-MM-DD"),
     to_date: moment().format("YYYY-MM-DD"),
@@ -30,7 +45,10 @@ const CategoryStock = () => {
   const token = usetoken();
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
-  // const doublebranch = "No";
+  // const doublebranch = "Yes";
+  const [brands, setBrands] = useState(["All Brands"]);
+  const [selectedBrands, setSelectedBrands] = useState("All Brands");
+
   console.log(singlebranch, doublebranch);
   const fetchCategorystockdata = async () => {
     const response = await apiClient.post(
@@ -149,6 +167,18 @@ const CategoryStock = () => {
       [field]: value,
     }));
   };
+  useEffect(() => {
+    if (Categorystockdata?.stock && Categorystockdata?.stock.length > 0) {
+      const uniqueBrands = [
+        ...new Set(Categorystockdata?.stock.map((item) => item.item_brand)),
+      ];
+      const sortedBrands = uniqueBrands
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+      setBrands(["All Brands", ...sortedBrands]);
+    }
+  }, [Categorystockdata]);
 
   const processedStock =
     Categorystockdata?.stock?.map((item) => {
@@ -187,6 +217,28 @@ const CategoryStock = () => {
         total,
       };
     }) || [];
+
+  console.log(processedStock, "processedStock");
+
+  // const filteredStock = (
+  //   selectedBrands === "All Brands"
+  //     ? processedStock
+  //     : processedStock.filter((item) => item.item_brand === selectedBrands)
+  // ).sort((a, b) => a.item_name.localeCompare(b.item_name));
+  const filteredStock = (
+    selectedBrands === "All Brands"
+      ? processedStock
+      : processedStock.filter((item) => item.item_brand === selectedBrands)
+  ).sort((a, b) => {
+    const numA = parseFloat(a.item_name) || 0;
+    const numB = parseFloat(b.item_name) || 0;
+
+    if (numA !== numB) {
+      return numA - numB;
+    }
+    return a.item_name.localeCompare(b.item_name);
+  });
+
   const BranchHeader = () => (
     <div
       className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-3 mb-2`}
@@ -194,7 +246,7 @@ const CategoryStock = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="lg:w-64 xl:w-72 shrink-0">
           <h1 className="text-xl font-bold text-gray-800 truncate">
-            Category Stock Summary{" "}
+            Category Stock Summary
           </h1>
           <p className="text-md text-gray-500 truncate">
             Add a Category Stock to Visit Report{" "}
@@ -250,8 +302,71 @@ const CategoryStock = () => {
               </div>
             </div>
 
-            {/* Buttons Section */}
+            {/* Buttons Sectio{columnVisibilityn */}
             <div className="flex flex-col md:flex-row justify-end gap-2">
+              <div className="flex flex-wrap justify-center gap-4 items-center  rounded-xl  w-full max-w-4xl ">
+                {Object.keys(columnVisibility).map((key) => (
+                  <>
+                    <span className="capitalize">Stock</span>
+
+                    <label
+                      key={key}
+                      className="flex cursor-pointer items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg shadow hover:bg-gray-200 transition duration-200"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={columnVisibility[key]}
+                        onChange={() => handleToggle(key)}
+                        className="accent-blue-600 w-4 h-4 cursor-pointer"
+                      />
+                    </label>
+                  </>
+                ))}
+              </div>
+
+              <div className="space-y-1">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className=" truncate">
+                      <span className="truncate">{selectedBrands}</span>
+                      <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    className="max-h-60 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+                    align="start"
+                    sideOffset={5}
+                    collisionPadding={10}
+                  >
+                    {brands.map((brands) => (
+                      <DropdownMenuItem
+                        key={brands}
+                        onSelect={() => setSelectedBrands(brands)}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="truncate">{brands}</span>
+                        {selectedBrands === brands && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="flex-shrink-0 ml-2"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
               <Button
                 type="button"
                 size="sm"
@@ -285,7 +400,7 @@ const CategoryStock = () => {
     box: Math.floor(val / itemPiece),
     piece: val % itemPiece,
   });
-  const grandTotal = processedStock.reduce((acc, item) => acc + item.total, 0);
+  const grandTotal = filteredStock.reduce((acc, item) => acc + item.total, 0);
 
   return (
     <Page>
@@ -365,11 +480,66 @@ const CategoryStock = () => {
                       placeholder="Select Category"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 w-full">
+                    <label
+                      className={`block ${ButtonConfig.cardLabel} text-xs font-medium`}
+                    >
+                      Brands
+                    </label>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full truncate flex justify-between"
+                        >
+                          <span className="truncate">{selectedBrands}</span>
+                          <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent
+                        className="w-full max-h-60 overflow-y-auto"
+                        align="start"
+                        sideOffset={5}
+                        collisionPadding={10}
+                      >
+                        {brands.map((brand) => (
+                          <DropdownMenuItem
+                            key={brand}
+                            onSelect={() => setSelectedBrands(brand)}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="truncate">{brand}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-4 items-center  rounded-xl  w-full max-w-4xl ">
+                    {Object.keys(columnVisibility).map((key) => (
+                      <>
+                        <span className="capitalize">Stock</span>
+
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg  shadow hover:bg-gray-200 transition duration-200"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={columnVisibility[key]}
+                            onChange={() => handleToggle(key)}
+                            className="accent-blue-600 w-4 h-4 cursor-pointer"
+                          />
+                        </label>
+                      </>
+                    ))}
+                  </div>
+                  <div>
                     <Button
                       type="submit"
                       size="sm"
-                      className={`h-9 mt-6 w-full ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                      className={`h-9  w-full  ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
                     >
                       <Search className="h-3 w-3 mr-1" /> Search
                     </Button>
@@ -393,7 +563,7 @@ const CategoryStock = () => {
             </div>
           ) : (
             <>
-              {processedStock?.length > 0 && (
+              {filteredStock?.length > 0 && (
                 <>
                   <h1 className="text-lg mb-4 font-bold">
                     Category Stock Summary
@@ -438,41 +608,47 @@ const CategoryStock = () => {
                           PHOTO
                         </th>
 
-                        {(singlebranch === "Yes" && doublebranch === "No") ||
-                        (singlebranch === "No" && doublebranch === "Yes") ? (
-                          <th
-                            className="border border-black px-2 py-2 text-center  w-[10%] "
-                            colSpan={2}
-                          >
-                            STOCK
-                          </th>
-                        ) : null}
+                        {columnVisibility.box &&
+                          ((singlebranch == "Yes" && doublebranch == "No") ||
+                            (singlebranch == "No" &&
+                              doublebranch == "Yes")) && (
+                            <th
+                              className="border border-black px-2 py-2 text-center w-[10%]"
+                              colSpan={2}
+                            >
+                              STOCK
+                            </th>
+                          )}
 
-                        {singlebranch === "Yes" && doublebranch === "Yes" && (
-                          <th
-                            className="border border-black px-2 py-2 text-center w-[15%]"
-                            colSpan={2}
-                          >
-                            STOCK
-                          </th>
-                        )}
+                        {columnVisibility.box &&
+                          singlebranch === "Yes" &&
+                          doublebranch === "Yes" && (
+                            <th
+                              className="border border-black px-2 py-2 text-center w-[15%]"
+                              colSpan={2}
+                            >
+                              STOCK
+                            </th>
+                          )}
                       </tr>
 
-                      {singlebranch === "Yes" && doublebranch === "Yes" && (
-                        <tr>
-                          <th className="border border-black px-2 py-2 text-center">
-                            Box
-                          </th>
-                          <th className="border border-black px-2 py-2 text-center">
-                            Piece
-                          </th>
-                        </tr>
-                      )}
+                      {columnVisibility.box &&
+                        singlebranch === "Yes" &&
+                        doublebranch === "Yes" && (
+                          <tr>
+                            <th className="border border-black px-2 py-2 text-center">
+                              Box
+                            </th>
+                            <th className="border border-black px-2 py-2 text-center">
+                              Piece
+                            </th>
+                          </tr>
+                        )}
                     </thead>
 
                     <tbody>
                       <React.Fragment>
-                        {processedStock?.map((item) => {
+                        {filteredStock?.map((item) => {
                           const itemPiece = item.item_piece || 1;
 
                           const openPurch =
@@ -528,7 +704,7 @@ const CategoryStock = () => {
                               <td className="border border-black px-2 py-2 text-sm text-center">
                                 {item.item_name}
                               </td>
-                              <td className="border border-black px-2 py-2 text-center">
+                              <td className="border-b border-black px-2 py-2 flex text-center justify-center ">
                                 <img
                                   src={
                                     item.item_image
@@ -536,11 +712,12 @@ const CategoryStock = () => {
                                       : NO_IMAGE_URL
                                   }
                                   alt={"Category Image"}
-                                  className="w-full h-40 object-contain"
+                                  className="w-auto h-40 object-contain"
                                 />
                               </td>
 
-                              {(singlebranch == "Yes" &&
+                              {(columnVisibility.box &&
+                                singlebranch == "Yes" &&
                                 doublebranch == "No") ||
                               (singlebranch == "No" &&
                                 doublebranch == "Yes") ? (
@@ -553,7 +730,8 @@ const CategoryStock = () => {
                                 </td>
                               ) : null}
 
-                              {singlebranch === "Yes" &&
+                              {columnVisibility.box &&
+                                singlebranch === "Yes" &&
                                 doublebranch === "Yes" && (
                                   <>
                                     <td
@@ -578,40 +756,41 @@ const CategoryStock = () => {
                           );
                         })}
                       </React.Fragment>
-
-                      <tr className="font-bold">
-                        <td
-                          className="border border-black px-2 py-2 text-center text-lg"
-                          colSpan={2}
-                        >
-                          Total:
-                        </td>
-
-                        {singlebranch === "Yes" && doublebranch === "Yes" ? (
-                          <>
-                            <td className="border border-black px-2 py-2 text-right text-lg">
-                              {
-                                toBoxPiece(
-                                  grandTotal,
-                                  processedStock[0]?.itemPiece || 1
-                                ).box
-                              }
-                            </td>
-                            <td className="border border-black px-2 py-2 text-right text-lg">
-                              {
-                                toBoxPiece(
-                                  grandTotal,
-                                  processedStock[0]?.itemPiece || 1
-                                ).piece
-                              }
-                            </td>
-                          </>
-                        ) : (
-                          <td className="border border-black px-2 py-2 text-right text-lg">
-                            {grandTotal}
+                      {columnVisibility.box && (
+                        <tr className="font-bold">
+                          <td
+                            className="border border-black px-2 py-2 text-center text-lg"
+                            colSpan={2}
+                          >
+                            Total:
                           </td>
-                        )}
-                      </tr>
+
+                          {singlebranch === "Yes" && doublebranch === "Yes" ? (
+                            <>
+                              <td className="border border-black px-2 py-2 text-right text-lg">
+                                {
+                                  toBoxPiece(
+                                    grandTotal,
+                                    filteredStock[0]?.itemPiece || 1
+                                  ).box
+                                }
+                              </td>
+                              <td className="border border-black px-2 py-2 text-right text-lg">
+                                {
+                                  toBoxPiece(
+                                    grandTotal,
+                                    filteredStock[0]?.itemPiece || 1
+                                  ).piece
+                                }
+                              </td>
+                            </>
+                          ) : (
+                            <td className="border border-black px-2 py-2 text-right text-lg">
+                              {grandTotal}
+                            </td>
+                          )}
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </>

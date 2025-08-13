@@ -1,45 +1,39 @@
-import { DISPATCH_EDIT_LIST } from "@/api";
-import apiClient from "@/api/axios";
+import { fetchPreBookingById } from "@/api";
 import usetoken from "@/api/usetoken";
-import { decryptId } from "@/components/common/Encryption";
 import Loader from "@/components/loader/Loader";
 import { Button } from "@/components/ui/button";
 import { IMAGE_URL, NO_IMAGE_URL } from "@/config/BaseUrl";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import { toggleDispatchColumn } from "@/redux/dispatchColumnVisibilitySlice";
 import { useQuery } from "@tanstack/react-query";
 import html2pdf from "html2pdf.js";
 import { Printer } from "lucide-react";
 import moment from "moment";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import Page from "../dashboard/page";
+import { toggleDispatchColumn } from "@/redux/dispatchColumnVisibilitySlice";
 
-const DispatchView = () => {
+const PreBookingView = () => {
+  const dispatch = useDispatch();
+
   const { id } = useParams();
-  const dispatched = useDispatch();
-  const decryptedId = decryptId(id);
   const containerRef = useRef();
   const token = usetoken();
-  const [dispatch, setDispatch] = useState({});
-  const [buyer, setBuyer] = useState({});
-  const [dispatchsubData, setDispatchSubData] = useState([]);
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
-  // const doublebranch = "Yes";
-
   const columnVisibility = useSelector(
     (state) => state.dispatchcolumnVisibility
   );
   const handleToggle = (key) => {
-    dispatched(toggleDispatchColumn(key));
+    dispatch(toggleDispatchColumn(key));
   };
   console.log(columnVisibility, "columnVisibility");
+
   const handlePrintPdf = useReactToPrint({
     content: () => containerRef.current,
-    documentTitle: "Dispatch",
+    documentTitle: "PreBooking",
     pageStyle: `
       @page {
     size: A4 portrait;
@@ -60,43 +54,22 @@ const DispatchView = () => {
       }
     `,
   });
-  const {
-    data: DispatchId,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["dispatchByid", decryptedId],
-    queryFn: async () => {
-      const response = await apiClient.get(
-        `${DISPATCH_EDIT_LIST}/${decryptedId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return response.data;
-    },
-  });
 
-  useEffect(() => {
-    if (DispatchId) {
-      setDispatch(DispatchId.dispatch);
-      setBuyer(DispatchId.buyer);
-      setDispatchSubData(DispatchId.dispatchSub);
-    }
-  }, [DispatchId]);
-  const totalDispatchSubPiece = dispatchsubData.reduce(
-    (total, row) => total + row.dispatch_sub_piece,
+  const { data: prebookingByid, isLoading } = useQuery({
+    queryKey: ["prebookingByid", id],
+    queryFn: () => fetchPreBookingById(id, token),
+    enabled: !!id,
+  });
+  const totalPrebookingSubPiece = prebookingByid?.prebookingsub?.reduce(
+    (total, row) => total + row.pre_booking_sub_piece,
     0
   );
-  const totalDispatchSubBox = dispatchsubData.reduce(
-    (total, row) => total + row.dispatch_sub_box,
+  const totalPreBookingSubBox = prebookingByid?.prebookingsub?.reduce(
+    (total, row) => total + row.pre_booking_sub_box,
     0
   );
-  const totalDispatchWeight = dispatchsubData.reduce(
-    (total, row) => total + row.item_weight * row.dispatch_sub_box,
+  const totalPreBookingWeight = prebookingByid?.prebookingsub?.reduce(
+    (total, row) => total + row.item_weight * row.pre_booking_sub_box,
     0
   );
 
@@ -109,8 +82,8 @@ const DispatchView = () => {
     html2pdf()
       .from(containerRef.current)
       .set({
-        margin: 10, // Standard margin
-        filename: "Dispatch.pdf",
+        margin: 10,
+        filename: "PreBooking.pdf",
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
@@ -134,12 +107,13 @@ const DispatchView = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Title Section */}
           <h1 className="text-lg sm:text-xl font-bold text-center sm:text-left">
-            Dispatch
+            PreBooking{" "}
           </h1>
 
+          {/* Button Section */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
             {Object.keys(columnVisibility)
-              .filter((key) => key === "dispatchimage")
+              .filter((key) => key === "prebookimage")
               .map((key) => (
                 <div key={key} className="flex items-center space-x-2">
                   <span className="capitalize">Image</span>
@@ -173,25 +147,31 @@ const DispatchView = () => {
         className="w-full max-w-3xl mx-auto px-4 pb-4 border border-black bg-white"
         ref={containerRef}
       >
-        <h2 className="text-center font-bold text-lg py-2 ">RUFF PERFORMA</h2>
+        <h2 className="text-center font-bold text-lg py-2 ">PRE BOOK</h2>
 
         <div className="w-full border border-black mb-4 grid grid-cols-2">
           <div className="border-r border-black">
             <div className="p-2 border-b border-black">
-              <span className="font-medium">Name:</span> {buyer.buyer_name}
+              <span className="font-medium">Name:</span>{" "}
+              {prebookingByid?.buyer.buyer_name || ""}
             </div>
             <div className="p-2">
               <span className="font-medium">Ref No:</span>{" "}
-              {dispatch.dispatch_ref_no}
+              {prebookingByid?.prebooking?.pre_booking_ref_no || ""}
             </div>
           </div>
           <div>
             <div className="p-2 border-b border-black">
-              <span className="font-medium">City:</span> {buyer.buyer_city}
+              <span className="font-medium">City:</span>{" "}
+              {prebookingByid?.buyer.buyer_city || ""}
             </div>
             <div className="p-2">
               <span className="font-medium">Date:</span>{" "}
-              {moment(dispatch.dispatch_date).format("DD-MMM-YYYY")}
+              {prebookingByid?.prebooking?.pre_booking_date
+                ? moment(prebookingByid?.prebooking.pre_booking_date).format(
+                    "DD-MMM-YYYY"
+                  )
+                : ""}
             </div>
           </div>
         </div>
@@ -202,7 +182,7 @@ const DispatchView = () => {
               <th className="p-2 border border-black" rowSpan={2}>
                 ITEM NAME
               </th>
-              {columnVisibility.dispatchimage && (
+              {columnVisibility.prebookimage && (
                 <th className="p-2 border border-black">IMAGE</th>
               )}
               <th className="p-2 border border-black" rowSpan={2}>
@@ -239,13 +219,12 @@ const DispatchView = () => {
 
           {/* Table Body */}
           <tbody>
-            {dispatchsubData.map((row, index) => {
+            {prebookingByid?.prebookingsub?.map((row, index) => {
               return (
                 <tr key={index} className="border border-black">
                   <td className="p-2 border border-black">{row.item_name}</td>
-                  {columnVisibility.dispatchimage && (
+                  {columnVisibility.prebookimage && (
                     <td className="p-2  flex justify-center">
-                      {" "}
                       {row.item_image && (
                         <img
                           src={
@@ -254,50 +233,47 @@ const DispatchView = () => {
                               : NO_IMAGE_URL
                           }
                           alt={row.item_name}
-                          className="w-10 h-10 object-cover inline-block mr-2"
+                          className="w-auto h-10 object-cover inline-block mr-2"
                         />
                       )}
                     </td>
                   )}
-                  <td className="p-2 border border-black ">{row.item_size}</td>
+                  <td className="p-2 border border-black">{row.item_size}</td>
 
                   {singlebranch === "Yes" && doublebranch === "Yes" ? (
                     <>
                       <td className="border border-black px-2 py-2 text-center">
-                        {row.dispatch_sub_box}
+                        {row.pre_booking_sub_box}
                       </td>
                       <td className="border border-black px-2 py-2 text-center">
-                        {row.dispatch_sub_piece}
+                        {row.pre_booking_sub_piece}
                       </td>
                     </>
                   ) : (
                     <td className="border border-black px-2 py-2 text-right">
-                      {row.dispatch_sub_box}
+                      {row.pre_booking_sub_box}
                     </td>
                   )}
                 </tr>
               );
             })}
 
-            {/* Total Row */}
             <tr className="border border-black bg-gray-200 font-semibold">
               <td className="p-2 border border-black">TOTAL</td>
-              <td className="p-2 border-l border-black"/>
-              {columnVisibility.dispatchimage && (
-                <td />
-              )}
+              <td className="p-2 border-l border-black" />
+              {columnVisibility.prebookimage && <td />}
               {singlebranch == "Yes" && doublebranch == "Yes" ? (
                 <>
                   <td className="border border-black px-2 py-2 text-center">
-                    {totalDispatchSubBox}
+                    {totalPreBookingSubBox}
                   </td>
                   <td className="border border-black px-2 py-2 text-center">
-                    {totalDispatchSubPiece}
+                    {totalPrebookingSubPiece}
                   </td>
                 </>
               ) : (
                 <td className="border border-black px-2 py-2 text-right">
-                  {totalDispatchSubBox}
+                  {totalPreBookingSubBox}
                 </td>
               )}
             </tr>
@@ -306,21 +282,23 @@ const DispatchView = () => {
 
         {/* Footer Details */}
         <div className="mt-2 text-sm border border-black">
-          {totalDispatchWeight ? (
+          {totalPreBookingWeight ? (
             <p className="py-1 px-2 border-b border-black">
-              WEIGHT : {totalDispatchWeight} KG
+              WEIGHT : {totalPreBookingWeight} KG
             </p>
           ) : (
             ""
           )}
           <p className="py-1 px-2 border-b border-black">
-            VEHICLE : {dispatch.dispatch_vehicle_no}
+            VEHICLE : {prebookingByid?.prebooking?.pre_booking_vehicle_no || ""}
           </p>
-          <p className="py-1 px-2">REMARK : {dispatch.dispatch_remark}</p>
+          <p className="py-1 px-2">
+            REMARK : {prebookingByid?.prebooking?.pre_booking_remark || ""}
+          </p>
         </div>
       </div>
     </Page>
   );
 };
 
-export default DispatchView;
+export default PreBookingView;

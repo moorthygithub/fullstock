@@ -124,12 +124,7 @@ const CreateDispatch = () => {
       boxInputRefs.current[rowIndex].focus();
     }
   };
-  const {
-    data: dispatchByid,
-    isFetching,
-    isError,
-    refetch,
-  } = useQuery({
+  const { data: dispatchByid, isFetching } = useQuery({
     queryKey: ["dispatchByid", id],
     queryFn: () => fetchDispatchById(id, token),
     enabled: !!id,
@@ -238,15 +233,21 @@ const CreateDispatch = () => {
     setInvoiceData([...updatedData]);
   };
   useEffect(() => {
-    invoiceData.forEach((row, index) => {
-      const { dispatch_sub_item_id, dispatch_sub_godown_id } = row;
-      if (dispatch_sub_item_id && dispatch_sub_godown_id) {
-        fetchAndSetStock(index, dispatch_sub_item_id, dispatch_sub_godown_id, [
-          ...invoiceData,
-        ]);
-      }
-    });
+    if (!editId) {
+      invoiceData.forEach((row, index) => {
+        const { dispatch_sub_item_id, dispatch_sub_godown_id } = row;
+        if (dispatch_sub_item_id && dispatch_sub_godown_id) {
+          fetchAndSetStock(
+            index,
+            dispatch_sub_item_id,
+            dispatch_sub_godown_id,
+            [...invoiceData]
+          );
+        }
+      });
+    }
   }, [
+    editId,
     invoiceData
       .map(
         (row) => row?.dispatch_sub_item_id + "-" + row?.dispatch_sub_godown_id
@@ -1066,15 +1067,10 @@ const CreateDispatch = () => {
                             Piece<span className="text-red-500 ml-1">*</span>
                           </TableHead>
                         )}
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
-                          <div className="flex justify-center items-center gap-2">
-                            Action
-                            <PlusCircle
-                              onClick={addRow}
-                              className="cursor-pointer text-blue-500 hover:text-gray-800 h-4 w-4"
-                            />
-                          </div>
-                        </TableHead>
+                        {/* <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
+                          Action
+                     
+                        </TableHead> */}
                       </TableRow>
                     </TableHeader>
 
@@ -1082,7 +1078,7 @@ const CreateDispatch = () => {
                       {invoiceData.map((row, rowIndex) => (
                         <TableRow
                           key={rowIndex}
-                          className="border-t border-gray-200 hover:bg-gray-50"
+                          className="border-t border-gray-200 hover:bg-gray-50 relative"
                         >
                           {/* Item Column */}
                           <TableCell className="px-4 py-3 align-top">
@@ -1110,6 +1106,35 @@ const CreateDispatch = () => {
                                 </div>
                               )}
                             </div>
+
+                            {row.id ? (
+                              userType == 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  className={`absolute top-1 left-2 rounded-full p-1 ${
+                                    invoiceData.length === 1
+                                      ? "bg-gray-200 text-gray-400"
+                                      : "bg-red-100 text-red-500"
+                                  }`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeRow(rowIndex)}
+                                disabled={invoiceData.length === 1}
+                                className={`absolute top-1 left-2 rounded-full p-1 ${
+                                  invoiceData.length === 1
+                                    ? "bg-gray-200 text-gray-400"
+                                    : "bg-red-100 text-red-500"
+                                }`}
+                              >
+                                <MinusCircle className="h-4 w-4" />
+                              </button>
+                            )}
                           </TableCell>
 
                           {/* Godown Column */}
@@ -1195,7 +1220,7 @@ const CreateDispatch = () => {
                             </TableCell>
                           )}
                           {/* Delete Button */}
-                          <TableCell className="p-2 align-middle">
+                          {/* <TableCell className="p-2 text-center align-middle">
                             {row.id ? (
                               userType == 2 && (
                                 <Button
@@ -1218,11 +1243,21 @@ const CreateDispatch = () => {
                                 <MinusCircle className="h-4 w-4" />
                               </Button>
                             )}
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  <div className="mt-2">
+                    <button
+                      onClick={addRow}
+                      type="button"
+                      className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center gap-2  px-3 py-1.5 rounded-md shadow-md transition`}
+                    >
+                      <PlusCircle className="h-5 w-5" />
+                      <span className="text-sm font-medium">Add More</span>
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

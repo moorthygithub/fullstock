@@ -6,7 +6,7 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer"; // assuming you're using a wrapped component
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,7 +81,7 @@ export default function EnquiryDrawer({ isDrawerOpen, setDrawerOpen }) {
 
   return (
     <Drawer open={isDrawerOpen} onOpenChange={setDrawerOpen}>
-      <DrawerContent className="p-6 max-w-md ml-auto w-full">
+      <DrawerContent className="p-6 max-w-md ml-auto w-full ">
         <DrawerHeader>
           <DrawerTitle className="text-xl text-yellow-900">
             Web Enquiry

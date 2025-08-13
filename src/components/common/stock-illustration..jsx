@@ -1,10 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
-const imageUrls = [
-  "/src/assets/img/boxes.gif",
-  "/src/assets/img/warehouse.gif",
-];
+const imageUrls = ["/boxes.gif", "/warehouse.gif"];
 
 export default function StockIllustrationCycle({ className = "w-80 h-auto" }) {
   const [index, setIndex] = useState(0);
@@ -12,7 +9,7 @@ export default function StockIllustrationCycle({ className = "w-80 h-auto" }) {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % imageUrls.length);
-    }, 3000); 
+    }, 3000);
 
     return () => clearInterval(timer);
   }, []);
