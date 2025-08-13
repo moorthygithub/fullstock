@@ -15,10 +15,3 @@ const Logo = ({ showLogo }) => {
 };
 
 export default Logo;
-// import React from "react";
-// import image from "../assets/img/companylogo.png";
-// const Logo = () => {
-//   return <img src={image} alt="Logo" className="w-8 h-8" />;
-// };
-
-// export default Logo;

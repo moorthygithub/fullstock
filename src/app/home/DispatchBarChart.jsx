@@ -231,9 +231,8 @@ const StockBarChart = ({
   };
 
   const maxY = Math.max(...datasets.flatMap((d) => d.data)) || 0;
-  console.log(maxY, "maxY");
   return (
-    <Card className="p-0 md:p-4">
+    <Card className="p-0">
       <CardHeader>
         <div className="flex flex-col md:flex-row items-center md:justify-between mb-4 space-y-2 md:space-y-0 md:space-x-4 ">
           <CardTitle className="text-lg font-semibold text-black">

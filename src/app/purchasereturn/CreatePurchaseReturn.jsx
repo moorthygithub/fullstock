@@ -1048,15 +1048,10 @@ const CreatePurchaseReturn = () => {
                           </TableHead>
                         )}
 
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
-                          <div className="flex justify-center items-center gap-2">
-                            Action
-                            <PlusCircle
-                              onClick={addRow}
-                              className="cursor-pointer text-blue-500 hover:text-gray-800 h-4 w-4"
-                            />
-                          </div>
-                        </TableHead>
+                        {/* <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
+                          Action
+                   
+                        </TableHead> */}
                       </TableRow>
                     </TableHeader>
 
@@ -1064,7 +1059,7 @@ const CreatePurchaseReturn = () => {
                       {invoiceData.map((row, rowIndex) => (
                         <TableRow
                           key={rowIndex}
-                          className="border-t border-gray-200 hover:bg-gray-50"
+                          className="border-t border-gray-200 hover:bg-gray-50 relative"
                         >
                           {/* Item Column */}
                           <TableCell className="px-4 py-3 align-top">
@@ -1092,6 +1087,34 @@ const CreatePurchaseReturn = () => {
                                 </div>
                               )}
                             </div>
+                            {row.id ? (
+                              userType == 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  className={`absolute top-1 left-2 rounded-full p-1 ${
+                                    invoiceData.length === 1
+                                      ? "bg-gray-200 text-gray-400"
+                                      : "bg-red-100 text-red-500"
+                                  }`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeRow(rowIndex)}
+                                disabled={invoiceData.length === 1}
+                                className={`absolute top-1 left-2 rounded-full p-1 ${
+                                  invoiceData.length === 1
+                                    ? "bg-gray-200 text-gray-400"
+                                    : "bg-red-100 text-red-500"
+                                }`}
+                              >
+                                <MinusCircle className="h-4 w-4" />
+                              </button>
+                            )}
                           </TableCell>
 
                           {/* Godown Column */}
@@ -1176,7 +1199,7 @@ const CreatePurchaseReturn = () => {
                           )}
 
                           {/* Delete Button */}
-                          <TableCell className="p-2 align-middle">
+                          {/* <TableCell className="p-2 text-center align-middle">
                             {row.id ? (
                               userType == 2 && (
                                 <Button
@@ -1199,11 +1222,21 @@ const CreatePurchaseReturn = () => {
                                 <MinusCircle className="h-4 w-4" />
                               </Button>
                             )}
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  <div className="mt-2">
+                    <button
+                      onClick={addRow}
+                      type="button"
+                      className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center gap-2  px-3 py-1.5 rounded-md shadow-md transition`}
+                    >
+                      <PlusCircle className="h-5 w-5" />
+                      <span className="text-sm font-medium">Add More</span>
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

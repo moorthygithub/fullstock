@@ -224,7 +224,11 @@ const CreateItem = ({ editId = null }) => {
       if (/^\d*\.?\d*$/.test(value)) {
         setFormData((prev) => ({ ...prev, [id]: value }));
       }
-    } else {
+    } else if (id === "item_name") {
+    if (/^[a-zA-Z0-9 Xx]*$/.test(value)) {
+      setFormData((prev) => ({ ...prev, [id]: value }));
+    }
+  } else {
       setFormData((prev) => ({ ...prev, [id]: value }));
     }
   };

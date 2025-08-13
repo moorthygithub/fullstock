@@ -105,6 +105,12 @@ export function AppSidebar({ ...props }) {
         isActive: false,
       },
       {
+        title: "PreBooking",
+        url: "/pre-booking",
+        icon: ShoppingBag,
+        isActive: false,
+      },
+      {
         title: "Dispatch",
         url: "/dispatch",
         icon: ShoppingBag,

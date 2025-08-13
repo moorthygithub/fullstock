@@ -130,7 +130,7 @@ export default function LoginAuth() {
                   >
                     <Logo />
                   </motion.div>{" "}
-                  <span className="text-xl font-bold text-yellow-800">
+                  <span className="text-xl font-bold text-[#ff9e0e]">
                     {companyname?.CompanyName}
                   </span>
                 </div>
@@ -197,12 +197,7 @@ export default function LoginAuth() {
                   </motion.div>
 
                   <CardDescription className="flex justify-between mt-2">
-                    <span
-                      onClick={() => setDrawerOpen(true)}
-                      className="text-yellow-800 underline cursor-pointer"
-                    >
-                      Web Enquiry
-                    </span>
+                    <span></span>
                     <span
                       onClick={() => navigate("/forgot-password")}
                       className="text-yellow-800 underline cursor-pointer"
@@ -216,10 +211,12 @@ export default function LoginAuth() {
           </motion.div>
         </div>
       </motion.div>
-      <EnquiryDrawer
-        isDrawerOpen={isDrawerOpen}
-        setDrawerOpen={setDrawerOpen}
-      />
+      <div className="overflow-y-auto">
+        <EnquiryDrawer
+          isDrawerOpen={isDrawerOpen}
+          setDrawerOpen={setDrawerOpen}
+        />
+      </div>
     </div>
   );
 }

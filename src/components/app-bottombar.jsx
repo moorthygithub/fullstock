@@ -1,17 +1,15 @@
-import * as React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Frame,
-  Settings2,
-  ShoppingBag,
+  ChevronRight,
   File,
   Home,
-  ChevronUp,
+  Settings2,
+  ShoppingBag,
   X,
-  ChevronRight,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import * as React from "react";
 import { useSelector } from "react-redux";
+import { Link, useLocation } from "react-router-dom";
 
 export function AppBottombar() {
   const location = useLocation();
@@ -85,10 +83,18 @@ export function AppBottombar() {
       ],
     },
     {
-      title: "Dispatch",
+      title: (
+        <div>
+          Dispatch<br></br>&PreBook
+        </div>
+      ),
       url: "#",
       icon: ShoppingBag,
       items: [
+        {
+          title: "PreBooking",
+          url: "/pre-booking",
+        },
         {
           title: "Dispatch",
           url: "/dispatch",
@@ -198,7 +204,7 @@ export function AppBottombar() {
                   )}
                   <IconComponent className="h-4 w-4" />
                 </div>
-                <span className="text-xs mt-1 font-medium">{item.title}</span>
+                <span className="text-xs mt-1 font-medium ">{item.title}</span>
 
                 {hasDropdown && (
                   <span

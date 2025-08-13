@@ -1,9 +1,8 @@
 import {
-  DISPATCH_RETURN_CREATE,
-  DISPATCH_RETURN_EDIT_LIST,
-  DISPATCH_RETURN_SUB_DELETE,
   fetchAvaiableItem,
-  fetchDispatchReturnById,
+  fetchPreBookingById,
+  PRE_BOOKING_CREATE,
+  PRE_BOOKING_SUB_DELETE,
 } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
@@ -38,9 +37,9 @@ import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import {
   useFetchBuyers,
-  useFetchDispatchReturnRef,
   useFetchGoDown,
   useFetchItems,
+  useFetchPreBookingRef,
 } from "@/hooks/useApi";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -57,13 +56,11 @@ import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import BuyerForm from "../master/buyer/CreateBuyer";
 import CreateItem from "../master/item/CreateItem";
-const CreateDispatchReturnForm = () => {
+const PreBookingForm = () => {
   const { id } = useParams();
   const decryptedId = decryptId(id);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
-  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
-  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
   const userType = useSelector((state) => state.auth.user_type);
   const editId = Boolean(id);
   const { toast } = useToast();
@@ -71,28 +68,36 @@ const CreateDispatchReturnForm = () => {
   const boxInputRefs = useRef([]);
   const today = moment().format("YYYY-MM-DD");
   const [isLoading, setIsLoading] = useState(false);
-
+  const singlebranch = useSelector((state) => state.auth.branch_s_unit);
+  const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+  // const doublebranch = "Yes";
+  // console.log(singlebranch, doublebranch);
   const token = usetoken();
 
   const [formData, setFormData] = useState({
-    dispatch_date: today,
-    dispatch_buyer_id: "",
-    dispatch_ref_no: "",
-    dispatch_vehicle_no: "",
-    dispatch_buyer_city: "",
-    dispatch_remark: "",
-    dispatch_status: editId ? "" : null,
+    pre_booking_date: today,
+    pre_booking_buyer_id: "",
+    pre_booking_ref_no: "",
+    pre_booking_vehicle_no: "",
+    pre_booking_buyer_city: "",
+    pre_booking_remark: "",
+    pre_booking_status: editId ? "" : null,
   });
 
   const [invoiceData, setInvoiceData] = useState([
     {
       id: editId ? "" : null,
-      dispatch_sub_item_id: "",
-      dispatch_sub_godown_id: "",
-      dispatch_sub_box: 0,
+      pre_booking_sub_item_id: "",
+      pre_booking_sub_godown_id: "",
+      pre_booking_sub_box: 0,
       item_brand: "",
       item_size: "",
-      dispatch_sub_piece: 0,
+      pre_booking_sub_piece: 0,
+      stockData: {
+        total: 0,
+        total_box: 0,
+        total_piece: 0,
+      },
     },
   ]);
 
@@ -100,10 +105,10 @@ const CreateDispatchReturnForm = () => {
     setInvoiceData((prev) => [
       ...prev,
       {
-        dispatch_sub_item_id: "",
-        dispatch_sub_godown_id: "",
-        dispatch_sub_box: 0,
-        dispatch_sub_piece: 0,
+        pre_booking_sub_item_id: "",
+        pre_booking_sub_godown_id: "",
+        pre_booking_sub_box: 0,
+        pre_booking_sub_piece: 0,
       },
     ]);
   }, []);
@@ -120,61 +125,57 @@ const CreateDispatchReturnForm = () => {
       boxInputRefs.current[rowIndex].focus();
     }
   };
-  const {
-    data: dispatchByid,
-    isFetching,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["dispatchByid", id],
-    queryFn: () => fetchDispatchReturnById(id, token),
+  const { data: prebookingByid, isFetching } = useQuery({
+    queryKey: ["prebookingByid", id],
+    queryFn: () => fetchPreBookingById(id, token),
     enabled: !!id,
   });
   useEffect(() => {
-    if (editId && dispatchByid?.dispatch) {
-      console.log(dispatchByid.dispatch.dispatch_ref_no);
+    if (editId && prebookingByid?.prebooking) {
+      console.log(prebookingByid.prebooking.pre_booking_ref_no);
       setFormData({
-        dispatch_date: dispatchByid.dispatch.dispatch_date || "",
-        dispatch_buyer_id: dispatchByid.dispatch.dispatch_buyer_id || "",
-        dispatch_buyer_city: dispatchByid.buyer.buyer_city || "",
-        dispatch_ref_no: dispatchByid.dispatch.dispatch_ref_no || "",
-        dispatch_vehicle_no: dispatchByid.dispatch.dispatch_vehicle_no || "",
-        dispatch_remark: dispatchByid.dispatch.dispatch_remark || "",
-        dispatch_status: dispatchByid.dispatch.dispatch_status || "",
+        pre_booking_date: prebookingByid.prebooking.pre_booking_date || "",
+        pre_booking_buyer_id:
+          prebookingByid.prebooking.pre_booking_buyer_id || "",
+        pre_booking_buyer_city: prebookingByid.buyer.buyer_city || "",
+        pre_booking_ref_no: prebookingByid.prebooking.pre_booking_ref_no || "",
+        pre_booking_vehicle_no:
+          prebookingByid.prebooking.pre_booking_vehicle_no || "",
+        pre_booking_remark: prebookingByid.prebooking.pre_booking_remark || "",
+        pre_booking_status: prebookingByid.prebooking.pre_booking_status || "",
       });
 
       // Set invoice line items
-      const mappedData = Array.isArray(dispatchByid.dispatchSub)
-        ? dispatchByid.dispatchSub.map((sub) => ({
+      const mappedData = Array.isArray(prebookingByid?.prebookingsub)
+        ? prebookingByid.prebookingsub.map((sub) => ({
             id: sub.id || "",
-            dispatch_sub_item_id: sub.dispatch_sub_item_id || "",
-            dispatch_sub_box: sub.dispatch_sub_box || 0,
-            dispatch_sub_piece: sub.dispatch_sub_piece || 0,
-
+            pre_booking_sub_item_id: sub.pre_booking_sub_item_id || "",
+            pre_booking_sub_box: sub.pre_booking_sub_box || 0,
+            pre_booking_sub_piece: sub.pre_booking_sub_piece || 0,
             item_brand: sub.item_brand || "",
             item_size: sub.item_size || "",
-            dispatch_sub_godown_id: sub.dispatch_sub_godown_id,
+            pre_booking_sub_godown_id: sub.pre_booking_sub_godown_id,
           }))
         : [
             {
-              dispatch_sub_item_id: "",
-              dispatch_sub_box: "",
+              pre_booking_sub_item_id: "",
+              pre_booking_sub_box: "",
               item_brand: "",
               item_size: "",
-              dispatch_sub_piece: "",
-              dispatch_sub_godown_id: "",
+              pre_booking_sub_piece: "",
+              pre_booking_sub_godown_id: "",
             },
           ];
 
       setInvoiceData(mappedData);
     }
-  }, [editId, dispatchByid]);
+  }, [editId, prebookingByid]);
 
   const { data: buyerData, isLoading: loadingbuyer } = useFetchBuyers();
   const { data: itemsData, isLoading: loadingitem } = useFetchItems();
   const { data: godownData, isLoading: loadinggodown } = useFetchGoDown();
-  const { data: dispatchRef, isLoading: loadingref } =
-    useFetchDispatchReturnRef();
+  const { data: preBookingRef, isLoading: loadingref } =
+    useFetchPreBookingRef();
 
   const fetchAndSetStock = async (rowIndex, itemId, godownId, updatedData) => {
     if (!itemId || !godownId) return;
@@ -238,12 +239,12 @@ const CreateDispatchReturnForm = () => {
   useEffect(() => {
     if (!editId) {
       invoiceData.forEach((row, index) => {
-        const { dispatch_sub_item_id, dispatch_sub_godown_id } = row;
-        if (dispatch_sub_item_id && dispatch_sub_godown_id) {
+        const { pre_booking_sub_item_id, pre_booking_sub_godown_id } = row;
+        if (pre_booking_sub_item_id && pre_booking_sub_godown_id) {
           fetchAndSetStock(
             index,
-            dispatch_sub_item_id,
-            dispatch_sub_godown_id,
+            pre_booking_sub_item_id,
+            pre_booking_sub_godown_id,
             [...invoiceData]
           );
         }
@@ -253,7 +254,8 @@ const CreateDispatchReturnForm = () => {
     editId,
     invoiceData
       .map(
-        (row) => row?.dispatch_sub_item_id + "-" + row?.dispatch_sub_godown_id
+        (row) =>
+          row?.pre_booking_sub_item_id + "-" + row?.pre_booking_sub_godown_id
       )
       .join(","),
   ]);
@@ -261,7 +263,7 @@ const CreateDispatchReturnForm = () => {
     let value = selectedValue?.target?.value ?? selectedValue;
     const updatedData = [...invoiceData];
 
-    if (fieldName == "dispatch_sub_item_id") {
+    if (fieldName == "pre_booking_sub_item_id") {
       updatedData[rowIndex][fieldName] = value;
       const selectedItem = itemsData?.items?.find((item) => item.id === value);
       if (selectedItem) {
@@ -271,7 +273,7 @@ const CreateDispatchReturnForm = () => {
       focusBoxInput(rowIndex);
     } else {
       if (
-        ["dispatch_sub_box", "dispatch_sub_piece"].includes(fieldName) &&
+        ["pre_booking_sub_box", "pre_booking_sub_piece"].includes(fieldName) &&
         !/^\d*$/.test(value)
       ) {
         console.log("Invalid input. Only digits are allowed.");
@@ -282,20 +284,22 @@ const CreateDispatchReturnForm = () => {
 
     setInvoiceData(updatedData);
   };
+
   const handleInputChange = (e, field) => {
     const value = e.target ? e.target.value : e;
     let updatedFormData = { ...formData, [field]: value };
 
-    if (field == "dispatch_buyer_id") {
+    if (field == "pre_booking_buyer_id") {
       console.log(value, "value");
 
       const selectedBuyer = buyerData?.buyers.find(
         (buyer) => buyer.id == value
       );
+      console.log(selectedBuyer, "selectedBuyer");
       if (selectedBuyer) {
-        updatedFormData.dispatch_buyer_city = selectedBuyer.buyer_city;
+        updatedFormData.pre_booking_buyer_city = selectedBuyer.buyer_city;
       } else {
-        updatedFormData.dispatch_buyer_city = "";
+        updatedFormData.pre_booking_buyer_city = "";
       }
     }
 
@@ -305,32 +309,31 @@ const CreateDispatchReturnForm = () => {
     e.preventDefault();
 
     const missingFields = [];
-    if (!formData.dispatch_date) missingFields.push("Dispatch Date");
-    if (!formData.dispatch_buyer_id) missingFields.push("Buyer Id");
-    if (!formData.dispatch_ref_no) missingFields.push("Bill Ref No");
-    if (!formData.dispatch_status && editId) {
+    if (!formData.pre_booking_date) missingFields.push("Preebooking Date");
+    if (!formData.pre_booking_buyer_id) missingFields.push("Buyer Id");
+    if (!formData.pre_booking_ref_no) missingFields.push("Bill Ref No");
+    if (!formData.pre_booking_status && editId) {
       missingFields.push("Status");
     }
     invoiceData.forEach((row, index) => {
-      if (!row.dispatch_sub_godown_id)
+      if (!row.pre_booking_sub_godown_id)
         missingFields.push(`Row ${index + 1}: Go Down`);
-      if (!row.dispatch_sub_item_id)
+      if (!row.pre_booking_sub_item_id)
         missingFields.push(`Row ${index + 1}: Item`);
-
       if (singlebranch == "Yes") {
         if (
-          row.dispatch_sub_box === null ||
-          row.dispatch_sub_box === undefined ||
-          row.dispatch_sub_box === ""
+          row.pre_booking_sub_box === null ||
+          row.pre_booking_sub_box === undefined ||
+          row.pre_booking_sub_box === ""
         ) {
           missingFields.push(`Row ${index + 1}: Box`);
         }
       }
       if (doublebranch == "Yes") {
         if (
-          row.dispatch_sub_piece === null ||
-          row.dispatch_sub_piece === undefined ||
-          row.dispatch_sub_piece === ""
+          row.pre_booking_sub_piece === null ||
+          row.pre_booking_sub_piece === undefined ||
+          row.pre_booking_sub_piece === ""
         ) {
           missingFields.push(`Row ${index + 1}: Piece`);
         }
@@ -360,7 +363,7 @@ const CreateDispatchReturnForm = () => {
     try {
       const payload = {
         ...formData,
-        dispatch_product_data: invoiceData,
+        pre_booking_product_data: invoiceData,
       };
 
       if (editId) {
@@ -368,8 +371,8 @@ const CreateDispatchReturnForm = () => {
       }
 
       const url = editId
-        ? `${DISPATCH_RETURN_EDIT_LIST}/${decryptedId}`
-        : DISPATCH_RETURN_CREATE;
+        ? `${PRE_BOOKING_CREATE}/${decryptedId}`
+        : PRE_BOOKING_CREATE;
       const method = editId ? "put" : "post";
 
       const response = await apiClient[method](url, payload, {
@@ -382,7 +385,7 @@ const CreateDispatchReturnForm = () => {
           title: "Success",
           description: response.data.msg,
         });
-        navigate("/dispatch-return");
+        navigate("/pre-booking");
       } else {
         toast({
           title: "Error",
@@ -408,7 +411,7 @@ const CreateDispatchReturnForm = () => {
   const handleDelete = async () => {
     try {
       const response = await apiClient.delete(
-        `${DISPATCH_RETURN_SUB_DELETE}/${deleteItemId}`,
+        `${PRE_BOOKING_SUB_DELETE}/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -480,21 +483,19 @@ const CreateDispatchReturnForm = () => {
               <div className="flex items-center px-4 py-5 relative z-10">
                 <button
                   type="button"
-                  onClick={() => navigate("/dispatch-return")}
+                  onClick={() => navigate("/pre-booking")}
                   className="p-1.5 bg-white/20 rounded-full text-white mr-3 shadow-sm hover:bg-white/30 transition-colors"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div className="flex flex-col">
                   <h1 className="text-lg font-bold tracking-wide">
-                    {editId
-                      ? "Update Dispatch Return"
-                      : "Create  Dispatch Return"}
+                    {editId ? "Update PreBooking" : "Create  PreBooking"}
                   </h1>
                   <p className="text-xs text-yellow-100 mt-0.5 opacity-90">
                     {editId
-                      ? "Update new dispatch return details"
-                      : "Add new dispatch return details"}
+                      ? "Update new prebooking details"
+                      : "Add new prebooking details"}
                   </p>
                 </div>
               </div>
@@ -511,8 +512,8 @@ const CreateDispatchReturnForm = () => {
                   </label>
                   <Input
                     className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.dispatch_date}
-                    onChange={(e) => handleInputChange(e, "dispatch_date")}
+                    value={formData.pre_booking_date}
+                    onChange={(e) => handleInputChange(e, "pre_booking_date")}
                     type="date"
                   />
                 </div>
@@ -533,8 +534,10 @@ const CreateDispatchReturnForm = () => {
                     )}
                   </div>
                   <MemoizedSelect
-                    value={formData.dispatch_buyer_id}
-                    onChange={(e) => handleInputChange(e, "dispatch_buyer_id")}
+                    value={formData.pre_booking_buyer_id}
+                    onChange={(e) =>
+                      handleInputChange(e, "pre_booking_buyer_id")
+                    }
                     options={
                       buyerData?.buyers?.map((buyer) => ({
                         value: buyer.id,
@@ -554,16 +557,16 @@ const CreateDispatchReturnForm = () => {
                       </label>
 
                       <MemoizedSelect
-                        value={formData.dispatch_ref_no}
+                        value={formData.pre_booking_ref_no}
                         onChange={(e) =>
-                          handleInputChange(e, "dispatch_ref_no")
+                          handleInputChange(e, "pre_booking_ref_no")
                         }
                         options={
-                          dispatchRef
+                          preBookingRef
                             ? [
                                 {
-                                  value: dispatchRef.dispatch_ref,
-                                  label: dispatchRef.dispatch_ref,
+                                  value: preBookingRef.pre_booking_ref,
+                                  label: preBookingRef.pre_booking_ref,
                                 },
                               ]
                             : []
@@ -583,8 +586,10 @@ const CreateDispatchReturnForm = () => {
                     </label>
                     <Input
                       className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                      value={formData.dispatch_ref_no}
-                      onChange={(e) => handleInputChange(e, "dispatch_ref_no")}
+                      value={formData.pre_booking_ref_no}
+                      onChange={(e) =>
+                        handleInputChange(e, "pre_booking_ref_no")
+                      }
                       disabled
                     />
                   </div>
@@ -596,9 +601,9 @@ const CreateDispatchReturnForm = () => {
                   </label>
                   <Input
                     className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.dispatch_vehicle_no}
+                    value={formData.pre_booking_vehicle_no}
                     onChange={(e) =>
-                      handleInputChange(e, "dispatch_vehicle_no")
+                      handleInputChange(e, "pre_booking_vehicle_no")
                     }
                     placeholder="Vehicle No"
                   />
@@ -610,9 +615,9 @@ const CreateDispatchReturnForm = () => {
                   </label>
                   <Input
                     className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.dispatch_buyer_city}
+                    value={formData.pre_booking_buyer_city}
                     onChange={(e) =>
-                      handleInputChange(e, "dispatch_buyer_city")
+                      handleInputChange(e, "pre_booking_buyer_city")
                     }
                     placeholder="City"
                   />
@@ -625,8 +630,8 @@ const CreateDispatchReturnForm = () => {
                 </label>
                 <Textarea
                   className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                  value={formData.dispatch_remark}
-                  onChange={(e) => handleInputChange(e, "dispatch_remark")}
+                  value={formData.pre_booking_remark}
+                  onChange={(e) => handleInputChange(e, "pre_booking_remark")}
                   placeholder="Add any notes here"
                   rows={2}
                 />
@@ -694,12 +699,12 @@ const CreateDispatchReturnForm = () => {
                           <TableCell className="px-4 py-3 min-w-[200px] align-top">
                             <div className="space-y-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_item_id}
+                                value={row.pre_booking_sub_item_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_item_id"
+                                    "pre_booking_sub_item_id"
                                   )
                                 }
                                 options={
@@ -755,12 +760,12 @@ const CreateDispatchReturnForm = () => {
                           <TableCell className="px-4 py-3 min-w-[150px] align-top">
                             <div className="space-y-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_godown_id}
+                                value={row.pre_booking_sub_godown_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_godown_id"
+                                    "pre_booking_sub_godown_id"
                                   )
                                 }
                                 options={
@@ -790,20 +795,19 @@ const CreateDispatchReturnForm = () => {
                                     (boxInputRefs.current[rowIndex] = el)
                                   }
                                   className="bg-white border border-gray-300 w-full text-xs"
-                                  value={row.dispatch_sub_box}
+                                  value={row.pre_booking_sub_box}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_box"
+                                      "pre_booking_sub_box"
                                     )
                                   }
                                   placeholder="Qty"
-                                  type="number"
                                 />
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.pre_booking_sub_godown_id &&
+                                  row?.pre_booking_sub_item_id && (
                                     <div className="text-xs text-gray-600">
                                       <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
                                         {row.stockData?.total_box}
@@ -819,19 +823,19 @@ const CreateDispatchReturnForm = () => {
                               <div className="space-y-1">
                                 <Input
                                   className="bg-white border border-gray-300 w-full text-xs"
-                                  value={row.dispatch_sub_piece}
+                                  value={row.pre_booking_sub_piece}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_piece"
+                                      "pre_booking_sub_piece"
                                     )
                                   }
                                   placeholder="Piece"
                                 />
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.pre_booking_sub_godown_id &&
+                                  row?.pre_booking_sub_item_id && (
                                     <div className="text-xs text-gray-600">
                                       <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
                                         {row.stockData?.total_piece}
@@ -867,9 +871,9 @@ const CreateDispatchReturnForm = () => {
                       {editId ? "Updating..." : "Creating..."}
                     </>
                   ) : editId ? (
-                    "Update Dispatch Return"
+                    "Update PreBooking"
                   ) : (
-                    "Create Dispatch Return"
+                    "Create PreBooking"
                   )}
                 </Button>
               </div>
@@ -884,9 +888,7 @@ const CreateDispatchReturnForm = () => {
             >
               <div className="flex-1">
                 <h1 className="text-lg font-bold text-gray-800">
-                  {editId
-                    ? "Update Dispatch Return"
-                    : "Create New Dispatch Return"}
+                  {editId ? "Update PreBooking" : "Create New PreBooking"}
                 </h1>
               </div>
             </div>{" "}
@@ -902,8 +904,10 @@ const CreateDispatchReturnForm = () => {
                       </label>
                       <Input
                         className="bg-white"
-                        value={formData.dispatch_date}
-                        onChange={(e) => handleInputChange(e, "dispatch_date")}
+                        value={formData.pre_booking_date}
+                        onChange={(e) =>
+                          handleInputChange(e, "pre_booking_date")
+                        }
                         placeholder="Enter Payment Date"
                         type="date"
                       />
@@ -929,9 +933,9 @@ const CreateDispatchReturnForm = () => {
                     </div>
 
                     <MemoizedSelect
-                      value={formData.dispatch_buyer_id}
+                      value={formData.pre_booking_buyer_id}
                       onChange={(e) =>
-                        handleInputChange(e, "dispatch_buyer_id")
+                        handleInputChange(e, "pre_booking_buyer_id")
                       }
                       options={
                         buyerData?.buyers?.map((buyer) => ({
@@ -952,9 +956,9 @@ const CreateDispatchReturnForm = () => {
                       </label>
                       <Input
                         className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                        value={formData.dispatch_buyer_city}
+                        value={formData.pre_booking_buyer_city}
                         onChange={(e) =>
-                          handleInputChange(e, "dispatch_buyer_city")
+                          handleInputChange(e, "pre_booking_buyer_city")
                         }
                         placeholder="City"
                       />
@@ -970,16 +974,16 @@ const CreateDispatchReturnForm = () => {
                         </label>
 
                         <MemoizedSelect
-                          value={formData.dispatch_ref_no}
+                          value={formData.pre_booking_ref_no}
                           onChange={(e) =>
-                            handleInputChange(e, "dispatch_ref_no")
+                            handleInputChange(e, "pre_booking_ref_no")
                           }
                           options={
-                            dispatchRef
+                            preBookingRef
                               ? [
                                   {
-                                    value: dispatchRef.dispatch_ref,
-                                    label: dispatchRef.dispatch_ref,
+                                    value: preBookingRef.pre_booking_ref,
+                                    label: preBookingRef.pre_booking_ref,
                                   },
                                 ]
                               : []
@@ -999,9 +1003,9 @@ const CreateDispatchReturnForm = () => {
                       </label>
                       <Input
                         className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                        value={formData.dispatch_ref_no}
+                        value={formData.pre_booking_ref_no}
                         onChange={(e) =>
-                          handleInputChange(e, "dispatch_ref_no")
+                          handleInputChange(e, "pre_booking_ref_no")
                         }
                         disabled
                       />
@@ -1010,21 +1014,19 @@ const CreateDispatchReturnForm = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div>
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        Vehicle No
-                      </label>
-                      <Input
-                        className="bg-white"
-                        value={formData.dispatch_vehicle_no}
-                        onChange={(e) =>
-                          handleInputChange(e, "dispatch_vehicle_no")
-                        }
-                        placeholder="Enter Vehicle No"
-                      />
-                    </div>
+                    <label
+                      className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
+                    >
+                      Vehicle No
+                    </label>
+                    <Input
+                      className="bg-white"
+                      value={formData.pre_booking_vehicle_no}
+                      onChange={(e) =>
+                        handleInputChange(e, "pre_booking_vehicle_no")
+                      }
+                      placeholder="Enter Vehicle No"
+                    />
                   </div>
                   <div className="md:col-span-3">
                     <label
@@ -1034,8 +1036,10 @@ const CreateDispatchReturnForm = () => {
                     </label>
                     <Textarea
                       className="bg-white"
-                      value={formData.dispatch_remark}
-                      onChange={(e) => handleInputChange(e, "dispatch_remark")}
+                      value={formData.pre_booking_remark}
+                      onChange={(e) =>
+                        handleInputChange(e, "pre_booking_remark")
+                      }
                       placeholder="Enter Remark"
                     />
                   </div>
@@ -1076,10 +1080,9 @@ const CreateDispatchReturnForm = () => {
                             Piece<span className="text-red-500 ml-1">*</span>
                           </TableHead>
                         )}
-
                         {/* <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
                           Action
-                    
+                     
                         </TableHead> */}
                       </TableRow>
                     </TableHeader>
@@ -1094,12 +1097,12 @@ const CreateDispatchReturnForm = () => {
                           <TableCell className="px-4 py-3 align-top">
                             <div className="flex flex-col gap-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_item_id}
+                                value={row.pre_booking_sub_item_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_item_id"
+                                    "pre_booking_sub_item_id"
                                   )
                                 }
                                 options={
@@ -1116,6 +1119,7 @@ const CreateDispatchReturnForm = () => {
                                 </div>
                               )}
                             </div>
+
                             {row.id ? (
                               userType == 2 && (
                                 <button
@@ -1150,12 +1154,12 @@ const CreateDispatchReturnForm = () => {
                           <TableCell className="px-4 py-3 align-top">
                             <div className="flex flex-col gap-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_godown_id}
+                                value={row.pre_booking_sub_godown_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_godown_id"
+                                    "pre_booking_sub_godown_id"
                                   )
                                 }
                                 options={
@@ -1179,20 +1183,20 @@ const CreateDispatchReturnForm = () => {
                               <div className="flex flex-col gap-1">
                                 <Input
                                   className="bg-white border border-gray-300 text-sm"
-                                  value={row.dispatch_sub_box}
+                                  value={row.pre_booking_sub_box}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_box"
+                                      "pre_booking_sub_box"
                                     )
                                   }
                                   placeholder="Enter Box"
                                 />
 
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.pre_booking_sub_godown_id &&
+                                  row?.pre_booking_sub_item_id && (
                                     <div className="text-xs text-gray-700">
                                       • Available Box:{" "}
                                       {row?.stockData?.total_box ?? 0}
@@ -1201,24 +1205,25 @@ const CreateDispatchReturnForm = () => {
                               </div>
                             </TableCell>
                           )}
+
                           {doublebranch == "Yes" && (
                             <TableCell className="px-4 py-3 align-top min-w-28">
                               <div className="flex flex-col gap-1">
                                 <Input
                                   className="bg-white border border-gray-300 text-sm"
-                                  value={row.dispatch_sub_piece}
+                                  value={row.pre_booking_sub_piece}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_piece"
+                                      "pre_booking_sub_piece"
                                     )
                                   }
                                   placeholder="Enter Piece"
                                 />
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.pre_booking_sub_godown_id &&
+                                  row?.pre_booking_sub_item_id && (
                                     <div className="text-xs text-gray-700">
                                       • Available Piece:{" "}
                                       {row?.stockData?.total_piece ?? 0}
@@ -1281,16 +1286,16 @@ const CreateDispatchReturnForm = () => {
                     {editId ? "Updating..." : "Creating..."}
                   </>
                 ) : editId ? (
-                  "Update Dispatch Return"
+                  "Update PreBooking"
                 ) : (
-                  "Create Dispatch Return"
+                  "Create PreBooking"
                 )}{" "}
               </Button>
 
               <Button
                 type="button"
                 onClick={() => {
-                  navigate("/dispatch-return");
+                  navigate("/pre-booking");
                 }}
                 className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center mt-2`}
               >
@@ -1305,8 +1310,8 @@ const CreateDispatchReturnForm = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              dispatch return.
+              This action cannot be undone. This will permanently delete the pre
+              booking.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1324,4 +1329,4 @@ const CreateDispatchReturnForm = () => {
   );
 };
 
-export default CreateDispatchReturnForm;
+export default PreBookingForm;

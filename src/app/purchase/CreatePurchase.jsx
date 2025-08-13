@@ -249,15 +249,21 @@ const CreatePurchase = () => {
     setInvoiceData([...updatedData]);
   };
   useEffect(() => {
-    invoiceData.forEach((row, index) => {
-      const { purchase_sub_item_id, purchase_sub_godown_id } = row;
-      if (purchase_sub_item_id && purchase_sub_godown_id) {
-        fetchAndSetStock(index, purchase_sub_item_id, purchase_sub_godown_id, [
-          ...invoiceData,
-        ]);
-      }
-    });
+    if (!editId) {
+      invoiceData.forEach((row, index) => {
+        const { purchase_sub_item_id, purchase_sub_godown_id } = row;
+        if (purchase_sub_item_id && purchase_sub_godown_id) {
+          fetchAndSetStock(
+            index,
+            purchase_sub_item_id,
+            purchase_sub_godown_id,
+            [...invoiceData]
+          );
+        }
+      });
+    }
   }, [
+    editId,
     invoiceData
       .map(
         (row) => row?.purchase_sub_item_id + "-" + row?.purchase_sub_godown_id
@@ -631,14 +637,6 @@ const CreatePurchase = () => {
                       </button>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={addRow}
-                    className="flex items-center bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs shadow-sm hover:bg-yellow-600 transition-colors"
-                  >
-                    <PlusCircle className="h-3 w-3 mr-1" />
-                    Add Item
-                  </button>
                 </div>
 
                 {/*  Item Table */}
@@ -828,9 +826,20 @@ const CreatePurchase = () => {
                 </div>
 
                 {/* Item count  */}
-                <div className="mt-2 text-xs text-gray-500 flex items-center">
-                  <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                  Total Items: {invoiceData.length}
+                <div className="mt-2 text-xs text-gray-500 flex justify-between items-center">
+                  <div>
+                    <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
+                    Total Items: {invoiceData.length}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addRow}
+                    className="flex items-center bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs shadow-sm hover:bg-yellow-600 transition-colors"
+                  >
+                    <PlusCircle className="h-3 w-3 mr-1" />
+                    Add Item
+                  </button>
                 </div>
               </div>
 
@@ -1038,15 +1047,10 @@ const CreatePurchase = () => {
                             <span className="text-red-500 ml-1 text-xs">*</span>
                           </TableHead>
                         )}
-                        <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
-                          <div className="flex justify-center items-center gap-2">
-                            Action
-                            <PlusCircle
-                              onClick={addRow}
-                              className="cursor-pointer text-blue-500 hover:text-gray-800 h-4 w-4"
-                            />
-                          </div>
-                        </TableHead>
+                        {/* <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center">
+                          Action
+                     
+                        </TableHead> */}
                       </TableRow>
                     </TableHeader>
 
@@ -1054,7 +1058,7 @@ const CreatePurchase = () => {
                       {invoiceData.map((row, rowIndex) => (
                         <TableRow
                           key={rowIndex}
-                          className="border-t border-gray-200 hover:bg-gray-50"
+                          className="border-t border-gray-200 hover:bg-gray-50 relative"
                         >
                           {/* Item Column */}
                           <TableCell className="px-4 py-3 align-top">
@@ -1082,6 +1086,34 @@ const CreatePurchase = () => {
                                 </div>
                               )}
                             </div>
+                            {row.id ? (
+                              userType == 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  className={`absolute top-1 left-2 rounded-full p-1 ${
+                                    invoiceData.length === 1
+                                      ? "bg-gray-200 text-gray-400"
+                                      : "bg-red-100 text-red-500"
+                                  }`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeRow(rowIndex)}
+                                disabled={invoiceData.length === 1}
+                                className={`absolute top-1 left-2 rounded-full p-1 ${
+                                  invoiceData.length === 1
+                                    ? "bg-gray-200 text-gray-400"
+                                    : "bg-red-100 text-red-500"
+                                }`}
+                              >
+                                <MinusCircle className="h-4 w-4" />
+                              </button>
+                            )}
                           </TableCell>
 
                           {/* Godown Column */}
@@ -1164,7 +1196,7 @@ const CreatePurchase = () => {
                             </TableCell>
                           )}
                           {/* Delete Button */}
-                          <TableCell className="p-2 align-middle">
+                          {/* <TableCell className="p-2 text-center align-middle">
                             {row.id ? (
                               userType == 2 && (
                                 <Button
@@ -1187,11 +1219,22 @@ const CreatePurchase = () => {
                                 <MinusCircle className="h-4 w-4" />
                               </Button>
                             )}
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+
+                  <div className="mt-2">
+                    <button
+                      onClick={addRow}
+                      type="button"
+                      className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center gap-2  px-3 py-1.5 rounded-md shadow-md transition`}
+                    >
+                      <PlusCircle className="h-5 w-5" />
+                      <span className="text-sm font-medium">Add More</span>
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

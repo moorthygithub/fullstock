@@ -178,81 +178,7 @@ const DispatchReturnList = () => {
       );
     }
   };
-  //   const handleSendWhatsApp = (
-  //     dispatch,
-  //     dispatchSub,
-  //     buyer,
-  //     singlebranch,
-  //     doublebranch
-  //   ) => {
-  //     const { dispatch_ref, dispatch_date, dispatch_vehicle_no } = dispatch;
-  //     const { buyer_name, buyer_city } = buyer;
 
-  //     const dispatchNo = dispatch_ref?.split("-").pop();
-
-  //     const NAME_WIDTH = 30;
-  //     const BOX_WIDTH = 7;
-  //     const itemLine = dispatchSub.map((item) => {
-  //       const name = item.item_name.padEnd(NAME_WIDTH, " ");
-  //       const box = `(${String(item.dispatch_sub_box || 0)})`.padEnd(
-  //         BOX_WIDTH,
-  //         " "
-  //       );
-
-  //       const piece = String(item.dispatch_sub_piece || 0);
-  //       return `${name}  ${box}   ${piece}`;
-  //     });
-
-  //     const itemLines = dispatchSub.map((item) => {
-  //       const name = item.item_name.padEnd(NAME_WIDTH, " ");
-  //       const box = `(${String(item.dispatch_sub_box || 0)})`;
-  //       return `${name}  ${box}`;
-  //     });
-
-  //     const totalQty = dispatchSub.reduce(
-  //       (sum, item) => sum + (parseInt(item.dispatch_sub_piece, 10) || 0),
-  //       0
-  //     );
-  //     const totalQtyBox = dispatchSub.reduce(
-  //       (sum, item) => sum + (parseInt(item.dispatch_sub_box, 10) || 0),
-  //       0
-  //     );
-
-  //     const isBothYes = singlebranch == "Yes" && doublebranch == "Yes";
-
-  //     const productHeader = isBothYes
-  //       ? `Product  [SIZE]                (QTY)   (Piece)`
-  //       : `Product  [SIZE]                (QTY)`;
-
-  //     const productBody = isBothYes ? itemLine.join("\n") : itemLines.join("\n");
-
-  //     const totalLine = isBothYes
-  //       ? `*Total QTY: ${totalQtyBox}   ${totalQty}*`
-  //       : `*Total QTY: ${totalQtyBox}*`;
-
-  //     const message = `
-  //  === DispatchReturnList ===
-  //  No.        : ${dispatchNo}
-  //  Date       : ${moment(dispatch_date).format("DD-MM-YYYY")}
-  //  Party      : ${buyer_name}
-  //  City       : ${buyer_city}
-  //  VEHICLE NO : ${dispatch_vehicle_no}
-  //  ======================
-  //  ${productHeader}
-  //  ======================
-  //  ${productBody}
-  //  ======================
-  //  ${totalLine}
-  //  ======================
-  //  `;
-
-  //     // const phoneNumber = "919360485526";
-  //     const phoneNumber = `${whatsapp}`;
-
-  //     const encodedMessage = encodeURIComponent(message);
-  //     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-  //     window.open(whatsappUrl, "_blank");
-  //   };
   const handleSendWhatsApp = (dispatch, dispatchSub, buyer) => {
     const { dispatch_ref, dispatch_date, dispatch_vehicle_no } = dispatch;
     const { buyer_name, buyer_city } = buyer;
@@ -288,11 +214,31 @@ const DispatchReturnList = () => {
   Total QTY: ${totalQty}
   ======================
   \`\`\``;
-    const phoneNumber = `${whatsapp}`;
-    // const phoneNumber = "919360485526";
+    // const phoneNumber = `${whatsapp}`;
+    // // const phoneNumber = "919360485526";
+    // const encodedMessage = encodeURIComponent(message);
+    // const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    // window.open(whatsappUrl, "_blank");
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, "_blank");
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      const mobileUrl = `whatsapp://send?text=${encodedMessage}`;
+      window.location.href = mobileUrl;
+    } else {
+      const webUrl = `https://web.whatsapp.com/send?text=${encodedMessage}`;
+      const desktopFallback = `whatsapp://send?text=${encodedMessage}`;
+
+      try {
+        window.open(webUrl, "_blank");
+        setTimeout(() => {
+          window.location.href = desktopFallback;
+        }, 500);
+      } catch (err) {
+        window.location.href = desktopFallback;
+      }
+    }
   };
 
   const columns = [

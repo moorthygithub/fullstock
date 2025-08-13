@@ -39,7 +39,18 @@ const StockView = () => {
         },
       }
     );
-    return response.data.stock;
+    // return response.data.stock;
+    const sortedStock = response.data.stock.sort((a, b) => {
+      const numA = parseFloat(a.item_name) || 0;
+      const numB = parseFloat(b.item_name) || 0;
+
+      if (numA !== numB) {
+        return numA - numB;
+      }
+      return a.item_name.localeCompare(b.item_name);
+    });
+
+    return sortedStock;
   };
 
   const {

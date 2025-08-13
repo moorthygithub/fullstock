@@ -225,9 +225,12 @@ const CreateCategory = ({ editId = null }) => {
                 id="category"
                 placeholder="Enter category"
                 value={formData.category}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, category: e.target.value }))
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^[a-zA-Z0-9 Xx]*$/.test(value)) {
+                    setFormData((prev) => ({ ...prev, category: value }));
+                  }
+                }}
               />
               {editId && (
                 <div className="grid gap-1">

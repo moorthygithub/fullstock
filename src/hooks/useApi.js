@@ -50,6 +50,9 @@ export const useFetchPurchaseReturnRef = () => {
     createQueryConfig(["purchasesreturnref"], "/purchases-return-ref")
   );
 };
+export const useFetchPreBookingRef = () => {
+  return useQuery(createQueryConfig(["prebookingref"], "/pre-booking-ref"));
+};
 export const useFetchDispatchRef = () => {
   return useQuery(createQueryConfig(["dispatchref"], "/dispatch-ref"));
 };

@@ -39,25 +39,23 @@ import {
   Trash2,
   View,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
   DISPATCH_EDIT_LIST,
-  DISPATCH_LIST,
-  fetchDispatchById,
+  fetchPreBookingById,
   navigateTODispatchEdit,
   navigateTODispatchView,
+  navigateToPreBookingEdit,
+  navigateToPreBookingView,
+  PRE_BOOKING_LIST
 } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import { encryptId } from "@/components/common/Encryption";
 import Loader from "@/components/loader/Loader";
 import StatusToggle from "@/components/toggle/StatusToggle";
-import { ButtonConfig } from "@/config/ButtonConfig";
-import { useToast } from "@/hooks/use-toast";
-import moment from "moment";
-import { RiWhatsappFill } from "react-icons/ri";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,25 +66,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ButtonConfig } from "@/config/ButtonConfig";
+import { useToast } from "@/hooks/use-toast";
+import moment from "moment";
+import { RiWhatsappFill } from "react-icons/ri";
 import { useSelector } from "react-redux";
-const DispatchList = () => {
+const PreBookingList = () => {
   const token = usetoken();
   const {
-    data: dispatch,
+    data: prebooking,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["dispatch"],
+    queryKey: ["prebookings"],
     queryFn: async () => {
-      const response = await apiClient.get(`${DISPATCH_LIST}`, {
+      const response = await apiClient.get(`${PRE_BOOKING_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.dispatch;
+      return response.data.pre_booking;
     },
   });
-  // State for table management
-
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -99,10 +99,11 @@ const DispatchList = () => {
   const whatsapp = useSelector((state) => state.auth.whatsapp_number);
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+
+  // const doublebranch = "Yes";
+  // console.log(singlebranch, doublebranch);
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(
-    moment().format("YYYY-MM-DD")
-  );
+
   const { toast } = useToast();
   const handleDeleteRow = (productId) => {
     setDeleteItemId(productId);
@@ -159,13 +160,13 @@ const DispatchList = () => {
     try {
       const data = await queryClient.fetchQuery({
         queryKey: ["dispatchByid", dispatchId],
-        queryFn: () => fetchDispatchById(dispatchId, token),
+        queryFn: () => fetchPreBookingById(dispatchId, token),
       });
 
-      if (data?.dispatch && data?.dispatchSub) {
+      if (data?.prebooking && data?.prebookingsub) {
         handleSendWhatsApp(
-          data.dispatch,
-          data.dispatchSub,
+          data.prebooking,
+          data.prebookingsub,
           data.buyer,
           singlebranch,
           doublebranch
@@ -174,37 +175,38 @@ const DispatchList = () => {
         console.error("Incomplete data received");
       }
     } catch (error) {
-      console.error("Failed to fetch dispatch data or send WhatsApp:", error);
+      console.error("Failed to fetch prebooking data or send WhatsApp:", error);
     }
   };
 
-  const handleSendWhatsApp = (dispatch, dispatchSub, buyer) => {
-    const { dispatch_ref, dispatch_date, dispatch_vehicle_no } = dispatch;
+  const handleSendWhatsApp = (prebooking, prebookingsub, buyer) => {
+    const { pre_booking_ref, pre_booking_date, pre_booking_vehicle_no } =
+      prebooking;
     const { buyer_name, buyer_city } = buyer;
 
-    const dispatchNo = dispatch_ref?.split("-").pop();
+    const preBookingNo = pre_booking_ref?.split("-").pop();
 
     const NAME_WIDTH = 25;
 
-    const itemLines = dispatchSub.map((item) => {
+    const itemLines = prebookingsub.map((item) => {
       let name = item.item_name.slice(0, 20);
       name = name.padEnd(NAME_WIDTH, " ");
-      const box = `${String(item.dispatch_sub_box || 0)}`;
+      const box = `${String(item.pre_booking_sub_box || 0)}`;
       return `${name}${box}`;
     });
 
-    const totalQty = dispatchSub.reduce(
-      (sum, item) => sum + (parseInt(item.dispatch_sub_box, 10) || 0),
+    const totalQty = prebookingsub.reduce(
+      (sum, item) => sum + (parseInt(item.pre_booking_sub_box, 10) || 0),
       0
     );
 
     const message = `\`\`\`
-=== DispatchList ===
-No.        : ${dispatchNo}
-Date       : ${moment(dispatch_date).format("DD-MM-YYYY")}
+=== PreBookingList ===
+No.        : ${preBookingNo}
+Date       : ${moment(pre_booking_date).format("DD-MM-YYYY")}
 Party      : ${buyer_name}
 City       : ${buyer_city}
-VEHICLE NO : ${dispatch_vehicle_no}
+VEHICLE NO : ${pre_booking_vehicle_no}
 ======================
 Product [SIZE]          (QTY)
 ======================
@@ -247,11 +249,11 @@ Total QTY: ${totalQty}
       cell: ({ row }) => <div>{row.index + 1}</div>,
     },
     {
-      accessorKey: "dispatch_date",
+      accessorKey: "pre_booking_date",
       header: "Date",
       id: "Date",
       cell: ({ row }) => {
-        const date = row.original.dispatch_date;
+        const date = row.original.pre_booking_date;
         return moment(date).format("DD-MMM-YYYY");
       },
     },
@@ -262,16 +264,16 @@ Total QTY: ${totalQty}
       cell: ({ row }) => <div>{row.original.buyer_name}</div>,
     },
     {
-      accessorKey: "dispatch_ref_no",
+      accessorKey: "pre_booking_ref_no",
       header: "Ref No",
       id: "Ref No",
-      cell: ({ row }) => <div>{row.original.dispatch_ref_no}</div>,
+      cell: ({ row }) => <div>{row.original.pre_booking_ref_no}</div>,
     },
     {
-      accessorKey: "dispatch_vehicle_no",
+      accessorKey: "pre_booking_vehicle_no",
       header: "Vehicle No",
       id: "Vehicle No",
-      cell: ({ row }) => <div>{row.original.dispatch_vehicle_no}</div>,
+      cell: ({ row }) => <div>{row.original.pre_booking_vehicle_no}</div>,
     },
     ...(UserId == 3
       ? [
@@ -285,11 +287,11 @@ Total QTY: ${totalQty}
         ]
       : []),
     {
-      accessorKey: "dispatch_status",
+      accessorKey: "pre_booking_status",
       header: "Status",
       id: "Status",
       cell: ({ row }) => {
-        const status = row.original.dispatch_status;
+        const status = row.original.pre_booking_status;
         const statusId = row.original.id;
         return (
           <StatusToggle
@@ -306,7 +308,7 @@ Total QTY: ${totalQty}
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
-        const DispatchId = row.original.id;
+        const PreBookingId = row.original.id;
 
         return (
           <div className="flex flex-row space-x-2">
@@ -318,14 +320,14 @@ Total QTY: ${totalQty}
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        navigateTODispatchEdit(navigate, DispatchId);
+                        navigateToPreBookingEdit(navigate, PreBookingId);
                       }}
                     >
                       <Edit />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Edit Dispatch</p>
+                    <p>Edit PreBooking</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -338,14 +340,14 @@ Total QTY: ${totalQty}
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      navigateTODispatchView(navigate, DispatchId);
+                      navigateToPreBookingView(navigate, PreBookingId);
                     }}
                   >
                     <View />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>View Dispatch</p>
+                  <p>View PreBooking</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -355,7 +357,7 @@ Total QTY: ${totalQty}
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      onClick={() => handleDeleteRow(DispatchId)}
+                      onClick={() => handleDeleteRow(PreBookingId)}
                       className="text-red-500"
                       type="button"
                     >
@@ -363,7 +365,7 @@ Total QTY: ${totalQty}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Delete Purchase</p>
+                    <p>Delete PreBooking</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -374,7 +376,7 @@ Total QTY: ${totalQty}
                   <Button
                     variant="ghost"
                     onClick={() =>
-                      handleFetchDispatchById(encryptId(DispatchId))
+                      handleFetchDispatchById(encryptId(PreBookingId))
                     }
                     className="text-green-500"
                     type="button"
@@ -383,7 +385,7 @@ Total QTY: ${totalQty}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Whatsapp Dispatch</p>
+                  <p>Whatsapp PreBooking</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -393,22 +395,8 @@ Total QTY: ${totalQty}
     },
   ];
 
-  const filteredItem = useMemo(() => {
-    if (!dispatch) return [];
-
-    return dispatch.filter((item) => {
-      const itemDate = moment(item.dispatch_date).format("YYYY-MM-DD");
-      const matchesDate = !selectedDate || itemDate === selectedDate;
-      const matchesSearch = item.buyer_name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-
-      return matchesDate && matchesSearch;
-    });
-  }, [dispatch, selectedDate, searchQuery]);
-
   const table = useReactTable({
-    data: filteredItem || [],
+    data: prebooking || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -449,7 +437,7 @@ Total QTY: ${totalQty}
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching Dispatch
+              Error Fetching PreBooking
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -468,16 +456,16 @@ Total QTY: ${totalQty}
         <div className="sm:hidden">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
-              Dispatch List
+              PreBooking List
             </h1>
             {UserId != 3 && (
               <div>
                 <Button
                   variant="default"
                   className={`md:ml-2 bg-yellow-400 hover:bg-yellow-600 text-black rounded-l-full`}
-                  onClick={() => navigate("/dispatch/create")}
+                  onClick={() => navigate("/pre-booking/create")}
                 >
-                  <SquarePlus className="h-4 w-4 " /> Dispatch
+                  <SquarePlus className="h-4 w-4 " /> PreBooking
                 </Button>
               </div>
             )}
@@ -488,23 +476,17 @@ Total QTY: ${totalQty}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search dispatch..."
+                placeholder="Search PreBooking..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
               />
             </div>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
-            />
           </div>
 
           <div className="space-y-3">
-            {filteredItem.length > 0 ? (
-              filteredItem.map((item, index) => (
+            {prebooking.length > 0 ? (
+              prebooking.map((item, index) => (
                 <div
                   key={item.id}
                   onClick={() => {
@@ -659,14 +641,14 @@ Total QTY: ${totalQty}
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Dispatch List
+            PreBooking List
           </div>
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
             {/* Search Input */}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search Dispatch..."
+                placeholder="Search PreBooking..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -674,12 +656,6 @@ Total QTY: ${totalQty}
             </div>
 
             <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
-              />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full md:w-auto">
@@ -711,9 +687,9 @@ Total QTY: ${totalQty}
                   <Button
                     variant="default"
                     className={`w-full md:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                    onClick={() => navigate("/dispatch/create")}
+                    onClick={() => navigate("/pre-booking/create")}
                   >
-                    <SquarePlus className="h-4 w-4 mr-2" /> Dispatch
+                    <SquarePlus className="h-4 w-4 mr-2" /> PreBooking
                   </Button>
                 </>
               )}
@@ -777,7 +753,7 @@ Total QTY: ${totalQty}
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Dispatch : &nbsp;
+              Total PreBooking : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">
@@ -807,7 +783,7 @@ Total QTY: ${totalQty}
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              dispatch.
+              PreBooking.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -825,4 +801,4 @@ Total QTY: ${totalQty}
   );
 };
 
-export default DispatchList;
+export default PreBookingList;

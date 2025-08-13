@@ -1,8 +1,8 @@
-# Elgres Ceramics-New CRM
+# BizStock CRM
 
 ## 📌 Project Overview
 
-This is a **Customer Relationship Management (CRM) system** developed for **Elgres Ceramics**. The project is built using **React (Vite)** with **Tailwind CSS** and Material UI for a responsive and modern UI. It integrates authentication, dashboard management, master data management, reports, and utility features to provide a seamless CRM experience.
+This is a **Customer Relationship Management (CRM) system** developed for **BizStock**. The project is built using **React (Vite)** with **Tailwind CSS** and Material UI for a responsive and modern UI. It integrates authentication, dashboard management, master data management, reports, and utility features to provide a seamless CRM experience.
 
 ## 🚀 Tech Stack
 
@@ -15,7 +15,7 @@ This is a **Customer Relationship Management (CRM) system** developed for **Elgr
 ## 📁 Project Structure
 
 ```
-ag-solutions-bangalore-elgresceramics-crm/
+ag-solutions-bangalore-fullstock-crm/
 ├── public/                 # Static assets
 ├── src/                    # Source code
 │   ├── app/                # Main application logic
@@ -65,8 +65,8 @@ Follow these steps to set up the project locally:
 1. **Clone the repository:**
 
    ```sh
-   git clone https://github.com/AG-Solutions-Bangalore/elgresceramics-crm
-   cd elgresceramics-crm
+   git clone https://github.com/AG-Solutions-Bangalore/fullstock-crm
+   cd fullstock-crm
    ```
 
 2. **Install dependencies:**

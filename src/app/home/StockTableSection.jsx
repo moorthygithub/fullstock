@@ -87,7 +87,6 @@ function StockTableSection({
         newVisibility.box = true;
       }
     }
-    // dispatch(toggleColumn(key));
     dispatch(setColumnVisibility(newVisibility));
   };
 
@@ -135,111 +134,6 @@ function StockTableSection({
     <Card className="shadow-sm border-0">
       <CardHeader className="px-3 py-2 border-b">
         <div className="flex flex-col space-y-2">
-          {/* Title and Buttons */}
-          {/* <div className="flex items-center justify-between">
-            <CardTitle className="text-sm md:text-lg font-semibold text-black">
-              {title}
-            </CardTitle>
-            <div className="flex space-x-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-32 truncate">
-                    <span className="truncate">{selectedCategory}</span>
-                    <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="max-h-60 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
-                  align="start"
-                  sideOffset={5}
-                  collisionPadding={10}
-                >
-                  {categories.map((category, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onSelect={() => setSelectedCategory(category)}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="truncate">{category}</span>
-                      {selectedCategory === category && (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="flex-shrink-0 ml-2"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {title == "Stock View" && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className=" w-32 truncate">
-                      <span className="truncate">{selectedBrands}</span>
-                      <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent
-                    className="max-h-60 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
-                    align="start"
-                    sideOffset={5}
-                    collisionPadding={10}
-                  >
-                    {brands.map((brands) => (
-                      <DropdownMenuItem
-                        key={brands}
-                        onSelect={() => setSelectedBrands(brands)}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="truncate">{brands}</span>
-                        {selectedCategory === brands && (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="flex-shrink-0 ml-2"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              {print == "true" && (
-                <button
-                  className={`flex items-center justify-center sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-2 rounded-lg`}
-                  onClick={handlePrintPdf}
-                >
-                  <Printer className="h-4 w-4 mr-1" />
-                </button>
-              )}
-              <button
-                className={`flex items-center justify-center sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-2 rounded-lg`}
-                onClick={() => downloadCSV(filteredItems, toast)}
-              >
-                <Download className="h-4 w-4 mr-1" />
-              </button>
-            </div>
-          </div> */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle className="text-sm md:text-lg font-semibold text-black">
               {title}
@@ -375,25 +269,6 @@ function StockTableSection({
         <CardContent className="p-2">
           {filteredItems?.length ? (
             <>
-              {/* <div className="flex flex-wrap gap-4 mb-4 p-4 bg-gray-50 rounded-lg shadow-sm">
-                {Object.entries(columnVisibility).map(([key, value]) => (
-                  <label
-                    key={key}
-                    className="flex items-center gap-2 px-3 py-2 border rounded-md shadow-sm bg-white hover:bg-gray-100 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={value}
-                      onChange={() => handleToggle(key)}
-                      className="accent-blue-600 w-4 h-4"
-                    />
-                    <span className="capitalize text-sm font-medium">
-                      {key.replace(/_/g, " ")}
-                    </span>
-                  </label>
-                ))}
-              </div> */}
-
               <div className="flex justify-center">
                 <div className="flex flex-wrap justify-center gap-4 p-4  rounded-xl  w-full max-w-4xl ">
                   {Object.entries(columnVisibility).map(([key, value]) => {
@@ -440,243 +315,6 @@ function StockTableSection({
                   </div>
                 </div>
 
-                {/* <table className="w-full border border-black border-collapse">
-                  <thead className="bg-gray-100 sticky top-0 z-10">
-                    <tr>
-                      {columnVisibility.item_name && (
-                        <th
-                          className="border border-black px-2 py-2 text-center"
-                          rowSpan={2}
-                        >
-                          Item Name
-                        </th>
-                      )}
-                      {columnVisibility.category && (
-                        <th
-                          className="border border-black px-2 py-2 text-center"
-                          rowSpan={2}
-                        >
-                          Category
-                        </th>
-                      )}
-                      {columnVisibility.brand && (
-                        <th
-                          className="border border-black px-2 py-2 text-center"
-                          rowSpan={2}
-                        >
-                          Brand
-                        </th>
-                      )}
-                      {columnVisibility.size &&
-                        filteredItems[0]?.item_size !== undefined && (
-                          <th
-                            className="hidden print:table-cell border border-black px-2 py-2 text-center"
-                            rowSpan={2}
-                          >
-                            Size
-                          </th>
-                        )}
-                      {((singlebranch === "Yes" && doublebranch === "No") ||
-                        (singlebranch === "No" && doublebranch === "Yes")) &&
-                        columnVisibility.available_box && (
-                          <th
-                            className="border border-black px-2 py-2 text-center"
-                            rowSpan={2}
-                          >
-                            Available
-                          </th>
-                        )}
-
-                      {singlebranch === "Yes" &&
-                        doublebranch === "Yes" &&
-                        columnVisibility.available_box && (
-                          <th
-                            className="border border-black px-2 py-2 text-center"
-                            colSpan={2}
-                          >
-                            Available
-                          </th>
-                        )}
-                    </tr>
-                    {singlebranch == "Yes" && doublebranch == "Yes" && (
-                      <tr>
-                        <th className="border border-black px-2 py-2 text-center">
-                          Box
-                        </th>
-                        <th className="border border-black px-2 py-2 text-center">
-                          Piece
-                        </th>
-                      </tr>
-                    )}
-                  </thead>
-
-                  <tbody>
-                    {filteredItems.map((item, index) => {
-                      const itemPiece = Number(item.item_piece) || 1;
-
-                      const openingPurch =
-                        Number(item.openpurch) * itemPiece +
-                        Number(item.openpurch_piece);
-                      const openingSale =
-                        Number(item.closesale) * itemPiece +
-                        Number(item.closesale_piece);
-                      const openingPurchR =
-                        Number(item.openpurchR) * itemPiece +
-                        Number(item.openpurchR_piece);
-                      const openingSaleR =
-                        Number(item.closesaleR) * itemPiece +
-                        Number(item.closesaleR_piece);
-                      const opening =
-                        openingPurch -
-                        openingSale -
-                        openingPurchR +
-                        openingSaleR;
-
-                      const purchase =
-                        Number(item.purch) * itemPiece +
-                        Number(item.purch_piece);
-                      const purchaseR =
-                        Number(item.purchR) * itemPiece +
-                        Number(item.purchR_piece);
-                      const sale =
-                        Number(item.sale) * itemPiece + Number(item.sale_piece);
-                      const saleR =
-                        Number(item.saleR) * itemPiece +
-                        Number(item.saleR_piece);
-
-                      const total =
-                        opening + purchase - purchaseR - sale + saleR;
-                      const box = Math.floor(total / itemPiece);
-                      const piece = total % itemPiece;
-
-                      return (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="border border-black px-2 py-2">
-                            {item.item_name}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {item.item_category}
-                          </td>
-                          <td className="border border-black px-2 py-2 text-right">
-                            {item.item_brand || "-"}
-                          </td>
-
-                          {item.item_size !== undefined && (
-                            <td className="hidden print:table-cell border border-black px-2 py-2 text-right">
-                              {item.item_size}
-                            </td>
-                          )}
-
-                          {(singlebranch == "Yes" && doublebranch == "No") ||
-                          (singlebranch == "No" && doublebranch == "Yes") ? (
-                            <td
-                              className={`border border-black px-2 py-2 text-right ${
-                                total == "0" ? "opacity-50" : ""
-                              }`}
-                            >
-                              {total}
-                            </td>
-                          ) : null}
-
-                          {singlebranch === "Yes" && doublebranch === "Yes" && (
-                            <>
-                              <td
-                                className={`border border-black px-2 py-2 text-center ${
-                                  box == "0" ? "opacity-50" : ""
-                                }`}
-                              >
-                                {box}
-                              </td>
-                              <td
-                                className={`border border-black px-2 py-2 text-center ${
-                                  piece == "0" ? "opacity-50" : ""
-                                }`}
-                              >
-                                {piece}
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      );
-                    })}
-
-                    {(title === "Stock" || title === "Stock View") && (
-                      <tr className="font-bold bg-gray-200">
-                        <td
-                          className="border border-black px-2 py-2 text-right"
-                          colSpan={3}
-                        >
-                          Total:
-                        </td>
-
-                        {filteredItems[0]?.item_size !== undefined && (
-                          <td className="hidden print:table-cell border border-black px-2 py-2 text-right" />
-                        )}
-
-                        {(singlebranch === "Yes" && doublebranch === "No") ||
-                        (singlebranch === "No" && doublebranch === "Yes") ? (
-                          <td className="border border-black px-2 py-2 text-right">
-                            {filteredItems
-                              .reduce((total, item) => {
-                                const itemPiece = Number(item.item_piece) || 1;
-                                const openingPurch =
-                                  Number(item.openpurch) * itemPiece +
-                                  Number(item.openpurch_piece);
-                                const openingSale =
-                                  Number(item.closesale) * itemPiece +
-                                  Number(item.closesale_piece);
-                                const openingPurchR =
-                                  Number(item.openpurchR) * itemPiece +
-                                  Number(item.openpurchR_piece);
-                                const openingSaleR =
-                                  Number(item.closesaleR) * itemPiece +
-                                  Number(item.closesaleR_piece);
-                                const opening =
-                                  openingPurch -
-                                  openingSale -
-                                  openingPurchR +
-                                  openingSaleR;
-
-                                const purchase =
-                                  Number(item.purch) * itemPiece +
-                                  Number(item.purch_piece);
-                                const purchaseR =
-                                  Number(item.purchR) * itemPiece +
-                                  Number(item.purchR_piece);
-                                const sale =
-                                  Number(item.sale) * itemPiece +
-                                  Number(item.sale_piece);
-                                const saleR =
-                                  Number(item.saleR) * itemPiece +
-                                  Number(item.saleR_piece);
-
-                                return (
-                                  total +
-                                  (opening +
-                                    purchase -
-                                    purchaseR -
-                                    sale +
-                                    saleR)
-                                );
-                              }, 0)
-                              .toLocaleString()}
-                          </td>
-                        ) : null}
-
-                        {singlebranch === "Yes" && doublebranch === "Yes" && (
-                          <>
-                            <td className="border border-black px-2 py-2 text-center">
-                              {totalBoxesAndPieces.boxTotal}
-                            </td>
-                            <td className="border border-black px-2 py-2 text-center">
-                              {totalBoxesAndPieces.pieceTotal}
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    )}
-                  </tbody>
-                </table> */}
                 <table className="w-full border border-black border-collapse">
                   <thead className="bg-gray-100 sticky top-0 z-10">
                     <tr>
@@ -796,9 +434,16 @@ function StockTableSection({
                         opening + purchase - purchaseR - sale + saleR;
                       const box = Math.floor(total / itemPiece);
                       const piece = total % itemPiece;
-
+                     
                       return (
-                        <tr key={index} className="hover:bg-gray-50">
+                        <tr
+                          key={index}
+                          className={`hover:bg-gray-50 ${
+                            item.pre_box > 0 || item.pre_piece > 0
+                              ? "bg-pink-100 hover:bg-pink-100"
+                              : ""
+                          }`}
+                        >
                           {columnVisibility.item_name && (
                             <td className="border border-black px-2 py-2">
                               {item.item_name}
