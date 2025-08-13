@@ -68,7 +68,7 @@ const GoDownList = () => {
     },
     {
       accessorKey: "godown",
-      header: "GoDown",
+      header: "Godown",
       cell: ({ row }) => <div>{row.getValue("godown")}</div>,
     },
     {
@@ -149,7 +149,7 @@ const GoDownList = () => {
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching GoDown
+              Error Fetching Godown
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -169,7 +169,7 @@ const GoDownList = () => {
         <div className="sm:hidden">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
-              GoDown List
+              Godown List
             </h1>
             <div>
               <CreateGoDownForm />
@@ -231,7 +231,7 @@ const GoDownList = () => {
         {/* medium screen onwards  */}
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            GoDown List
+            Godown List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -332,7 +332,7 @@ const GoDownList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total godown : &nbsp;
+              Total Godown : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">

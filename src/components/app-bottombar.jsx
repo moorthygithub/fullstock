@@ -43,7 +43,7 @@ export function AppBottombar() {
                 url: "/master/buyer",
               },
               {
-                title: "Go Down",
+                title: "Godown",
                 url: "/master/go-down",
               },
               ...(id == 3

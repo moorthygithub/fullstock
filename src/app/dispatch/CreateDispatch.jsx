@@ -312,7 +312,7 @@ const CreateDispatch = () => {
     }
     invoiceData.forEach((row, index) => {
       if (!row.dispatch_sub_godown_id)
-        missingFields.push(`Row ${index + 1}: Go Down`);
+        missingFields.push(`Row ${index + 1}: Godown`);
       if (!row.dispatch_sub_item_id)
         missingFields.push(`Row ${index + 1}: Item`);
       if (singlebranch == "Yes") {

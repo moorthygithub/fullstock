@@ -184,7 +184,7 @@ const StockGoDown = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="lg:w-64 xl:w-72 shrink-0">
           <h1 className="text-xl font-bold text-gray-800 truncate">
-            Stock Go Down Summary{" "}
+            Stock Godown Summary{" "}
           </h1>
           <p className="text-md text-gray-500 truncate">
             Add a Stock godown to Visit Report{" "}
@@ -245,7 +245,7 @@ const StockGoDown = () => {
                       label: product.godown,
                     })) || []
                   }
-                  placeholder="Select GoDown"
+                  placeholder="Select Godown"
                   className="text-xs h-8"
                 />
               </div>
@@ -288,7 +288,7 @@ const StockGoDown = () => {
               {/* Title Section */}
               <div className="flex-1 text-center md:text-left">
                 <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                  Stock Go Down Summary
+                  Stock Godown Summary
                 </h1>
               </div>
 
@@ -352,7 +352,7 @@ const StockGoDown = () => {
                   <label
                     className={`block ${ButtonConfig.cardLabel} text-xs mb-1 font-medium`}
                   >
-                    GoDown
+                    Godown
                   </label>
                   <MemoizedSelect
                     value={formData.godown_id}
@@ -363,7 +363,7 @@ const StockGoDown = () => {
                         label: product.godown,
                       })) || []
                     }
-                    placeholder="Select GoDown"
+                    placeholder="Select Godown"
                     className="text-xs h-7"
                   />
                 </div>
@@ -393,7 +393,7 @@ const StockGoDown = () => {
           <div className="hidden print:block">
             <div className="flex justify-between ">
               <h1 className="text-left text-2xl font-semibold mb-3 ">
-                Stock Go Down Summary
+                Stock Godown Summary
               </h1>
               <div className="flex space-x-6">
                 <h1>

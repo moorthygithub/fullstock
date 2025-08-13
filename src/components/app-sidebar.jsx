@@ -69,7 +69,7 @@ export function AppSidebar({ ...props }) {
                   url: "/master/buyer",
                 },
                 {
-                  title: "Go Down",
+                  title: "Godown",
                   url: "/master/go-down",
                 },
                 ...(id == 3
@@ -144,7 +144,7 @@ export function AppSidebar({ ...props }) {
             url: "/report/stock",
           },
           {
-            title: "GoDown Stock",
+            title: "Godown Stock",
             url: "/report/godown-stock",
           },
           ...(id != 1
