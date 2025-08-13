@@ -305,7 +305,7 @@ const CreatePurchaseReturn = () => {
     }
     invoiceData.forEach((row, index) => {
       if (!row.purchase_sub_godown_id)
-        missingFields.push(`Row ${index + 1}: Go Down`);
+        missingFields.push(`Row ${index + 1}: Godown`);
       if (!row.purchase_sub_item_id)
         missingFields.push(`Row ${index + 1}: Item`);
 

@@ -177,7 +177,7 @@ const CreateGoDownForm = ({ editId = null }) => {
                   variant="default"
                   className={`md:ml-2 bg-yellow-400 hover:bg-yellow-600 text-black rounded-l-full`}
                 >
-                  <SquarePlus className="h-4 w-4" /> GoDOwn
+                  <SquarePlus className="h-4 w-4" /> Godown
                 </Button>
               </div>
               <div className="hidden sm:block">
@@ -185,7 +185,7 @@ const CreateGoDownForm = ({ editId = null }) => {
                   variant="default"
                   className={`md:ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
                 >
-                  <SquarePlus className="h-4 w-4 mr-2" /> GoDOwn
+                  <SquarePlus className="h-4 w-4 mr-2" /> Godown
                 </Button>
               </div>
             </div>
@@ -193,7 +193,7 @@ const CreateGoDownForm = ({ editId = null }) => {
         ) : pathname === "/purchase/create" ||
           pathname === "/dispatch/create" ? (
           <p className="text-xs text-red-600 w-32 hover:text-red-300 cursor-pointer">
-            GoDOwn
+            Godown
           </p>
         ) : (
           <span />
@@ -209,22 +209,22 @@ const CreateGoDownForm = ({ editId = null }) => {
           <div className="grid gap-4">
             <div className="space-y-2">
               <h4 className="font-medium leading-none">
-                {editId ? "Update GoDown" : "Create New GoDown"}
+                {editId ? "Update Godown" : "Create New Godown"}
               </h4>
               <p className="text-sm text-muted-foreground">
                 {editId
-                  ? "Update the details for the selected godown"
-                  : "Enter the details for the new GoDown"}
+                  ? "Update the details for the selected Godown"
+                  : "Enter the details for the new Godown"}
               </p>
             </div>
 
             <div className="grid gap-2">
               <label htmlFor="godown" className="text-sm font-medium">
-                GoDown *
+                Godown *
               </label>
               <Input
                 id="godown"
-                placeholder="Enter GoDown"
+                placeholder="Enter Godown"
                 value={formData.godown}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, godown: e.target.value }))
@@ -286,9 +286,9 @@ const CreateGoDownForm = ({ editId = null }) => {
                     {editId ? "Updating..." : "Creating..."}
                   </>
                 ) : editId ? (
-                  "Update GoDown"
+                  "Update Godown"
                 ) : (
-                  "Create GoDown"
+                  "Create Godown"
                 )}
               </Button>
             </div>

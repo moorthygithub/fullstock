@@ -317,7 +317,7 @@ const PreBookingForm = () => {
     }
     invoiceData.forEach((row, index) => {
       if (!row.pre_booking_sub_godown_id)
-        missingFields.push(`Row ${index + 1}: Go Down`);
+        missingFields.push(`Row ${index + 1}: Godown`);
       if (!row.pre_booking_sub_item_id)
         missingFields.push(`Row ${index + 1}: Item`);
       if (singlebranch == "Yes") {
