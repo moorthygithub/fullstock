@@ -1,8 +1,8 @@
-# BizStock CRM
+# FullStock CRM
 
 ## 📌 Project Overview
 
-This is a **Customer Relationship Management (CRM) system** developed for **BizStock**. The project is built using **React (Vite)** with **Tailwind CSS** and Material UI for a responsive and modern UI. It integrates authentication, dashboard management, master data management, reports, and utility features to provide a seamless CRM experience.
+This is a **Customer Relationship Management (CRM) system** developed for **FullStock**. The project is built using **React (Vite)** with **Tailwind CSS** and Material UI for a responsive and modern UI. It integrates authentication, dashboard management, master data management, reports, and utility features to provide a seamless CRM experience.
 
 ## 🚀 Tech Stack
 

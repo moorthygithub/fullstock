@@ -100,7 +100,7 @@ export default function Page({ children }) {
               <Logo />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-[#ff9e0e] leading-tight">
+              <span className="text-sm font-bold text-yellow-900 leading-tight">
                 {companyname?.CompanyName}
               </span>
             </div>
@@ -163,7 +163,7 @@ export default function Page({ children }) {
                       </span>
                     </span>
                     <span className="flex items-center gap-1 font-semibold">
-                      Updated on :12/08/2025
+                      Updated on :14/08/2025
                     </span>
                   </div>
                 </div>
