@@ -130,7 +130,7 @@ export default function LoginAuth() {
                   >
                     <Logo />
                   </motion.div>{" "}
-                  <span className="text-xl font-bold text-[#ff9e0e]">
+                  <span className="text-xl font-bold text-yellow-900">
                     {companyname?.CompanyName}
                   </span>
                 </div>
