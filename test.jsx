@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import {
-  BUYER_CREATE,
-  BUYER_EDIT_GET,
-  BUYER_EDIT_SUMBIT,
-  FETCH_STATE,
-} from "@/api";
+import { BUYER_CREATE, BUYER_EDIT_GET, BUYER_EDIT_SUMBIT } from "@/api";
 import { Loader2, SquarePlus, Edit, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +23,6 @@ import {
 import usetoken from "@/api/usetoken";
 import apiClient from "@/api/axios";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { MemoizedSelect } from "@/components/common/MemoizedSelect";
 
 const BuyerForm = ({ buyerId = null }) => {
   const [open, setOpen] = useState(false);
@@ -38,11 +31,7 @@ const BuyerForm = ({ buyerId = null }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [formData, setFormData] = useState({
     buyer_name: "",
-    buyer_mobile: "",
     buyer_city: "",
-    buyer_type: "",
-    buyer_state: "",
-    buyer_state_code: "",
     buyer_status: "Active",
   });
   const [originalData, setOriginalData] = useState(null);
@@ -54,16 +43,7 @@ const BuyerForm = ({ buyerId = null }) => {
   const queryClient = useQueryClient();
 
   const isEditMode = Boolean(buyerId);
-  const { data: stateData } = useQuery({
-    queryKey: ["statedata"],
-    queryFn: async () => {
-      const response = await apiClient.get(`${FETCH_STATE}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return response.data.state || [];
-    },
-    enabled: open,
-  });
+
   const fetchBuyerData = async () => {
     try {
       setIsFetching(true);
@@ -75,19 +55,11 @@ const BuyerForm = ({ buyerId = null }) => {
       const data = response.data.buyers || {};
       setFormData({
         buyer_name: data.buyer_name || "",
-        buyer_mobile: data.buyer_mobile || "",
         buyer_city: data.buyer_city || "",
-        buyer_type: data.buyer_type || "",
-        buyer_state: data.buyer_state || "",
-        buyer_state_code: data.buyer_state_code || "",
         buyer_status: data.buyer_status || "Active",
       });
       setOriginalData({
         buyer_name: data.buyer_name || "",
-        buyer_mobile: data.buyer_mobile || "",
-        buyer_type: data.buyer_type || "",
-        buyer_state: data.buyer_state || "",
-        buyer_state_code: data.buyer_state_code || "",
         buyer_city: data.buyer_city || "",
         buyer_status: data.buyer_status || "Active",
       });
@@ -111,9 +83,6 @@ const BuyerForm = ({ buyerId = null }) => {
     const missingFields = [];
     if (!formData.buyer_name) missingFields.push("Buyer Name");
     if (!formData.buyer_city) missingFields.push("Buyer City");
-    if (!formData.buyer_mobile) missingFields.push("Mobile");
-    if (!formData.buyer_type) missingFields.push("Buyer Type");
-    if (!formData.buyer_state) missingFields.push("Buyer State");
 
     if (missingFields.length > 0) {
       toast({
@@ -131,18 +100,13 @@ const BuyerForm = ({ buyerId = null }) => {
     }
 
     setIsLoading(true);
-    const payload = {
-      ...formData,
-      buyer_type: Array.isArray(formData.buyer_type)
-        ? formData.buyer_type.join(",")
-        : formData.buyer_type,
-    };
+
     try {
       const apiCall = isEditMode
-        ? apiClient.put(`${BUYER_EDIT_SUMBIT}/${buyerId}`, payload, {
+        ? apiClient.put(`${BUYER_EDIT_SUMBIT}/${buyerId}`, formData, {
             headers: { Authorization: `Bearer ${token}` },
           })
-        : apiClient.post(BUYER_CREATE, payload, {
+        : apiClient.post(BUYER_CREATE, formData, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -256,20 +220,12 @@ const BuyerForm = ({ buyerId = null }) => {
     originalData &&
     (formData.buyer_city !== originalData.buyer_city ||
       formData.buyer_status !== originalData.buyer_status ||
-      formData.buyer_name !== originalData.buyer_name ||
-      formData.buyer_mobile !== originalData.buyer_mobile ||
-      formData.buyer_type !== originalData.buyer_type ||
-      formData.buyer_state !== originalData.buyer_state ||
-      formData.buyer_state_code !== originalData.buyer_state_code);
+      formData.buyer_name !== originalData.buyer_name);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{renderTrigger()}</DialogTrigger>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{renderTrigger()}</PopoverTrigger>
 
-      <DialogContent
-        className="xs:w-96 md:max-w-xl"
-        aria-describedby={undefined}
-      >
-        {" "}
+      <PopoverContent className="w-80">
         {isFetching ? (
           <div className="flex justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -286,42 +242,20 @@ const BuyerForm = ({ buyerId = null }) => {
                   : "Enter the details for the new Buyer"}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label htmlFor="buyer_name" className="text-sm font-medium">
-                  Buyer Name *
-                </label>
-                <Input
-                  placeholder="Buyer Name"
-                  value={formData.buyer_name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      buyer_name: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div>
-                <label htmlFor="buyer_mobile" className="text-sm font-medium">
-                  Mobile *
-                </label>
-                <Input
-                  placeholder="Mobile"
-                  value={formData.buyer_mobile}
-                  maxLength={10}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, "");
-                    if (value.length <= 10) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        buyer_mobile: value,
-                      }));
-                    }
-                  }}
-                />
-              </div>
+            <div className="grid gap-2">
+              <label htmlFor="category" className="text-sm font-medium">
+                Buyer Name *
+              </label>
+              <Input
+                placeholder="Buyer Name"
+                value={formData.buyer_name}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    buyer_name: e.target.value,
+                  }))
+                }
+              />
               <div>
                 <label htmlFor="category" className="text-sm font-medium">
                   Buyer City *
@@ -336,55 +270,6 @@ const BuyerForm = ({ buyerId = null }) => {
                     }))
                   }
                 />
-              </div>
-              <div>
-                <label htmlFor="buyer_type" className="text-sm font-medium">
-                  Buyer Type *
-                </label>
-                <MemoizedSelect
-                  isMulti
-                  value={formData.buyer_type}
-                  onChange={(vals) =>
-                    setFormData({ ...formData, buyer_type: vals })
-                  }
-                  options={[
-                    { value: 1, label: "Buyer" },
-                    { value: 2, label: "Vendor" },
-                  ]}
-                  placeholder="Select buyer types"
-                />
-              </div>
-              <div>
-                <label htmlFor="buyer_state" className="text-sm font-medium">
-                  State *
-                </label>
-                <Select
-                  value={formData.buyer_state}
-                  onValueChange={(value) => {
-                    const selectedState = stateData?.find(
-                      (s) => s.state_name === value
-                    );
-                    setFormData((prev) => ({
-                      ...prev,
-                      buyer_state: selectedState?.state_name || value,
-                      buyer_state_code: selectedState?.state_code || "",
-                    }));
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select state" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stateData?.map((state) => (
-                      <SelectItem
-                        key={state.state_code}
-                        value={state.state_name}
-                      >
-                        {state.state_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               {isEditMode && (
                 <div className="grid gap-1">
@@ -419,36 +304,36 @@ const BuyerForm = ({ buyerId = null }) => {
                   </Select>
                 </div>
               )}
-            </div>
 
-            {hasChanges && (
-              <Alert className="bg-blue-50 border-blue-200 mt-2">
-                <AlertCircle className="h-4 w-4 text-blue-500" />
-                <AlertDescription className="text-blue-600 text-sm">
-                  You have unsaved changes
-                </AlertDescription>
-              </Alert>
-            )}
-            <Button
-              onClick={handleSubmit}
-              disabled={isEditMode ? !hasChanges : isLoading}
-              className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditMode ? "Updating..." : "Creating..."}
-                </>
-              ) : isEditMode ? (
-                "Update Buyer"
-              ) : (
-                "Create Buyer"
+              {hasChanges && (
+                <Alert className="bg-blue-50 border-blue-200 mt-2">
+                  <AlertCircle className="h-4 w-4 text-blue-500" />
+                  <AlertDescription className="text-blue-600 text-sm">
+                    You have unsaved changes
+                  </AlertDescription>
+                </Alert>
               )}
-            </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isEditMode ? !hasChanges : isLoading}
+                className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isEditMode ? "Updating..." : "Creating..."}
+                  </>
+                ) : isEditMode ? (
+                  "Update Buyer"
+                ) : (
+                  "Create Buyer"
+                )}
+              </Button>
+            </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </PopoverContent>
+    </Popover>
   );
 };
 

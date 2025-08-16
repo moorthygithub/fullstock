@@ -3,16 +3,18 @@ import React from "react";
 import ReactSelect from "react-select";
 
 export const MemoizedSelect = React.memo(
-  ({ value, onChange, options, placeholder }) => {
+  ({ value, onChange, options, placeholder, isMulti = false }) => {
     const selectOptions = options.map((option) => ({
       value: option.value,
       label: option.label,
     }));
 
-    const selectedOption = selectOptions.find(
-      (option) => option.value === value
-    );
-
+    // const selectedOption = selectOptions.find(
+    //   (option) => option.value === value
+    // );
+    const selectedOption = isMulti
+      ? selectOptions.filter((option) => value?.includes(option.value))
+      : selectOptions.find((option) => option.value === value);
     const customStyles = {
       control: (provided, state) => ({
         ...provided,
@@ -74,8 +76,15 @@ export const MemoizedSelect = React.memo(
 
     return (
       <ReactSelect
+        isMulti={isMulti}
         value={selectedOption}
-        onChange={(selected) => onChange(selected ? selected.value : "")}
+        onChange={(selected) =>
+          isMulti
+            ? onChange(selected ? selected.map((s) => s.value) : [])
+            : onChange(selected ? selected.value : "")
+        }
+        // value={selectedOption}
+        // onChange={(selected) => onChange(selected ? selected.value : "")}
         options={selectOptions}
         placeholder={placeholder}
         styles={customStyles}
