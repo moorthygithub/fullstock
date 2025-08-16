@@ -134,6 +134,12 @@ const ItemList = () => {
       header: "Minimum Stock",
       cell: ({ row }) => <div>{row.original.item_minimum_stock}</div>,
     },
+    {
+      id: "Rate",
+      accessorKey: "item_rate",
+      header: "Rate",
+      cell: ({ row }) => <div>{row.original.item_rate}</div>,
+    },
 
     ...(BrandUnit == "Yes"
       ? [

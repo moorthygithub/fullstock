@@ -43,6 +43,7 @@ const CreateItem = ({ editId = null }) => {
   const [formData, setFormData] = useState({
     item_category_id: "",
     item_name: "",
+    item_rate: "",
     item_piece: "",
     item_size: "",
     item_brand: "",
@@ -77,6 +78,7 @@ const CreateItem = ({ editId = null }) => {
         setFormData({
           item_category_id: fetchedData?.item_category_id || "",
           item_name: fetchedData?.item_name || "",
+          item_rate: fetchedData?.item_rate || "",
           item_piece: fetchedData?.item_piece || "",
           item_size: fetchedData?.item_size || "",
           item_brand: fetchedData?.item_brand || "",
@@ -88,6 +90,7 @@ const CreateItem = ({ editId = null }) => {
         setOriginalData({
           item_category_id: fetchedData?.item_category_id || "",
           item_name: fetchedData?.item_name || "",
+          item_rate: fetchedData?.item_rate || "",
           item_piece: fetchedData?.item_piece || "",
           item_size: fetchedData?.item_size || "",
           item_brand: fetchedData?.item_brand || "",
@@ -116,6 +119,7 @@ const CreateItem = ({ editId = null }) => {
     const missingFields = [];
     if (!formData.item_category_id) missingFields.push("Category ID");
     if (!formData.item_name) missingFields.push("Item Name");
+    if (!formData.item_rate) missingFields.push("Item Rate");
     if (!formData.item_size) missingFields.push("Item Size");
     if (editId && !formData.item_status) missingFields.push("Status");
 
@@ -142,6 +146,7 @@ const CreateItem = ({ editId = null }) => {
       const data = new FormData();
       data.append("item_category_id", formData.item_category_id);
       data.append("item_name", formData.item_name);
+      data.append("item_rate", formData.item_rate);
       data.append("item_size", formData.item_size);
       data.append("item_brand", formData.item_brand);
       data.append("item_weight", formData.item_weight);
@@ -180,6 +185,7 @@ const CreateItem = ({ editId = null }) => {
         setFormData({
           item_category_id: "",
           item_name: "",
+          item_rate: "",
           item_piece: "",
           item_size: "",
           item_brand: "",
@@ -219,16 +225,17 @@ const CreateItem = ({ editId = null }) => {
     } else if (
       id === "item_minimum_stock" ||
       id === "item_weight" ||
-      id === "item_piece"
+      id === "item_piece" ||
+      id === "item_rate"
     ) {
       if (/^\d*\.?\d*$/.test(value)) {
         setFormData((prev) => ({ ...prev, [id]: value }));
       }
     } else if (id === "item_name") {
-    if (/^[a-zA-Z0-9 Xx]*$/.test(value)) {
-      setFormData((prev) => ({ ...prev, [id]: value }));
-    }
-  } else {
+      if (/^[a-zA-Z0-9 Xx]*$/.test(value)) {
+        setFormData((prev) => ({ ...prev, [id]: value }));
+      }
+    } else {
       setFormData((prev) => ({ ...prev, [id]: value }));
     }
   };
@@ -306,7 +313,10 @@ const CreateItem = ({ editId = null }) => {
         )}
       </DialogTrigger>
 
-      <DialogContent className="md:w-96" aria-describedby={undefined}>
+      <DialogContent
+        className="xs:w-96 md:max-w-xl"
+        aria-describedby={undefined}
+      >
         {isFetching ? (
           <div className="flex justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -350,6 +360,17 @@ const CreateItem = ({ editId = null }) => {
                     id="item_name"
                     placeholder="Item Name"
                     value={formData.item_name}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="item_rate" className="text-sm font-medium">
+                    Item Rate *
+                  </label>
+                  <Input
+                    id="item_rate"
+                    placeholder="Item Rate"
+                    value={formData.item_rate}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -413,6 +434,40 @@ const CreateItem = ({ editId = null }) => {
                     onChange={handleInputChange}
                   />
                 </div>
+                <div>
+                  {editId && (
+                    <div className="grid gap-1">
+                      <label
+                        htmlFor="item_status"
+                        className="text-sm font-medium"
+                      >
+                        Status
+                      </label>
+                      <Select
+                        value={formData.item_status}
+                        onValueChange={handleSelectChange("item_status")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Active">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                              Active
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="Inactive">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
+                              Inactive
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="grid col-span-2">
@@ -445,39 +500,6 @@ const CreateItem = ({ editId = null }) => {
                 )}
               </div>
               <div>
-                {editId && (
-                  <div className="grid gap-1">
-                    <label
-                      htmlFor="item_status"
-                      className="text-sm font-medium"
-                    >
-                      Status
-                    </label>
-                    <Select
-                      value={formData.item_status}
-                      onValueChange={handleSelectChange("item_status")}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                            Active
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="Inactive">
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
-                            Inactive
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
                 {hasChanges && (
                   <Alert className="bg-blue-50 border-blue-200 mt-2">
                     <AlertCircle className="h-4 w-4 text-blue-500" />
