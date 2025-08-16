@@ -1,9 +1,8 @@
 import {
-  DISPATCH_CREATE,
-  DISPATCH_EDIT_LIST,
-  DISPATCH_SUB_DELETE,
   fetchAvaiableItem,
-  fetchDispatchById,
+  fetchQuotationById,
+  QUOTATION_FORM,
+  QUOTATION_SUB_DELETE,
 } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
@@ -38,9 +37,9 @@ import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import {
   useFetchBuyers,
-  useFetchDispatchRef,
   useFetchGoDown,
   useFetchItems,
+  useFetchQuotationRef,
 } from "@/hooks/useApi";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -55,9 +54,8 @@ import moment from "moment";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import BuyerForm from "../master/buyer/CreateBuyer";
 import CreateItem from "../master/item/CreateItem";
-const CreateDispatch = () => {
+const QuotationForm = () => {
   const { id } = useParams();
   const decryptedId = decryptId(id);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -74,25 +72,24 @@ const CreateDispatch = () => {
   const token = usetoken();
 
   const [formData, setFormData] = useState({
-    dispatch_date: today,
-    dispatch_buyer_id: "",
-    dispatch_ref_no: "",
-    dispatch_vehicle_no: "",
-    dispatch_buyer_city: "",
-    dispatch_remark: "",
-    dispatch_status: editId ? "" : null,
+    quotation_date: today,
+    quotation_buyer_id: "",
+    quotation_ref_no: "",
+    quotation_vehicle_no: "",
+    quotation_remark: "",
+    quotation_status: editId ? "" : null,
   });
 
   const [invoiceData, setInvoiceData] = useState([
     {
       id: editId ? "" : null,
-      dispatch_sub_item_id: "",
-      dispatch_sub_godown_id: "",
-      dispatch_sub_rate: "",
-      dispatch_sub_box: 0,
+      quotation_sub_item_id: "",
+      quotation_sub_godown_id: "",
+      quotation_sub_rate: "",
+      quotation_sub_box: 0,
       item_brand: "",
       item_size: "",
-      dispatch_sub_piece: 0,
+      quotation_sub_piece: 0,
       stockData: {
         total: 0,
         total_box: 0,
@@ -105,11 +102,11 @@ const CreateDispatch = () => {
     setInvoiceData((prev) => [
       ...prev,
       {
-        dispatch_sub_item_id: "",
-        dispatch_sub_godown_id: "",
-        dispatch_sub_rate: "",
-        dispatch_sub_box: 0,
-        dispatch_sub_piece: 0,
+        quotation_sub_item_id: "",
+        quotation_sub_godown_id: "",
+        quotation_sub_rate: "",
+        quotation_sub_box: 0,
+        quotation_sub_piece: 0,
       },
     ]);
   }, []);
@@ -126,56 +123,56 @@ const CreateDispatch = () => {
       boxInputRefs.current[rowIndex].focus();
     }
   };
-  const { data: dispatchByid, isFetching } = useQuery({
-    queryKey: ["dispatchByid", id],
-    queryFn: () => fetchDispatchById(id, token),
+  const { data: QuotationByid, isFetching } = useQuery({
+    queryKey: ["quotationByid", id],
+    queryFn: () => fetchQuotationById(id, token),
     enabled: !!id,
   });
   useEffect(() => {
-    if (editId && dispatchByid?.dispatch) {
-      console.log(dispatchByid.dispatch.dispatch_ref_no);
+    if (editId && QuotationByid?.quotation) {
+      console.log(QuotationByid, "quotation");
       setFormData({
-        dispatch_date: dispatchByid.dispatch.dispatch_date || "",
-        dispatch_buyer_id: dispatchByid.dispatch.dispatch_buyer_id || "",
-        dispatch_buyer_city: dispatchByid.buyer.buyer_city || "",
-        dispatch_ref_no: dispatchByid.dispatch.dispatch_ref_no || "",
-        dispatch_vehicle_no: dispatchByid.dispatch.dispatch_vehicle_no || "",
-        dispatch_remark: dispatchByid.dispatch.dispatch_remark || "",
-        dispatch_status: dispatchByid.dispatch.dispatch_status || "",
+        quotation_date: QuotationByid.quotation.quotation_date || "",
+        quotation_buyer_id: QuotationByid.quotation.quotation_buyer_id || "",
+        quotation_ref_no: QuotationByid.quotation.quotation_ref_no || "",
+        quotation_vehicle_no:
+          QuotationByid.quotation.quotation_vehicle_no || "",
+        quotation_remark: QuotationByid.quotation.quotation_remark || "",
+        quotation_status: QuotationByid.quotation.quotation_status || "",
       });
 
       // Set invoice line items
-      const mappedData = Array.isArray(dispatchByid.dispatchSub)
-        ? dispatchByid.dispatchSub.map((sub) => ({
+      const mappedData = Array.isArray(QuotationByid.quotationSub)
+        ? QuotationByid.quotationSub.map((sub) => ({
             id: sub.id || "",
-            dispatch_sub_item_id: sub.dispatch_sub_item_id || "",
-            dispatch_sub_box: sub.dispatch_sub_box || 0,
-            dispatch_sub_piece: sub.dispatch_sub_piece || 0,
+            quotation_sub_item_id: sub.quotation_sub_item_id || "",
+            quotation_sub_box: sub.quotation_sub_box || 0,
+            quotation_sub_piece: sub.quotation_sub_piece || 0,
             item_brand: sub.item_brand || "",
             item_size: sub.item_size || "",
-            dispatch_sub_godown_id: sub.dispatch_sub_godown_id,
-            dispatch_sub_rate: sub.dispatch_sub_rate,
+            quotation_sub_godown_id: sub.quotation_sub_godown_id,
+            quotation_sub_rate: sub.quotation_sub_rate,
           }))
         : [
             {
-              dispatch_sub_item_id: "",
-              dispatch_sub_box: "",
+              quotation_sub_item_id: "",
+              quotation_sub_box: "",
               item_brand: "",
               item_size: "",
-              dispatch_sub_piece: "",
-              dispatch_sub_godown_id: "",
-              dispatch_sub_rate: "",
+              quotation_sub_piece: "",
+              quotation_sub_godown_id: "",
+              quotation_sub_rate: "",
             },
           ];
 
       setInvoiceData(mappedData);
     }
-  }, [editId, dispatchByid]);
+  }, [editId, QuotationByid]);
 
   const { data: buyerData, isLoading: loadingbuyer } = useFetchBuyers();
   const { data: itemsData, isLoading: loadingitem } = useFetchItems();
   const { data: godownData, isLoading: loadinggodown } = useFetchGoDown();
-  const { data: dispatchRef, isLoading: loadingref } = useFetchDispatchRef();
+  const { data: quotationRef, isLoading: loadingref } = useFetchQuotationRef();
 
   const fetchAndSetStock = async (rowIndex, itemId, godownId, updatedData) => {
     if (!itemId || !godownId) return;
@@ -239,12 +236,12 @@ const CreateDispatch = () => {
   useEffect(() => {
     if (!editId) {
       invoiceData.forEach((row, index) => {
-        const { dispatch_sub_item_id, dispatch_sub_godown_id } = row;
-        if (dispatch_sub_item_id && dispatch_sub_godown_id) {
+        const { quotation_sub_item_id, quotation_sub_godown_id } = row;
+        if (quotation_sub_item_id && quotation_sub_godown_id) {
           fetchAndSetStock(
             index,
-            dispatch_sub_item_id,
-            dispatch_sub_godown_id,
+            quotation_sub_item_id,
+            quotation_sub_godown_id,
             [...invoiceData]
           );
         }
@@ -254,7 +251,7 @@ const CreateDispatch = () => {
     editId,
     invoiceData
       .map(
-        (row) => row?.dispatch_sub_item_id + "-" + row?.dispatch_sub_godown_id
+        (row) => row?.quotation_sub_item_id + "-" + row?.quotation_sub_godown_id
       )
       .join(","),
   ]);
@@ -262,7 +259,7 @@ const CreateDispatch = () => {
     let value = selectedValue?.target?.value ?? selectedValue;
     const updatedData = [...invoiceData];
 
-    if (fieldName == "dispatch_sub_item_id") {
+    if (fieldName == "quotation_sub_item_id") {
       updatedData[rowIndex][fieldName] = value;
       const selectedItem = itemsData?.items?.find((item) => item.id === value);
       if (selectedItem) {
@@ -272,7 +269,7 @@ const CreateDispatch = () => {
       focusBoxInput(rowIndex);
     } else {
       if (
-        ["dispatch_sub_box", "dispatch_sub_piece"].includes(fieldName) &&
+        ["quotation_sub_box", "quotation_sub_piece"].includes(fieldName) &&
         !/^\d*$/.test(value)
       ) {
         console.log("Invalid input. Only digits are allowed.");
@@ -288,18 +285,17 @@ const CreateDispatch = () => {
     const value = e.target ? e.target.value : e;
     let updatedFormData = { ...formData, [field]: value };
 
-    if (field == "dispatch_buyer_id") {
+    if (field == "quotation_buyer_id") {
       console.log(value, "value");
 
       const selectedBuyer = buyerData?.buyers.find(
         (buyer) => buyer.id == value
       );
-      console.log(selectedBuyer, "selectedBuyer");
-      if (selectedBuyer) {
-        updatedFormData.dispatch_buyer_city = selectedBuyer.buyer_city;
-      } else {
-        updatedFormData.dispatch_buyer_city = "";
-      }
+      //   if (selectedBuyer) {
+      //     updatedFormData.dispatch_buyer_city = selectedBuyer.buyer_city;
+      //   } else {
+      //     updatedFormData.dispatch_buyer_city = "";
+      //   }
     }
 
     setFormData(updatedFormData);
@@ -308,32 +304,32 @@ const CreateDispatch = () => {
     e.preventDefault();
 
     const missingFields = [];
-    if (!formData.dispatch_date) missingFields.push("Dispatch Date");
-    if (!formData.dispatch_buyer_id) missingFields.push("Buyer Id");
-    if (!formData.dispatch_ref_no) missingFields.push("Bill Ref No");
-    if (!formData.dispatch_status && editId) {
+    if (!formData.quotation_date) missingFields.push("Date");
+    if (!formData.quotation_buyer_id) missingFields.push("Buyer Id");
+    if (!formData.quotation_ref_no) missingFields.push("Bill Ref No");
+    if (!formData.quotation_status && editId) {
       missingFields.push("Status");
     }
     invoiceData.forEach((row, index) => {
-      if (!row.dispatch_sub_godown_id)
+      if (!row.quotation_sub_godown_id)
         missingFields.push(`Row ${index + 1}: Godown`);
-      if (!row.dispatch_sub_rate) missingFields.push(`Row ${index + 1}: Rate`);
-      if (!row.dispatch_sub_item_id)
+      if (!row.quotation_sub_rate) missingFields.push(`Row ${index + 1}: Rate`);
+      if (!row.quotation_sub_item_id)
         missingFields.push(`Row ${index + 1}: Item`);
       if (singlebranch == "Yes") {
         if (
-          row.dispatch_sub_box === null ||
-          row.dispatch_sub_box === undefined ||
-          row.dispatch_sub_box === ""
+          row.quotation_sub_box === null ||
+          row.quotation_sub_box === undefined ||
+          row.quotation_sub_box === ""
         ) {
           missingFields.push(`Row ${index + 1}: Box`);
         }
       }
       if (doublebranch == "Yes") {
         if (
-          row.dispatch_sub_piece === null ||
-          row.dispatch_sub_piece === undefined ||
-          row.dispatch_sub_piece === ""
+          row.quotation_sub_piece === null ||
+          row.quotation_sub_piece === undefined ||
+          row.quotation_sub_piece === ""
         ) {
           missingFields.push(`Row ${index + 1}: Piece`);
         }
@@ -363,16 +359,14 @@ const CreateDispatch = () => {
     try {
       const payload = {
         ...formData,
-        dispatch_product_data: invoiceData,
+        quotation_product_data: invoiceData,
       };
 
       if (editId) {
         payload.item_status = formData.item_status;
       }
 
-      const url = editId
-        ? `${DISPATCH_EDIT_LIST}/${decryptedId}`
-        : DISPATCH_CREATE;
+      const url = editId ? `${QUOTATION_FORM}/${decryptedId}` : QUOTATION_FORM;
       const method = editId ? "put" : "post";
 
       const response = await apiClient[method](url, payload, {
@@ -385,7 +379,7 @@ const CreateDispatch = () => {
           title: "Success",
           description: response.data.msg,
         });
-        navigate("/dispatch");
+        navigate("/quotation");
       } else {
         toast({
           title: "Error",
@@ -411,7 +405,7 @@ const CreateDispatch = () => {
   const handleDelete = async () => {
     try {
       const response = await apiClient.delete(
-        `${DISPATCH_SUB_DELETE}/${deleteItemId}`,
+        `${QUOTATION_SUB_DELETE}/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -483,19 +477,20 @@ const CreateDispatch = () => {
               <div className="flex items-center px-4 py-5 relative z-10">
                 <button
                   type="button"
-                  onClick={() => navigate("/dispatch")}
+                  onClick={() => navigate("/quotation")}
+                  quotation_ref
                   className="p-1.5 bg-white/20 rounded-full text-white mr-3 shadow-sm hover:bg-white/30 transition-colors"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div className="flex flex-col">
                   <h1 className="text-lg font-bold tracking-wide">
-                    {editId ? "Update Dispatch" : "Create  Dispatch"}
+                    {editId ? "Update Quotation" : "Create  Quotation"}
                   </h1>
                   <p className="text-xs text-yellow-100 mt-0.5 opacity-90">
                     {editId
-                      ? "Update new dispatch details"
-                      : "Add new dispatch details"}
+                      ? "Update new quotation details"
+                      : "Add new quotation details"}
                   </p>
                 </div>
               </div>
@@ -512,8 +507,8 @@ const CreateDispatch = () => {
                   </label>
                   <Input
                     className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.dispatch_date}
-                    onChange={(e) => handleInputChange(e, "dispatch_date")}
+                    value={formData.quotation_date}
+                    onChange={(e) => handleInputChange(e, "quotation_date")}
                     type="date"
                   />
                 </div>
@@ -523,19 +518,10 @@ const CreateDispatch = () => {
                       <span className="w-1 h-4 bg-yellow-500 rounded-full mr-2"></span>
                       Buyer<span className="text-red-500">*</span>
                     </label>
-                    {!editId && (
-                      <button
-                        type="button"
-                        className="flex items-center text-xs text-yellow-600 font-medium bg-yellow-50 px-2 py-0.5 rounded-full"
-                      >
-                        <SquarePlus className="h-3 w-3 mr-1" />
-                        <BuyerForm />
-                      </button>
-                    )}
                   </div>
                   <MemoizedSelect
-                    value={formData.dispatch_buyer_id}
-                    onChange={(e) => handleInputChange(e, "dispatch_buyer_id")}
+                    value={formData.quotation_buyer_id}
+                    onChange={(e) => handleInputChange(e, "quotation_buyer_id")}
                     options={
                       buyerData?.buyers?.map((buyer) => ({
                         value: buyer.id,
@@ -555,16 +541,16 @@ const CreateDispatch = () => {
                       </label>
 
                       <MemoizedSelect
-                        value={formData.dispatch_ref_no}
+                        value={formData.quotation_ref_no}
                         onChange={(e) =>
-                          handleInputChange(e, "dispatch_ref_no")
+                          handleInputChange(e, "quotation_ref_no")
                         }
                         options={
-                          dispatchRef
+                          quotationRef
                             ? [
                                 {
-                                  value: dispatchRef.dispatch_ref,
-                                  label: dispatchRef.dispatch_ref,
+                                  value: quotationRef.quotation_ref,
+                                  label: quotationRef.quotation_ref,
                                 },
                               ]
                             : []
@@ -584,8 +570,8 @@ const CreateDispatch = () => {
                     </label>
                     <Input
                       className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                      value={formData.dispatch_ref_no}
-                      onChange={(e) => handleInputChange(e, "dispatch_ref_no")}
+                      value={formData.quotation_ref_no}
+                      onChange={(e) => handleInputChange(e, "quotation_ref_no")}
                       disabled
                     />
                   </div>
@@ -597,25 +583,11 @@ const CreateDispatch = () => {
                   </label>
                   <Input
                     className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.dispatch_vehicle_no}
+                    value={formData.quotation_vehicle_no}
                     onChange={(e) =>
-                      handleInputChange(e, "dispatch_vehicle_no")
+                      handleInputChange(e, "quotation_vehicle_no")
                     }
                     placeholder="Vehicle No"
-                  />
-                </div>
-                <div>
-                  <label className="sm:block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <span className="w-1 h-4 bg-gray-300 rounded-full mr-2"></span>
-                    City
-                  </label>
-                  <Input
-                    className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                    value={formData.dispatch_buyer_city}
-                    onChange={(e) =>
-                      handleInputChange(e, "dispatch_buyer_city")
-                    }
-                    placeholder="City"
                   />
                 </div>
               </div>
@@ -626,8 +598,8 @@ const CreateDispatch = () => {
                 </label>
                 <Textarea
                   className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                  value={formData.dispatch_remark}
-                  onChange={(e) => handleInputChange(e, "dispatch_remark")}
+                  value={formData.quotation_remark}
+                  onChange={(e) => handleInputChange(e, "quotation_remark")}
                   placeholder="Add any notes here"
                   rows={2}
                 />
@@ -698,12 +670,12 @@ const CreateDispatch = () => {
                           <TableCell className="px-4 py-3 min-w-[200px] align-top">
                             <div className="space-y-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_item_id}
+                                value={row.quotation_sub_item_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_item_id"
+                                    "quotation_sub_item_id"
                                   )
                                 }
                                 options={
@@ -759,12 +731,12 @@ const CreateDispatch = () => {
                           <TableCell className="px-4 py-3 min-w-[150px] align-top">
                             <div className="space-y-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_godown_id}
+                                value={row.quotation_sub_godown_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_godown_id"
+                                    "quotation_sub_godown_id"
                                   )
                                 }
                                 options={
@@ -789,12 +761,12 @@ const CreateDispatch = () => {
                             <div className="space-y-1">
                               <Input
                                 className="bg-white border border-gray-300 w-full text-xs"
-                                value={row.dispatch_sub_rate}
+                                value={row.quotation_sub_rate}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_rate"
+                                    "quotation_sub_rate"
                                   )
                                 }
                                 placeholder="Rate"
@@ -810,19 +782,19 @@ const CreateDispatch = () => {
                                     (boxInputRefs.current[rowIndex] = el)
                                   }
                                   className="bg-white border border-gray-300 w-full text-xs"
-                                  value={row.dispatch_sub_box}
+                                  value={row.quotation_sub_box}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_box"
+                                      "quotation_sub_box"
                                     )
                                   }
                                   placeholder="Qty"
                                 />
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.quotation_sub_godown_id &&
+                                  row?.quotation_sub_item_id && (
                                     <div className="text-xs text-gray-600">
                                       <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
                                         {row.stockData?.total_box}
@@ -838,19 +810,19 @@ const CreateDispatch = () => {
                               <div className="space-y-1">
                                 <Input
                                   className="bg-white border border-gray-300 w-full text-xs"
-                                  value={row.dispatch_sub_piece}
+                                  value={row.quotation_sub_piece}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_piece"
+                                      "quotation_sub_piece"
                                     )
                                   }
                                   placeholder="Piece"
                                 />
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.quotation_sub_godown_id &&
+                                  row?.quotation_sub_item_id && (
                                     <div className="text-xs text-gray-600">
                                       <span className="inline-block bg-gray-100 px-1.5 py-0.5 rounded">
                                         {row.stockData?.total_piece}
@@ -886,9 +858,9 @@ const CreateDispatch = () => {
                       {editId ? "Updating..." : "Creating..."}
                     </>
                   ) : editId ? (
-                    "Update Dispatch"
+                    "Update Quotation"
                   ) : (
-                    "Create Dispatch"
+                    "Create Quotation"
                   )}
                 </Button>
               </div>
@@ -903,7 +875,7 @@ const CreateDispatch = () => {
             >
               <div className="flex-1">
                 <h1 className="text-lg font-bold text-gray-800">
-                  {editId ? "Update Dispatch" : "Create New Dispatch"}
+                  {editId ? "Update Quotation" : "Create New Quotation"}
                 </h1>
               </div>
             </div>{" "}
@@ -919,9 +891,8 @@ const CreateDispatch = () => {
                       </label>
                       <Input
                         className="bg-white"
-                        value={formData.dispatch_date}
-                        onChange={(e) => handleInputChange(e, "dispatch_date")}
-                        placeholder="Enter Payment Date"
+                        value={formData.quotation_date}
+                        onChange={(e) => handleInputChange(e, "quotation_date")}
                         type="date"
                       />
                     </div>
@@ -933,22 +904,12 @@ const CreateDispatch = () => {
                       >
                         Buyer <span className="text-red-500">*</span>
                       </label>
-                      {!editId && (
-                        <button
-                          type="button"
-                          className="flex items-center text-xs font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 px-2 py-1 rounded-full transition-colors duration-150"
-                        >
-                          <SquarePlus className="h-3 w-3 mr-1" />
-
-                          <BuyerForm />
-                        </button>
-                      )}
                     </div>
 
                     <MemoizedSelect
-                      value={formData.dispatch_buyer_id}
+                      value={formData.quotation_buyer_id}
                       onChange={(e) =>
-                        handleInputChange(e, "dispatch_buyer_id")
+                        handleInputChange(e, "quotation_buyer_id")
                       }
                       options={
                         buyerData?.buyers?.map((buyer) => ({
@@ -960,23 +921,7 @@ const CreateDispatch = () => {
                       className="bg-white focus:ring-2 focus:ring-yellow-300"
                     />
                   </div>
-                  <div className="md:col-span-1">
-                    <div>
-                      <label
-                        className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
-                      >
-                        City
-                      </label>
-                      <Input
-                        className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                        value={formData.dispatch_buyer_city}
-                        onChange={(e) =>
-                          handleInputChange(e, "dispatch_buyer_city")
-                        }
-                        placeholder="City"
-                      />
-                    </div>
-                  </div>
+
                   {!editId && (
                     <div>
                       <div>
@@ -987,16 +932,16 @@ const CreateDispatch = () => {
                         </label>
 
                         <MemoizedSelect
-                          value={formData.dispatch_ref_no}
+                          value={formData.quotation_ref_no}
                           onChange={(e) =>
-                            handleInputChange(e, "dispatch_ref_no")
+                            handleInputChange(e, "quotation_ref_no")
                           }
                           options={
-                            dispatchRef
+                            quotationRef
                               ? [
                                   {
-                                    value: dispatchRef.dispatch_ref,
-                                    label: dispatchRef.dispatch_ref,
+                                    value: quotationRef.quotation_ref,
+                                    label: quotationRef.quotation_ref,
                                   },
                                 ]
                               : []
@@ -1016,16 +961,14 @@ const CreateDispatch = () => {
                       </label>
                       <Input
                         className="bg-white border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-yellow-300 focus:border-yellow-400"
-                        value={formData.dispatch_ref_no}
+                        value={formData.quotation_ref_no}
                         onChange={(e) =>
-                          handleInputChange(e, "dispatch_ref_no")
+                          handleInputChange(e, "quotation_ref_no")
                         }
                         disabled
                       />
                     </div>
                   )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div>
                     <label
                       className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
@@ -1034,14 +977,16 @@ const CreateDispatch = () => {
                     </label>
                     <Input
                       className="bg-white"
-                      value={formData.dispatch_vehicle_no}
+                      value={formData.quotation_vehicle_no}
                       onChange={(e) =>
-                        handleInputChange(e, "dispatch_vehicle_no")
+                        handleInputChange(e, "quotation_vehicle_no")
                       }
                       placeholder="Enter Vehicle No"
                     />
                   </div>
-                  <div className="md:col-span-3">
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-4">
                     <label
                       className={`block  ${ButtonConfig.cardLabel} text-sm mb-2 font-medium `}
                     >
@@ -1049,8 +994,8 @@ const CreateDispatch = () => {
                     </label>
                     <Textarea
                       className="bg-white"
-                      value={formData.dispatch_remark}
-                      onChange={(e) => handleInputChange(e, "dispatch_remark")}
+                      value={formData.quotation_remark}
+                      onChange={(e) => handleInputChange(e, "quotation_remark")}
                       placeholder="Enter Remark"
                     />
                   </div>
@@ -1108,12 +1053,12 @@ const CreateDispatch = () => {
                           <TableCell className="px-4 py-3 align-top">
                             <div className="flex flex-col gap-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_item_id}
+                                value={row.quotation_sub_item_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_item_id"
+                                    "quotation_sub_item_id"
                                   )
                                 }
                                 options={
@@ -1165,12 +1110,12 @@ const CreateDispatch = () => {
                           <TableCell className="px-4 py-3 align-top">
                             <div className="flex flex-col gap-1">
                               <MemoizedProductSelect
-                                value={row.dispatch_sub_godown_id}
+                                value={row.quotation_sub_godown_id}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_godown_id"
+                                    "quotation_sub_godown_id"
                                   )
                                 }
                                 options={
@@ -1192,12 +1137,12 @@ const CreateDispatch = () => {
                             <div className="space-y-1">
                               <Input
                                 className="bg-white border border-gray-300 w-full text-xs"
-                                value={row.dispatch_sub_rate}
+                                value={row.quotation_sub_rate}
                                 onChange={(e) =>
                                   handlePaymentChange(
                                     e,
                                     rowIndex,
-                                    "dispatch_sub_rate"
+                                    "quotation_sub_rate"
                                   )
                                 }
                                 placeholder="Rate"
@@ -1210,20 +1155,20 @@ const CreateDispatch = () => {
                               <div className="flex flex-col gap-1">
                                 <Input
                                   className="bg-white border border-gray-300 text-sm"
-                                  value={row.dispatch_sub_box}
+                                  value={row.quotation_sub_box}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_box"
+                                      "quotation_sub_box"
                                     )
                                   }
                                   placeholder="Enter Box"
                                 />
 
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.quotation_sub_godown_id &&
+                                  row?.quotation_sub_item_id && (
                                     <div className="text-xs text-gray-700">
                                       • Available Box:{" "}
                                       {row?.stockData?.total_box ?? 0}
@@ -1238,19 +1183,19 @@ const CreateDispatch = () => {
                               <div className="flex flex-col gap-1">
                                 <Input
                                   className="bg-white border border-gray-300 text-sm"
-                                  value={row.dispatch_sub_piece}
+                                  value={row.quotation_sub_piece}
                                   onChange={(e) =>
                                     handlePaymentChange(
                                       e,
                                       rowIndex,
-                                      "dispatch_sub_piece"
+                                      "quotation_sub_piece"
                                     )
                                   }
                                   placeholder="Enter Piece"
                                 />
                                 {!editId &&
-                                  row?.dispatch_sub_godown_id &&
-                                  row?.dispatch_sub_item_id && (
+                                  row?.quotation_sub_godown_id &&
+                                  row?.quotation_sub_item_id && (
                                     <div className="text-xs text-gray-700">
                                       • Available Piece:{" "}
                                       {row?.stockData?.total_piece ?? 0}
@@ -1261,29 +1206,29 @@ const CreateDispatch = () => {
                           )}
                           {/* Delete Button */}
                           {/* <TableCell className="p-2 text-center align-middle">
-                            {row.id ? (
-                              userType == 2 && (
+                              {row.id ? (
+                                userType == 2 && (
+                                  <Button
+                                    variant="ghost"
+                                    onClick={() => handleDeleteRow(row.id)}
+                                    className="text-red-500"
+                                    type="button"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )
+                              ) : (
                                 <Button
                                   variant="ghost"
-                                  onClick={() => handleDeleteRow(row.id)}
+                                  onClick={() => removeRow(rowIndex)}
+                                  disabled={invoiceData.length === 1}
                                   className="text-red-500"
                                   type="button"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <MinusCircle className="h-4 w-4" />
                                 </Button>
-                              )
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                onClick={() => removeRow(rowIndex)}
-                                disabled={invoiceData.length === 1}
-                                className="text-red-500"
-                                type="button"
-                              >
-                                <MinusCircle className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </TableCell> */}
+                              )}
+                            </TableCell> */}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -1313,16 +1258,16 @@ const CreateDispatch = () => {
                     {editId ? "Updating..." : "Creating..."}
                   </>
                 ) : editId ? (
-                  "Update Dispatch"
+                  "Update Quotation"
                 ) : (
-                  "Create Dispatch"
+                  "Create Quotation"
                 )}{" "}
               </Button>
 
               <Button
                 type="button"
                 onClick={() => {
-                  navigate("/dispatch");
+                  navigate("/quotation");
                 }}
                 className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} flex items-center mt-2`}
               >
@@ -1338,7 +1283,7 @@ const CreateDispatch = () => {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              dispatch.
+              quotation.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1356,4 +1301,4 @@ const CreateDispatch = () => {
   );
 };
 
-export default CreateDispatch;
+export default QuotationForm;

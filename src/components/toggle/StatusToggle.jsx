@@ -15,9 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import { DISPATCH_STATUS, PURCHASE_STATUS } from "@/api";
+import { DISPATCH_STATUS, PURCHASE_STATUS, QUOTATION_STATUS } from "@/api";
 import usetoken from "@/api/usetoken";
-
 const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
   const [status, setStatus] = useState(initialStatus);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +31,7 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
   const handleToggle = async () => {
     setIsDialogOpen(false);
     setIsLoading(true);
-    const newStatus = status === "Active" ? "Inactive" : "Active";
+    const newStatus = status == "Active" ? "Inactive" : "Active";
 
     let apiUrl = "";
     if (
@@ -45,6 +44,8 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
       location.pathname.includes("/dispatch-return")
     ) {
       apiUrl = `${DISPATCH_STATUS}/${teamId}`;
+    } else if (location.pathname.includes("/quotation")) {
+      apiUrl = `${QUOTATION_STATUS}/${teamId}`;
     } else {
       toast({
         title: "Error",
