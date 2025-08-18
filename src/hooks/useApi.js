@@ -56,6 +56,9 @@ export const useFetchPreBookingRef = () => {
 export const useFetchDispatchRef = () => {
   return useQuery(createQueryConfig(["dispatchref"], "/dispatch-ref"));
 };
+export const useFetchQuotationRef = () => {
+  return useQuery(createQueryConfig(["quotationref"], "/quotation-ref"));
+};
 export const useFetchDispatchReturnRef = () => {
   return useQuery(
     createQueryConfig(["dispatchreturnref"], "/dispatch-return-ref")

@@ -1,4 +1,4 @@
-import { BUYER_LIST } from "@/api";
+import { PAYMENT_LIST } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import Page from "@/app/dashboard/page";
@@ -32,23 +32,22 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, Search } from "lucide-react";
 import { useState } from "react";
-import BuyerForm from "./CreateBuyer";
+import PaymentForm from "./PaymentForm";
 
-const BuyerList = () => {
+const PaymentList = () => {
   const token = usetoken();
-
   const {
-    data: buyers,
+    data: payment,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["buyers"],
+    queryKey: ["payment"],
     queryFn: async () => {
-      const response = await apiClient.get(`${BUYER_LIST}`, {
+      const response = await apiClient.get(`${PAYMENT_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.buyers;
+      return response.data.payment;
     },
   });
 
@@ -130,19 +129,19 @@ const BuyerList = () => {
 
         return (
           <div className="flex flex-row">
-            <BuyerForm buyerId={buyerId} />
+            <PaymentForm buyerId={buyerId} />
           </div>
         );
       },
     },
   ];
   const filteredItems =
-    buyers?.filter((item) =>
+    payment?.filter((item) =>
       item.buyer_name.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
   // Create the table instance
   const table = useReactTable({
-    data: buyers || [],
+    data: payment || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -183,7 +182,7 @@ const BuyerList = () => {
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching Buyer
+              Error Fetching Payment
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -202,10 +201,10 @@ const BuyerList = () => {
         <div className="sm:hidden">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
-              Buyer List
+              Payment List
             </h1>
             <div>
-              <BuyerForm />
+              <PaymentForm />
             </div>
           </div>
 
@@ -214,7 +213,7 @@ const BuyerList = () => {
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search buyer..."
+                placeholder="Search payment..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -281,7 +280,7 @@ const BuyerList = () => {
                             {item.buyer_status}
                           </span>
 
-                          <BuyerForm buyerId={item.id} />
+                          <PaymentForm buyerId={item.id} />
                         </div>
                       </div>
                     </div>
@@ -298,7 +297,7 @@ const BuyerList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Buyer List
+            Payment List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -306,7 +305,7 @@ const BuyerList = () => {
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search buyer..."
+                placeholder="Search payment..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -339,7 +338,7 @@ const BuyerList = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <BuyerForm />
+              <PaymentForm />
             </div>
           </div>
           {/* table  */}
@@ -399,7 +398,7 @@ const BuyerList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Buyer : &nbsp;
+              Total Payment : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">
@@ -427,4 +426,4 @@ const BuyerList = () => {
   );
 };
 
-export default BuyerList;
+export default PaymentList;

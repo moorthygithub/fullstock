@@ -75,6 +75,15 @@ export const UPDATE_TEAM_STATUS = `/updateteamstatus`;
 export const GODOWN_LIST = `/godown-list`;
 export const GODOWN_CREATE = `/godown`;
 export const GODOWN_UPDATE = `/godown`;
+//Quatiation
+export const QUOTATION = `/quotation-list`;
+export const QUOTATION_FORM = `/quotation`;
+export const QUOTATION_SUB_DELETE = `/quotation-sub`;
+export const QUOTATION_STATUS = `/quotation-status`;
+//payment
+export const PAYMENT_MODE = `/payment-mode`;
+export const PAYMENT_LIST = `/payment-list`;
+export const PAYMENT_FORM = `/payment`;
 
 //REPORT STOCK -BUYER
 export const BUYER_REPORT = `/report-buyer-data`;
@@ -94,6 +103,7 @@ export const ROUTES = {
   PURCHASE_RETURN_VIEW: (id) => `/purchase-return/view/${encryptId(id)}`,
   PREBOOKING_EDIT: (id) => `/pre-booking/edit/${encryptId(id)}`,
   PREBOOKING_VIEW: (id) => `/pre-booking/view/${encryptId(id)}`,
+  QUOTATION_EDIT: (id) => `/quotation/form/${encryptId(id)}`,
   DISPATCH_EDIT: (id) => `/dispatch/edit/${encryptId(id)}`,
   DISPATCH_RETURN_EDIT: (id) => `/dispatch-return/edit/${encryptId(id)}`,
   DISPATCH_VIEW: (id) => `/dispatch/view/${encryptId(id)}`,
@@ -116,6 +126,9 @@ export const navigateToPreBookingEdit = (navigate, prebookingId) => {
 };
 export const navigateToPreBookingView = (navigate, dispatchId) => {
   navigate(ROUTES.PREBOOKING_VIEW(dispatchId));
+};
+export const navigateToQuotationEdit = (navigate, dispatchId) => {
+  navigate(ROUTES.QUOTATION_EDIT(dispatchId));
 };
 export const navigateTODispatchEdit = (navigate, dispatchId) => {
   navigate(ROUTES.DISPATCH_EDIT(dispatchId));
@@ -169,6 +182,23 @@ export const fetchPreBookingById = async (encryptedId, token) => {
 
     const id = decryptId(encryptedId);
     const response = await apiClient.get(`${PRE_BOOKING_CREATE}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch purchase details"
+    );
+  }
+};
+export const fetchQuotationById = async (encryptedId, token) => {
+  try {
+    if (!token) throw new Error("No authentication token found");
+
+    const id = decryptId(encryptedId);
+    const response = await apiClient.get(`${QUOTATION_FORM}/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

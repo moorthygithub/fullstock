@@ -93,6 +93,18 @@ export function AppSidebar({ ...props }) {
           ]
         : []),
       {
+        title: "Payment",
+        url: "/payment",
+        icon: ShoppingBag,
+        isActive: false,
+      },
+      {
+        title: "Quotation",
+        url: "/quotation",
+        icon: ShoppingBag,
+        isActive: false,
+      },
+      {
         title: "Purchase",
         url: "/purchase",
         icon: ShoppingBag,
