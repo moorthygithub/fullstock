@@ -1,8 +1,4 @@
-import {
-  BUYER_EDIT_GET,
-  PAYMENT_FORM,
-  PAYMENT_MODE
-} from "@/api";
+import { BUYER_EDIT_GET, PAYMENT_FORM, PAYMENT_MODE } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
@@ -17,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useFetchBuyers } from "@/hooks/useApi";
@@ -25,7 +22,7 @@ import { AlertCircle, Edit, Loader2, SquarePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-const PaymentForm = ({ buyerId = null }) => {
+const PaymentForm = ({ paymentId = null }) => {
   const [open, setOpen] = useState(false);
   const token = usetoken();
   const [isLoading, setIsLoading] = useState(false);
@@ -33,22 +30,22 @@ const PaymentForm = ({ buyerId = null }) => {
   const [formData, setFormData] = useState({
     payment_date: "",
     payment_buyer_id: "",
-    buyer_city: "",
     payment_mode: "",
     buyer_state: "",
     payment_amount: "",
+    payment_transaction: "",
     buyer_status: "Active",
   });
   const [originalData, setOriginalData] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
-  const { data: buyerData, isLoading: loadingbuyer } = useFetchBuyers();
+  const { data: buyerData } = useFetchBuyers();
 
   const location = useLocation();
   const pathname = location.pathname;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const isEditMode = Boolean(buyerId);
+  const isEditMode = Boolean(paymentId);
   const { data: paymentmodeData } = useQuery({
     queryKey: ["modedata"],
     queryFn: async () => {
@@ -63,28 +60,24 @@ const PaymentForm = ({ buyerId = null }) => {
     try {
       setIsFetching(true);
 
-      const response = await apiClient.get(`${PAYMENT_FORM}/${buyerId}`, {
+      const response = await apiClient.get(`${PAYMENT_FORM}/${paymentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = response.data.buyers || {};
+      const data = response.data.payment || {};
       setFormData({
         payment_date: data.payment_date || "",
         payment_buyer_id: data.payment_buyer_id || "",
-        buyer_city: data.buyer_city || "",
         payment_mode: data.payment_mode || "",
-        buyer_state: data.buyer_state || "",
         payment_amount: data.payment_amount || "",
-        buyer_status: data.buyer_status || "Active",
+        payment_transaction: data.payment_transaction || "",
       });
       setOriginalData({
         payment_date: data.payment_date || "",
         payment_buyer_id: data.payment_buyer_id || "",
         payment_mode: data.payment_mode || "",
-        buyer_state: data.buyer_state || "",
         payment_amount: data.payment_amount || "",
-        buyer_city: data.buyer_city || "",
-        buyer_status: data.buyer_status || "Active",
+        payment_transaction: data.payment_transaction || "",
       });
     } catch {
       toast({
@@ -127,7 +120,7 @@ const PaymentForm = ({ buyerId = null }) => {
 
     try {
       const apiCall = isEditMode
-        ? apiClient.put(`${PAYMENT_FORM}/${buyerId}`, formData, {
+        ? apiClient.put(`${PAYMENT_FORM}/${paymentId}`, formData, {
             headers: { Authorization: `Bearer ${token}` },
           })
         : apiClient.post(PAYMENT_FORM, formData, {
@@ -146,8 +139,6 @@ const PaymentForm = ({ buyerId = null }) => {
         if (!isEditMode) {
           setFormData({
             payment_date: "",
-            buyer_city: "",
-            buyer_status: "Active",
           });
         }
       } else {
@@ -224,13 +215,11 @@ const PaymentForm = ({ buyerId = null }) => {
   };
   const hasChanges =
     originalData &&
-    (formData.buyer_city !== originalData.buyer_city ||
-      formData.buyer_status !== originalData.buyer_status ||
-      formData.payment_date !== originalData.payment_date ||
+    (formData.payment_date !== originalData.payment_date ||
       formData.payment_buyer_id !== originalData.payment_buyer_id ||
       formData.payment_mode !== originalData.payment_mode ||
-      formData.buyer_state !== originalData.buyer_state ||
-      formData.payment_amount !== originalData.payment_amount);
+      formData.payment_amount !== originalData.payment_amount ||
+      formData.payment_transaction !== originalData.payment_transaction);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{renderTrigger()}</DialogTrigger>
@@ -248,11 +237,11 @@ const PaymentForm = ({ buyerId = null }) => {
           <div className="grid gap-4">
             <div className="space-y-2">
               <h4 className="font-medium leading-none">
-                {isEditMode ? "Edit Buyer" : "Create New Buyer"}
+                {isEditMode ? "Edit Payment" : "Create New Payment"}
               </h4>
               <p className="text-sm text-muted-foreground">
                 {isEditMode
-                  ? "Update the buyer details below"
+                  ? "Update the payment details below"
                   : "Enter the details for the new Buyer"}
               </p>
             </div>
@@ -330,14 +319,14 @@ const PaymentForm = ({ buyerId = null }) => {
                   }
                 />
               </div>
-              <div>
+              <div className="col-span-2">
                 <label
                   htmlFor="payment_transaction"
                   className="text-sm font-medium"
                 >
-                  Trasaction *
+                  Trasaction
                 </label>
-                <Input
+                <Textarea
                   placeholder="Trasaction"
                   value={formData.payment_transaction}
                   onChange={(e) =>
@@ -348,39 +337,6 @@ const PaymentForm = ({ buyerId = null }) => {
                   }
                 />
               </div>
-              {isEditMode && (
-                <div className="grid gap-1">
-                  <label htmlFor="buyer_status" className="text-sm font-medium">
-                    Status *
-                  </label>
-                  <Select
-                    value={formData.buyer_status}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, buyer_status: value }))
-                    }
-                  >
-                    <SelectTrigger
-                      className={hasChanges ? "border-blue-200" : ""}
-                    >
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                          Active
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Inactive">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
-                          Inactive
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
 
             {hasChanges && (

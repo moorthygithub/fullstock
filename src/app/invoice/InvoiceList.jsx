@@ -32,14 +32,19 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, Edit, Search, SquarePlus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { navigateToQuotationEdit, QUOTATION, QUOTATION_FORM } from "@/api";
+import {
+  INVOICE,
+  INVOICE_FORM,
+  navigateTODispatchEdit,
+  navigateTODispatchView,
+  navigateToInvoiceEdit,
+} from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import Loader from "@/components/loader/Loader";
-import StatusToggle from "@/components/toggle/StatusToggle";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,24 +59,22 @@ import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import moment from "moment";
 import { useSelector } from "react-redux";
-const QuotationList = () => {
+const InvoiceList = () => {
   const token = usetoken();
   const {
-    data: quotation,
+    data: invoice,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["quotation"],
+    queryKey: ["invoice"],
     queryFn: async () => {
-      const response = await apiClient.get(`${QUOTATION}`, {
+      const response = await apiClient.get(`${INVOICE}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.quotation;
+      return response.data.invoice;
     },
   });
-  // State for table management
-
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -81,9 +84,7 @@ const QuotationList = () => {
   const UserId = useSelector((state) => state.auth.user_type);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
-  //   const whatsapp = useSelector((state) => state.auth.whatsapp_number);
-  //   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
-  //   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
+
   const { toast } = useToast();
   const handleDeleteRow = (productId) => {
     setDeleteItemId(productId);
@@ -92,7 +93,7 @@ const QuotationList = () => {
   const confirmDelete = async () => {
     try {
       const response = await apiClient.delete(
-        `${QUOTATION_FORM}/${deleteItemId}`,
+        `${INVOICE_FORM}/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -136,7 +137,6 @@ const QuotationList = () => {
       setDeleteItemId(null);
     }
   };
-
   const columns = [
     {
       accessorKey: "index",
@@ -145,11 +145,11 @@ const QuotationList = () => {
       cell: ({ row }) => <div>{row.index + 1}</div>,
     },
     {
-      accessorKey: "quotation_date",
+      accessorKey: "invoice_date",
       header: "Date",
       id: "Date",
       cell: ({ row }) => {
-        const date = row.original.quotation_date;
+        const date = row.original.invoice_date;
         return moment(date).format("DD-MMM-YYYY");
       },
     },
@@ -160,43 +160,39 @@ const QuotationList = () => {
       cell: ({ row }) => <div>{row.original.buyer_name}</div>,
     },
     {
-      accessorKey: "quotation_ref_no",
+      accessorKey: "invoice_ref_no",
       header: "Ref No",
       id: "Ref No",
-      cell: ({ row }) => <div>{row.original.quotation_ref_no}</div>,
+      cell: ({ row }) => <div>{row.original.invoice_ref_no}</div>,
     },
     {
-      accessorKey: "quotation_vehicle_no",
+      accessorKey: "invoice_vehicle_no",
       header: "Vehicle No",
       id: "Vehicle No",
-      cell: ({ row }) => <div>{row.original.quotation_vehicle_no}</div>,
+      cell: ({ row }) => <div>{row.original.invoice_vehicle_no}</div>,
     },
-    ...(UserId == 3
-      ? [
-          {
-            accessorKey: "branch_name",
-            header: "Branch Name",
-            id: "Branch Name",
 
-            cell: ({ row }) => <div>{row.original.branch_name}</div>,
-          },
-        ]
-      : []),
     {
-      accessorKey: "quotation_status",
+      accessorKey: "dispatch_status",
       header: "Status",
       id: "Status",
       cell: ({ row }) => {
-        const status = row.original.quotation_status;
-        const statusId = row.original.id;
+        const status = row.original.invoice_status; // e.g., "Active" | "Inactive"
+
+        const isActive = status?.toLowerCase() === "active";
+
         return (
-          <StatusToggle
-            initialStatus={status}
-            teamId={statusId}
-            onStatusChange={() => {
-              refetch();
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                isActive
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {status}
+            </span>
+          </div>
         );
       },
     },
@@ -204,7 +200,7 @@ const QuotationList = () => {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
-        const QuotationId = row.original.id;
+        const DispatchId = row.original.id;
 
         return (
           <div className="flex flex-row space-x-2">
@@ -216,26 +212,25 @@ const QuotationList = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        navigateToQuotationEdit(navigate, QuotationId);
+                        navigateToInvoiceEdit(navigate, DispatchId);
                       }}
                     >
                       <Edit />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Edit Quotation</p>
+                    <p>Edit Invoice</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
-
             {UserId != 1 && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      onClick={() => handleDeleteRow(QuotationId)}
+                      onClick={() => handleDeleteRow(DispatchId)}
                       className="text-red-500"
                       type="button"
                     >
@@ -243,7 +238,7 @@ const QuotationList = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Delete Quotation</p>
+                    <p>Delete Invoice</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -254,8 +249,20 @@ const QuotationList = () => {
     },
   ];
 
+  const filteredItem = useMemo(() => {
+    if (!invoice) return [];
+
+    return invoice.filter((item) => {
+      const matchesSearch = item.buyer_name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+      return matchesSearch;
+    });
+  }, [invoice, searchQuery]);
+
   const table = useReactTable({
-    data: quotation || [],
+    data: filteredItem || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -296,7 +303,7 @@ const QuotationList = () => {
         <Card className="w-full max-w-md mx-auto mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">
-              Error Fetching Quotation
+              Error Fetching Invoice
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -315,16 +322,16 @@ const QuotationList = () => {
         <div className="sm:hidden">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl text-gray-800 font-medium">
-              Quotation List
+              Invoice List
             </h1>
             {UserId != 3 && (
               <div>
                 <Button
                   variant="default"
                   className={`md:ml-2 bg-yellow-400 hover:bg-yellow-600 text-black rounded-l-full`}
-                  onClick={() => navigate("/quotation/form")}
+                  onClick={() => navigate("/dispatch/create")}
                 >
-                  <SquarePlus className="h-4 w-4 " /> Quotation
+                  <SquarePlus className="h-4 w-4 " /> Invoice
                 </Button>
               </div>
             )}
@@ -335,7 +342,7 @@ const QuotationList = () => {
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search quotation..."
+                placeholder="Search dispatch..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -344,10 +351,13 @@ const QuotationList = () => {
           </div>
 
           <div className="space-y-3">
-            {quotation.length > 0 ? (
-              quotation.map((item, index) => (
+            {filteredItem.length > 0 ? (
+              filteredItem.map((item, index) => (
                 <div
                   key={item.id}
+                  onClick={() => {
+                    navigateTODispatchView(navigate, item.id);
+                  }}
                   className="relative bg-white rounded-lg shadow-sm border-l-4 border-r border-b border-t border-yellow-500 overflow-hidden"
                 >
                   <div className="p-2 flex flex-col gap-2">
@@ -364,54 +374,29 @@ const QuotationList = () => {
                       <div className="flex items-center justify-between gap-2 ">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            item.quotation_status == "Active"
+                            item.invoice_status === "Active"
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
-                          onClick={(e) => e.stopPropagation()}
                         >
-                          <StatusToggle
-                            initialStatus={item.quotation_status}
-                            teamId={item.id}
-                            onStatusChange={() => {
-                              refetch();
-                            }}
-                          />
+                          {item.invoice_status}
                         </span>
                         {UserId != 3 && (
                           <button
                             className={`px-2 py-1 bg-yellow-400 hover:bg-yellow-600 rounded-lg text-black text-xs`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              navigateToQuotationEdit(navigate, item.id);
+                              navigateTODispatchEdit(navigate, item.id);
                             }}
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                         )}
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                onClick={() => handleDeleteRow(item.id)}
-                                className="text-red-500"
-                                type="button"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Delete Quotation</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap justify-between gap-1">
-                      {item.quotation_ref_no && (
+                      {item.invoice_ref_no && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -429,11 +414,11 @@ const QuotationList = () => {
                           </svg>
                           <span className="text-xs text-gray-700">
                             <span className="text-[10px]">Ref No:</span>
-                            {item.quotation_ref_no}
+                            {item.invoice_ref_no}
                           </span>
                         </div>
                       )}
-                      {item.quotation_vehicle_no && (
+                      {item.invoice_vehicle_no && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -454,11 +439,11 @@ const QuotationList = () => {
                           </svg>
                           <span className="text-xs text-gray-700">
                             <span className="text-[10px]">Vehicle No:</span>
-                            {item.quotation_vehicle_no}
+                            {item.invoice_vehicle_no}
                           </span>
                         </div>
                       )}
-                      {item.quotation_date && (
+                      {item.invoice_date && (
                         <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -485,7 +470,7 @@ const QuotationList = () => {
                             <line x1="3" y1="10" x2="21" y2="10" />
                           </svg>
                           <span className="text-xs text-gray-700">
-                            {moment(item.quotation_date).format("DD-MMM-YY")}
+                            {moment(item.invoice_date).format("DD-MMM-YY")}
                           </span>
                         </div>
                       )}
@@ -503,14 +488,14 @@ const QuotationList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Quotation List
+            Invoice List
           </div>
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
             {/* Search Input */}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search Quotation..."
+                placeholder="Search Invoice..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -549,9 +534,9 @@ const QuotationList = () => {
                   <Button
                     variant="default"
                     className={`w-full md:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                    onClick={() => navigate("/quotation/form")}
+                    onClick={() => navigate("/invoice-form")}
                   >
-                    <SquarePlus className="h-4 w-4 mr-2" /> Quotation
+                    <SquarePlus className="h-4 w-4 mr-2" /> Invoice
                   </Button>
                 </>
               )}
@@ -615,7 +600,7 @@ const QuotationList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Quotation : &nbsp;
+              Total Invoice : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">
@@ -645,7 +630,7 @@ const QuotationList = () => {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              Quotation.
+              Invoice.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -663,4 +648,4 @@ const QuotationList = () => {
   );
 };
 
-export default QuotationList;
+export default InvoiceList;

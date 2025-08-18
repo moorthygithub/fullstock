@@ -1,12 +1,4 @@
-import {
-  File,
-  Frame,
-  GalleryVerticalEnd,
-  Package,
-  Settings2,
-  ShoppingBag,
-} from "lucide-react";
-
+import { File, Frame, Package, Settings2, ShoppingBag } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -20,7 +12,6 @@ import {
 import { useSelector } from "react-redux";
 import companyname from "../json/company.json";
 import { NavMainUser } from "./nav-main-user";
-
 export function AppSidebar({ ...props }) {
   const nameL = useSelector((state) => state.auth.name);
   const emailL = useSelector((state) => state.auth.email);
@@ -92,6 +83,12 @@ export function AppSidebar({ ...props }) {
             },
           ]
         : []),
+      {
+        title: "Invoice",
+        url: "/invoice",
+        icon: ShoppingBag,
+        isActive: false,
+      },
       {
         title: "Payment",
         url: "/payment",
@@ -179,6 +176,14 @@ export function AppSidebar({ ...props }) {
                 },
               ]
             : []),
+          {
+            title: "Payment Summary",
+            url: "/report/payment-summary",
+          },
+          {
+            title: "Payment Ledger",
+            url: "/report/payment-ledger",
+          },
         ],
       },
     ],

@@ -3,7 +3,7 @@ import React from "react";
 import ReactSelect from "react-select";
 
 export const MemoizedProductSelect = React.memo(
-  ({ value, onChange, options, placeholder }) => {
+  ({ value, onChange, options, placeholder, disabled }) => {
     const selectOptions = options.map((option) => ({
       value: option.value,
       label: option.label,
@@ -82,6 +82,7 @@ export const MemoizedProductSelect = React.memo(
         }}
         options={selectOptions}
         placeholder={placeholder}
+        isDisabled={!!disabled}
         styles={customStyles}
         components={{
           IndicatorSeparator: () => null,

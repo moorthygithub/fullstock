@@ -43,6 +43,10 @@ import SingleItemStock from "@/app/report/SingleItemStock";
 import Stock from "@/app/report/Stock";
 import StockGoDown from "@/app/report/StockGoDown";
 import ValidationWrapper from "@/utils/ValidationWrapper";
+import InvoiceList from "@/app/invoice/InvoiceList";
+import InvoiceForm from "@/app/invoice/InvoiceForm";
+import PaymentSummaryReport from "@/app/report/PaymentSummaryReport";
+import PaymentLedgerReport from "@/app/report/PaymentLedgerReport";
 
 function AppRoutes() {
   return (
@@ -103,6 +107,9 @@ function AppRoutes() {
             path="/dispatch-return/view/:id"
             element={<DispatchReturnView />}
           />
+          <Route path="/invoice" element={<InvoiceList />} />
+          <Route path="/invoice-form" element={<InvoiceForm />} />
+          <Route path="/invoice-form/:id" element={<InvoiceForm />} />
           <Route path="/quotation" element={<QuotationList />} />
           <Route path="/quotation/form" element={<QuotationForm />} />
           <Route path="/quotation/form/:id" element={<QuotationForm />} />
@@ -114,6 +121,14 @@ function AppRoutes() {
           <Route
             path="/report/single-item-stock"
             element={<SingleItemStock />}
+          />
+          <Route
+            path="/report/payment-summary"
+            element={<PaymentSummaryReport />}
+          />
+          <Route
+            path="/report/payment-ledger"
+            element={<PaymentLedgerReport />}
           />
           <Route path="/report/category-stock" element={<CategoryStock />} />
           <Route path="/report/godown-stock" element={<StockGoDown />} />
