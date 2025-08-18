@@ -270,6 +270,7 @@ const CreateDispatchReturnForm = () => {
       const selectedItem = itemsData?.items?.find((item) => item.id === value);
       if (selectedItem) {
         updatedData[rowIndex]["item_size"] = selectedItem.item_size;
+        updatedData[rowIndex]["dispatch_sub_rate"] = selectedItem.item_rate;
         updatedData[rowIndex]["item_brand"] = selectedItem.item_brand;
       }
       focusBoxInput(rowIndex);
@@ -291,8 +292,6 @@ const CreateDispatchReturnForm = () => {
     let updatedFormData = { ...formData, [field]: value };
 
     if (field == "dispatch_buyer_id") {
-      console.log(value, "value");
-
       const selectedBuyer = buyerData?.buyers.find(
         (buyer) => buyer.id == value
       );
@@ -789,7 +788,7 @@ const CreateDispatchReturnForm = () => {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="px-4 py-3 align-top">
+                          <TableCell className="px-4 py-3 align-top min-w-[100px]">
                             <div className="space-y-1">
                               <Input
                                 className="bg-white border border-gray-300 w-full text-xs"
@@ -806,7 +805,7 @@ const CreateDispatchReturnForm = () => {
                             </div>
                           </TableCell>
                           {singlebranch == "Yes" && (
-                            <TableCell className="px-4 py-3 min-w-[150px] align-top">
+                            <TableCell className="px-4 py-3 min-w-[100px] align-top">
                               <div className="space-y-1">
                                 <Input
                                   ref={(el) =>
@@ -838,7 +837,7 @@ const CreateDispatchReturnForm = () => {
                           )}
 
                           {doublebranch == "Yes" && (
-                            <TableCell className="px-4 py-3 min-w-[150px] align-top">
+                            <TableCell className="px-4 py-3 min-w-[100px] align-top">
                               <div className="space-y-1">
                                 <Input
                                   className="bg-white border border-gray-300 w-full text-xs"
