@@ -35,7 +35,7 @@ const PaymentSummaryReport = () => {
     refetch();
   };
 
-  const DispatchStock = async () => {
+  const PaymentSummaryData = async () => {
     const response = await apiClient.post(
       `${PAYMENT_SUMMARY_REPORT}`,
       { ...formData },
@@ -55,10 +55,9 @@ const PaymentSummaryReport = () => {
     refetch,
   } = useQuery({
     queryKey: ["paymentsummaryreport", formData],
-    queryFn: DispatchStock,
+    queryFn: PaymentSummaryData,
     enabled: false,
   });
-  console.log(reportData, "reportdata");
   const handlePrintPdf = useReactToPrint({
     content: () => containerRef.current,
     documentTitle: "Payment_Summary_Report",
@@ -82,91 +81,7 @@ const PaymentSummaryReport = () => {
       }
     `,
   });
-  const downloadExcel = async () => {
-    if (reportData?.dispatch?.length == 0) {
-      toast({
-        title: "No Data",
-        description: "No data available to export",
-        variant: "destructive",
-      });
-      return;
-    }
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Dispatch");
 
-    // Add title and metadata
-    worksheet.addRow([`Dispatch Report`]);
-    worksheet.addRow([
-      `From: ${moment(formData.from_date).format("DD-MM-YYYY")} To: ${moment(
-        formData.to_date
-      ).format("DD-MM-YYYY")}`,
-    ]);
-    worksheet.addRow([]);
-
-    // Add headers
-    const headers = ["Ref", "Date", "Vehicle No", "Box"];
-    const headerRow = worksheet.addRow(headers);
-    headerRow.eachCell((cell) => {
-      cell.font = { bold: true };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "F3F4F6" },
-      };
-      cell.alignment = { horizontal: "center" };
-    });
-
-    // Add transactions
-    reportData?.dispatch?.forEach((transaction) => {
-      worksheet.addRow([
-        transaction.dispatch_ref_no,
-        moment(transaction.dispatch_date).format("DD MMM YYYY"),
-        transaction.dispatch_vehicle_no,
-
-        transaction.sum_dispatch_sub_box,
-      ]);
-    });
-
-    // Generate and download Excel file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `dispatch.xlsx`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Card className="w-full max-w-md mx-auto mt-6">
-        <CardHeader>
-          <CardTitle className="text-destructive">
-            Error Fetching Dispatch Data
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600 mb-4">
-            Unable to retrieve Dispatch information. Please try again.
-          </p>
-          <Button onClick={refetch} variant="outline">
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -332,10 +247,11 @@ const PaymentSummaryReport = () => {
                 </h1>
                 <div className="flex gap-[2px]">
                   <button
+                    button="submit"
+                    form="payment-form"
                     className={` sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md `}
-                    onClick={downloadExcel}
                   >
-                    <RiFileExcel2Line className="h-3 w-3 " />
+                    <Search className="h-3 w-3 " />
                   </button>
                   <button
                     className={` sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md `}
@@ -346,9 +262,9 @@ const PaymentSummaryReport = () => {
                 </div>
               </div>
 
-              {/* Form */}
               <form
                 onSubmit={handleSubmit}
+                id="payment-form"
                 className="bg-white p-2 rounded-md shadow-xs"
               >
                 <div className="grid grid-cols-2 gap-2 mb-2">
@@ -367,16 +283,6 @@ const PaymentSummaryReport = () => {
                       className="text-xs h-7"
                       onChange={(e) => handleInputChange("to_date", e)}
                     />
-                  </div>
-
-                  <div className="space-y-1">
-                    <Button
-                      type="submit"
-                      size="sm"
-                      className={`h-9 w-full ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                    >
-                      <Search className="h-3 w-3 mr-1" /> Search
-                    </Button>
                   </div>
                 </div>
               </form>
@@ -438,6 +344,7 @@ const PaymentSummaryReport = () => {
                         className={`h-8  ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
                       >
                         <Search className="h-3 w-3 mr-1" />
+                        Search
                       </Button>
                       <Button
                         type="button"
@@ -446,14 +353,7 @@ const PaymentSummaryReport = () => {
                         onClick={handlePrintPdf}
                       >
                         <Printer className="h-3 w-3 mr-1" />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={downloadExcel}
-                      >
-                        <RiFileExcel2Line className="h-3 w-3 mr-1" />
+                        Print
                       </Button>
                     </div>
                   </div>
