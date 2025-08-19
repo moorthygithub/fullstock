@@ -1,4 +1,15 @@
-import { File, Frame, Package, Settings2, ShoppingBag } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Box,
+  DollarSign,
+  File,
+  Frame,
+  Package,
+  ReceiptText,
+  Settings2,
+  ShoppingBag,
+} from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -83,78 +94,108 @@ export function AppSidebar({ ...props }) {
             },
           ]
         : []),
+
       {
-        title: "Invoice",
-        url: "/invoice",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "Payment",
-        url: "/payment",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "Quotation",
-        url: "/quotation",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "Purchase",
-        url: "/purchase",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "Purchase Return",
-        url: "/purchase-return",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "PreBooking",
-        url: "/pre-booking",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "Dispatch",
-        url: "/dispatch",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "Dispatch Return",
-        url: "/dispatch-return",
-        icon: ShoppingBag,
-        isActive: false,
-      },
-      {
-        title: "Stock View",
-        url: "/stock-view",
-        icon: Package,
-        isActive: false,
-      },
-      {
-        title: "Report",
+        title: "Inward",
         url: "#",
         isActive: false,
-        icon: File,
+        icon: ArrowDown,
+        items: [
+          {
+            title: "Purchase",
+            url: "/purchase",
+          },
+          {
+            title: "Purchase Return",
+            url: "/purchase-return",
+          },
+        ],
+      },
+      {
+        title: "Outward",
+        url: "#",
+        isActive: false,
+        icon: ArrowUp,
+        items: [
+          {
+            title: "Quotation",
+            url: "/quotation",
+          },
+
+          {
+            title: "PreBooking",
+            url: "/pre-booking",
+          },
+          {
+            title: "Dispatch",
+            url: "/dispatch",
+          },
+          {
+            title: "Dispatch Return",
+            url: "/dispatch-return",
+          },
+          ...(id != 1
+            ? [
+                {
+                  title: "Dispatch Summary",
+                  url: "/report/dispatch",
+                },
+              ]
+            : []),
+        ],
+      },
+      {
+        title: "Billing",
+        url: "#",
+        isActive: false,
+        icon: ReceiptText,
+        items: [
+          {
+            title: "Invoice",
+            url: "/invoice",
+          },
+          {
+            title: "Payment",
+            url: "/payment",
+          },
+          {
+            title: "Payment Summary",
+            url: "/report/payment-summary",
+          },
+          {
+            title: "Ledger",
+            url: "/report/payment-ledger",
+          },
+        ],
+      },
+
+      {
+        title: "Stock",
+        url: "#",
+        isActive: false,
+        icon: Package,
 
         items: [
+          {
+            title: "Stock View",
+            url: "/stock-view",
+          },
           {
             title: "Category Stock",
             url: "/report/category-stock",
           },
           {
-            title: "Stock",
+            title: "Stock Summary",
             url: "/report/stock",
           },
           {
             title: "Godown Stock",
             url: "/report/godown-stock",
+          },
+
+          {
+            title: "Single Item Stock",
+            url: "/report/single-item-stock",
           },
           ...(id != 1
             ? [
@@ -164,26 +205,6 @@ export function AppSidebar({ ...props }) {
                 },
               ]
             : []),
-          {
-            title: "Single Item Stock",
-            url: "/report/single-item-stock",
-          },
-          ...(id != 1
-            ? [
-                {
-                  title: "Dispatch",
-                  url: "/report/dispatch",
-                },
-              ]
-            : []),
-          {
-            title: "Payment Summary",
-            url: "/report/payment-summary",
-          },
-          {
-            title: "Payment Ledger",
-            url: "/report/payment-ledger",
-          },
         ],
       },
     ],

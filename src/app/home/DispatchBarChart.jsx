@@ -146,7 +146,6 @@ const StockBarChart = ({
       borderRadius: 4,
     },
   ];
-
   const tooltipCallbacks = {
     label: function (context) {
       const datasetLabel = context.dataset.label;
@@ -232,8 +231,8 @@ const StockBarChart = ({
 
   const maxY = Math.max(...datasets.flatMap((d) => d.data)) || 0;
   return (
-    <Card className="p-0">
-      <CardHeader>
+    <Card className="p-0 border-none">
+      <CardHeader className="p-1 md:p-4">
         <div className="flex flex-col md:flex-row items-center md:justify-between mb-4 space-y-2 md:space-y-0 md:space-x-4 ">
           <CardTitle className="text-lg font-semibold text-black">
             {title}
@@ -287,7 +286,7 @@ const StockBarChart = ({
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-1 md:p-0">
         {isLoadingdashboord ? (
           <Loader />
         ) : isErrordashboord ? (
@@ -295,7 +294,7 @@ const StockBarChart = ({
             <p className="text-red-600">Failed to load data.</p>
             <Button onClick={refetchdashboord}>Retry</Button>
           </div>
-        ) : (
+        ) : data.length > 0 ? (
           <Bar
             data={{
               labels,
@@ -324,7 +323,6 @@ const StockBarChart = ({
                   },
                 },
               },
-
               plugins: {
                 tooltip: {
                   callbacks: tooltipCallbacks,
@@ -345,6 +343,10 @@ const StockBarChart = ({
             }}
             height={300}
           />
+        ) : (
+          <div className="flex justify-center items-center min-h-20">
+            <h2>No data available</h2>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -1,4 +1,4 @@
-import { BUYER_EDIT_GET, PAYMENT_FORM, PAYMENT_MODE } from "@/api";
+import { PAYMENT_FORM, PAYMENT_MODE } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
@@ -6,13 +6,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
@@ -31,10 +24,8 @@ const PaymentForm = ({ paymentId = null }) => {
     payment_date: "",
     payment_buyer_id: "",
     payment_mode: "",
-    buyer_state: "",
     payment_amount: "",
     payment_transaction: "",
-    buyer_status: "Active",
   });
   const [originalData, setOriginalData] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -324,10 +315,10 @@ const PaymentForm = ({ paymentId = null }) => {
                   htmlFor="payment_transaction"
                   className="text-sm font-medium"
                 >
-                  Trasaction
+                  Transaction
                 </label>
                 <Textarea
-                  placeholder="Trasaction"
+                  placeholder="Transaction"
                   value={formData.payment_transaction}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -358,9 +349,9 @@ const PaymentForm = ({ paymentId = null }) => {
                   {isEditMode ? "Updating..." : "Creating..."}
                 </>
               ) : isEditMode ? (
-                "Update Buyer"
+                "Update Payment"
               ) : (
-                "Create Buyer"
+                "Create Payment"
               )}
             </Button>
           </div>

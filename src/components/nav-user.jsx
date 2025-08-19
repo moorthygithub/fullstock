@@ -32,7 +32,9 @@ export function NavUser({ user }) {
   const serverVersion = useSelector((state) => state?.version?.version);
   const sidebar = useSelector((state) => state.sidebar.open);
   const showDialog = localVersion !== serverVersion ? true : false;
-
+  // console.log(localVersion, "localVersion");
+  // console.log(showDialog, "showDialog");
+  // console.log(serverVersion, "serverVersion");
   const dispatch = useDispatch();
   const handleOpenDialog = () => {
     dispatch(
@@ -103,7 +105,7 @@ export function NavUser({ user }) {
                       </span>
                     </span>
                     <span className="flex items-center gap-1 font-semibold">
-                      Updated on :18/08/2025
+                      Updated on :19/08/2025
                     </span>
                   </div>
                 </div>

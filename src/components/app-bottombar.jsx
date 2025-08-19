@@ -1,8 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronRight,
   File,
   Home,
+  Package,
+  ReceiptText,
   Settings2,
   ShoppingBag,
   X,
@@ -66,11 +70,11 @@ export function AppBottombar() {
           },
         ]
       : []),
-
     {
-      title: "Purchase",
+      title: "Inward",
       url: "#",
-      icon: ShoppingBag,
+      isActive: false,
+      icon: ArrowDown,
       items: [
         {
           title: "Purchase",
@@ -83,14 +87,16 @@ export function AppBottombar() {
       ],
     },
     {
-      title: (
-        <div>
-          Dispatch<br></br>&PreBook
-        </div>
-      ),
+      title: "Outward",
       url: "#",
-      icon: ShoppingBag,
+      isActive: false,
+      icon: ArrowUp,
       items: [
+        {
+          title: "Quotation",
+          url: "/quotation",
+        },
+
         {
           title: "PreBooking",
           url: "/pre-booking",
@@ -103,21 +109,67 @@ export function AppBottombar() {
           title: "Dispatch Return",
           url: "/dispatch-return",
         },
+        ...(id != 1
+          ? [
+              {
+                title: "Dispatch Summary",
+                url: "/report/dispatch",
+              },
+            ]
+          : []),
       ],
     },
-
     {
-      title: "Report",
+      title: "Billing",
       url: "#",
-      icon: File,
+      isActive: false,
+      icon: ReceiptText,
       items: [
         {
-          title: "Stock",
+          title: "Invoice",
+          url: "/invoice",
+        },
+        {
+          title: "Payment",
+          url: "/payment",
+        },
+        {
+          title: "Payment Summary",
+          url: "/report/payment-summary",
+        },
+        {
+          title: "Ledger",
+          url: "/report/payment-ledger",
+        },
+      ],
+    },
+    {
+      title: "Stock",
+      url: "#",
+      isActive: false,
+      icon: Package,
+
+      items: [
+        {
+          title: "Stock View",
+          url: "/stock-view",
+        },
+        {
+          title: "Category Stock",
+          url: "/report/category-stock",
+        },
+        {
+          title: "Stock Summary",
           url: "/report/stock",
         },
         {
-          title: "Category stock",
-          url: "/report/category-stock",
+          title: "Godown Stock",
+          url: "/report/godown-stock",
+        },
+
+        {
+          title: "Single Item Stock",
+          url: "/report/single-item-stock",
         },
         ...(id != 1
           ? [
@@ -127,24 +179,12 @@ export function AppBottombar() {
               },
             ]
           : []),
-        {
-          title: "Single Item Stock",
-          url: "/report/single-item-stock",
-        },
-        ...(id != 1
-          ? [
-              {
-                title: "Dispatch",
-                url: "/report/dispatch",
-              },
-            ]
-          : []),
       ],
     },
   ];
 
   // show only first 5 items in bottom navigation
-  const mobileNavItems = navItems.slice(0, 5);
+  const mobileNavItems = navItems.slice(0, 6);
 
   const handleItemClick = (item, e) => {
     if (item.items) {
