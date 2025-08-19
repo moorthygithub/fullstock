@@ -62,7 +62,7 @@ const ChangePassword = ({ open, setOpen }) => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/change-password`,
+        `${BASE_URL}/change-password`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },

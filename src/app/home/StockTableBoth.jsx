@@ -35,42 +35,6 @@ function StockTableBoth({
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   // const doublebranch = "Yes";
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
-
-  console.log(singlebranch, doublebranch);
-  const totals = filteredItems.reduce(
-    (acc, item) => {
-      if (singlebranch == "Yes" && doublebranch == "Yes") {
-        const total =
-          Number(item.openpurch) -
-          Number(item.closesale) +
-          (Number(item.purch) - Number(item.sale)) * Number(item.item_piece) +
-          Number(item.openpurch_piece) -
-          Number(item.closesale_piece) +
-          (Number(item.purch_piece) - Number(item.sale_piece));
-
-        const itemPiece = Number(item.item_piece) || 1;
-        const box = Math.floor(total / itemPiece);
-        const piece = total % itemPiece;
-        acc.box += box;
-        acc.piece += piece;
-      }
-      return acc;
-    },
-    { box: 0, piece: 0 }
-  );
-
-  const convertPiecesToBoxes = (boxTotal, pieceTotal, piecePerBox) => {
-    if (!piecePerBox) return { boxTotal, pieceTotal };
-    return {
-      boxTotal: boxTotal,
-      pieceTotal: pieceTotal,
-    };
-  };
-
-  const piecePerBox = filteredItems[0]?.item_piece
-    ? Number(filteredItems[0].item_piece)
-    : 1;
-
   return (
     <Card className="shadow-sm border-0">
       <CardHeader className="px-3 py-2 border-b md:hidden">
@@ -208,14 +172,18 @@ function StockTableBoth({
           <div className="flex space-x-2">
             {print == "true" && (
               <Button
-                className={`flex items-center justify-center sm:w-auto  text-sm p-2 rounded-lg`}
+                size="sm"
+                variant="outline"
+                className="h-9 w-9"
                 onClick={handlePrintPdf}
               >
                 <Printer className="h-4 w-4 mr-1" />
               </Button>
             )}
             <Button
-              className={`flex items-center justify-center sm:w-auto  text-sm p-2 rounded-lg`}
+              size="sm"
+              variant="outline"
+              className="h-9 w-9"
               onClick={() => downloadCSV(filteredItems, toast)}
             >
               <Download className="h-4 w-4 mr-1" />

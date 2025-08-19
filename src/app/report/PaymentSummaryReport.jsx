@@ -6,13 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import ExcelJS from "exceljs";
 import { Printer, Search } from "lucide-react";
 import moment from "moment";
 import { useRef, useState } from "react";
-import { RiFileExcel2Line } from "react-icons/ri";
 import { useReactToPrint } from "react-to-print";
 import Page from "../dashboard/page";
 const PaymentSummaryReport = () => {
@@ -21,7 +18,6 @@ const PaymentSummaryReport = () => {
     from_date: moment().startOf("month").format("YYYY-MM-DD"),
     to_date: moment().format("YYYY-MM-DD"),
   });
-  const { toast } = useToast();
   const token = usetoken();
 
   const handleInputChange = (field, e) => {
@@ -116,7 +112,7 @@ const PaymentSummaryReport = () => {
 
     if (hasPaymentSummary || hasBuyerSummary) {
       return (
-        <div ref={containerRef} className="mt-4 space-y-6">
+        <div ref={containerRef} className="mt-4 space-y-6 max-w-4xl mx-auto">
           {hasPaymentSummary && (
             <div className="bg-white rounded-lg shadow-sm p-0 md:p-4">
               <div className="flex justify-between">
@@ -124,7 +120,7 @@ const PaymentSummaryReport = () => {
                   Payment Summary Report
                 </h2>
                 <div className="hidden print:block">
-                  <h2 className="text-lg font-bold mb-4 flex justify-center">
+                  <h2 className="text-sm font-bold mb-4 flex justify-center">
                     From - {moment(formData.from_date).format("DD MMM YYYY")} To
                     - {moment(formData.to_date).format("DD MMM YYYY")}
                   </h2>
@@ -174,7 +170,7 @@ const PaymentSummaryReport = () => {
                   Payment Buyer Summary
                 </h2>
                 <div className="hidden print:block">
-                  <h2 className="text-lg font-bold mb-4 flex justify-center">
+                  <h2 className="text-sm font-bold mb-4 flex justify-center">
                     From - {moment(formData.from_date).format("DD MMM YYYY")} To
                     - {moment(formData.to_date).format("DD MMM YYYY")}
                   </h2>

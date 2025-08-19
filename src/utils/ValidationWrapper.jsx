@@ -91,7 +91,7 @@ const ValidationWrapper = ({ children }) => {
     };
 
     validateEnvironment();
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
   return children;
 };

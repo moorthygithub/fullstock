@@ -677,13 +677,13 @@ const PreBookingForm = () => {
                         </TableHead>
                         {singlebranch == "Yes" && (
                           <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
-                            Box<span className="text-red-500 ml-1">*</span>
+                            Box
                           </TableHead>
                         )}
 
                         {doublebranch == "Yes" && (
                           <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
-                            Piece<span className="text-red-500 ml-1">*</span>
+                            Piece
                           </TableHead>
                         )}
                       </TableRow>
@@ -1072,12 +1072,12 @@ const PreBookingForm = () => {
 
                         {singlebranch == "Yes" && (
                           <TableHead className="text-sm font-semibold text-gray-700 py-3 px-4">
-                            Box<span className="text-red-500 ml-1">*</span>
+                            Box
                           </TableHead>
                         )}
                         {doublebranch == "Yes" && (
                           <TableHead className="text-sm font-semibold text-gray-700 py-3 px-4">
-                            Piece<span className="text-red-500 ml-1">*</span>
+                            Piece
                           </TableHead>
                         )}
                         {/* <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3 text-center w-1/6">
