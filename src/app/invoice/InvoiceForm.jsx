@@ -1,9 +1,9 @@
 import {
-    fetchDispatchInvoiceById,
-    fetchDispatchInvoiceSubById,
-    fetchInvoiceById,
-    INVOICE_FORM,
-    INVOICE_SUB,
+  fetchDispatchInvoiceById,
+  fetchDispatchInvoiceSubById,
+  fetchInvoiceById,
+  INVOICE_FORM,
+  INVOICE_SUB,
 } from "@/api";
 import apiClient from "@/api/axios";
 import usetoken from "@/api/usetoken";
@@ -13,42 +13,42 @@ import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect
 import { MemoizedSelect } from "@/components/common/MemoizedSelect";
 import Loader from "@/components/loader/Loader";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import {
-    useFetchBuyers,
-    useFetchGoDown,
-    useFetchInvoiceRef,
-    useFetchItems,
+  useFetchBuyers,
+  useFetchGoDown,
+  useFetchInvoiceRef,
+  useFetchItems,
 } from "@/hooks/useApi";
 import { useQuery } from "@tanstack/react-query";
 import {
-    ArrowLeft,
-    Loader2,
-    MinusCircle,
-    PlusCircle,
-    Trash2
+  ArrowLeft,
+  Loader2,
+  MinusCircle,
+  PlusCircle,
+  Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -478,6 +478,7 @@ const InvoiceForm = () => {
                     value={formData.invoice_date}
                     onChange={(e) => handleInputChange(e, "invoice_date")}
                     type="date"
+                    autoFocus
                   />
                 </div>
                 <div className="mb-4">
@@ -491,10 +492,14 @@ const InvoiceForm = () => {
                     value={formData.invoice_buyer_id}
                     onChange={(e) => handleInputChange(e, "invoice_buyer_id")}
                     options={
-                      buyerData?.buyers?.map((buyer) => ({
-                        value: buyer.id,
-                        label: buyer.buyer_name,
-                      })) || []
+                      buyerData?.buyers
+                        ?.filter((buyer) =>
+                          buyer.buyer_type?.split(",").includes("1")
+                        )
+                        .map((buyer) => ({
+                          value: buyer.id,
+                          label: buyer.buyer_name,
+                        })) || []
                     }
                     placeholder="Select Buyer"
                     className="bg-white focus:ring-2 focus:ring-yellow-300"
@@ -807,7 +812,7 @@ const InvoiceForm = () => {
                                 }
                                 placeholder="Enter Rate"
                               />
-                              { row.invoice_sub_rate && (
+                              {row.invoice_sub_rate && (
                                 <div className="text-xs text-gray-700">
                                   • Amount {row.invoice_sub_amount}
                                 </div>
@@ -888,6 +893,7 @@ const InvoiceForm = () => {
                         onChange={(e) => handleInputChange(e, "invoice_date")}
                         placeholder="Enter Payment Date"
                         type="date"
+                        autoFocus
                       />
                     </div>
                   </div>
@@ -904,10 +910,14 @@ const InvoiceForm = () => {
                       value={formData.invoice_buyer_id}
                       onChange={(e) => handleInputChange(e, "invoice_buyer_id")}
                       options={
-                        buyerData?.buyers?.map((buyer) => ({
-                          value: buyer.id,
-                          label: buyer.buyer_name,
-                        })) || []
+                        buyerData?.buyers
+                          ?.filter((buyer) =>
+                            buyer.buyer_type?.split(",").includes("1")
+                          )
+                          .map((buyer) => ({
+                            value: buyer.id,
+                            label: buyer.buyer_name,
+                          })) || []
                       }
                       placeholder="Select Buyer"
                       className="bg-white focus:ring-2 focus:ring-yellow-300"

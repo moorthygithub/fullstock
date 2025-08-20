@@ -130,7 +130,6 @@ const QuotationForm = () => {
   });
   useEffect(() => {
     if (editId && QuotationByid?.quotation) {
-      console.log(QuotationByid, "quotation");
       setFormData({
         quotation_date: QuotationByid.quotation.quotation_date || "",
         quotation_buyer_id: QuotationByid.quotation.quotation_buyer_id || "",
@@ -510,6 +509,7 @@ const QuotationForm = () => {
                     value={formData.quotation_date}
                     onChange={(e) => handleInputChange(e, "quotation_date")}
                     type="date"
+                    autoFocus
                   />
                 </div>
                 <div className="mb-4">
@@ -523,10 +523,14 @@ const QuotationForm = () => {
                     value={formData.quotation_buyer_id}
                     onChange={(e) => handleInputChange(e, "quotation_buyer_id")}
                     options={
-                      buyerData?.buyers?.map((buyer) => ({
-                        value: buyer.id,
-                        label: buyer.buyer_name,
-                      })) || []
+                      buyerData?.buyers
+                        ?.filter((buyer) =>
+                          buyer.buyer_type?.split(",").includes("1")
+                        )
+                        .map((buyer) => ({
+                          value: buyer.id,
+                          label: buyer.buyer_name,
+                        })) || []
                     }
                     placeholder="Select Buyer"
                     className="bg-white focus:ring-2 focus:ring-yellow-300"
@@ -893,6 +897,7 @@ const QuotationForm = () => {
                         value={formData.quotation_date}
                         onChange={(e) => handleInputChange(e, "quotation_date")}
                         type="date"
+                        autoFocus
                       />
                     </div>
                   </div>
@@ -911,10 +916,14 @@ const QuotationForm = () => {
                         handleInputChange(e, "quotation_buyer_id")
                       }
                       options={
-                        buyerData?.buyers?.map((buyer) => ({
-                          value: buyer.id,
-                          label: buyer.buyer_name,
-                        })) || []
+                        buyerData?.buyers
+                          ?.filter((buyer) =>
+                            buyer.buyer_type?.split(",").includes("1")
+                          )
+                          .map((buyer) => ({
+                            value: buyer.id,
+                            label: buyer.buyer_name,
+                          })) || []
                       }
                       placeholder="Select Buyer"
                       className="bg-white focus:ring-2 focus:ring-yellow-300"

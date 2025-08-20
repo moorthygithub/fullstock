@@ -309,7 +309,7 @@ const PreBookingForm = () => {
     e.preventDefault();
 
     const missingFields = [];
-    if (!formData.pre_booking_date) missingFields.push("Preebooking Date");
+    if (!formData.pre_booking_date) missingFields.push("Pre Booking Date");
     if (!formData.pre_booking_buyer_id) missingFields.push("Buyer Id");
     if (!formData.pre_booking_ref_no) missingFields.push("Bill Ref No");
     if (!formData.pre_booking_status && editId) {
@@ -515,6 +515,7 @@ const PreBookingForm = () => {
                     value={formData.pre_booking_date}
                     onChange={(e) => handleInputChange(e, "pre_booking_date")}
                     type="date"
+                    autoFocus
                   />
                 </div>
                 <div className="mb-4">
@@ -539,10 +540,14 @@ const PreBookingForm = () => {
                       handleInputChange(e, "pre_booking_buyer_id")
                     }
                     options={
-                      buyerData?.buyers?.map((buyer) => ({
-                        value: buyer.id,
-                        label: buyer.buyer_name,
-                      })) || []
+                      buyerData?.buyers
+                        ?.filter((buyer) =>
+                          buyer.buyer_type?.split(",").includes("1")
+                        )
+                        .map((buyer) => ({
+                          value: buyer.id,
+                          label: buyer.buyer_name,
+                        })) || []
                     }
                     placeholder="Select Buyer"
                     className="bg-white focus:ring-2 focus:ring-yellow-300"
@@ -910,6 +915,7 @@ const PreBookingForm = () => {
                         }
                         placeholder="Enter Payment Date"
                         type="date"
+                        autoFocus
                       />
                     </div>
                   </div>
@@ -938,10 +944,14 @@ const PreBookingForm = () => {
                         handleInputChange(e, "pre_booking_buyer_id")
                       }
                       options={
-                        buyerData?.buyers?.map((buyer) => ({
-                          value: buyer.id,
-                          label: buyer.buyer_name,
-                        })) || []
+                        buyerData?.buyers
+                          ?.filter((buyer) =>
+                            buyer.buyer_type?.split(",").includes("1")
+                          )
+                          .map((buyer) => ({
+                            value: buyer.id,
+                            label: buyer.buyer_name,
+                          })) || []
                       }
                       placeholder="Select Buyer"
                       className="bg-white focus:ring-2 focus:ring-yellow-300"

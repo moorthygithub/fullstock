@@ -155,6 +155,7 @@ export default function LoginAuth() {
                       onChange={(e) => setUserName(e.target.value)}
                       required
                       className="mt-1 bg-white text-black"
+                      autoFocus
                     />
                   </div>
 

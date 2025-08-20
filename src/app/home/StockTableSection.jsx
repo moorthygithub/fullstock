@@ -16,6 +16,7 @@ import {
 } from "@/redux/columnVisibilitySlice";
 import { ChevronDown, Download, Printer, Search } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import ColumnVisibilityDropdown from "./ColumnVisibilityDropdown";
 
 function StockTableSection({
   title,
@@ -245,18 +246,55 @@ function StockTableSection({
             </div>
           </div>
 
-          <div className="flex items-center justify-between space-x-2">
+          {/* <div className="flex items-center justify-between space-x-2">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
+                autoFocus
                 placeholder={`Search ${title.toLowerCase()}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-sm"
               />
             </div>
+            <div>
+              <ColumnVisibilityDropdown
+                columnVisibility={columnVisibility}
+                singlebranch={singlebranch}
+                doublebranch={doublebranch}
+                handleToggle={handleToggle}
+              />
+            </div>
             <div className="text-sm text-gray-600">
               {filteredItems.length} items
+            </div>
+          </div> */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                autoFocus
+                placeholder={`Search ${title.toLowerCase()}...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-sm"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="w-full flex justify-end">
+                <ColumnVisibilityDropdown
+                  columnVisibility={columnVisibility}
+                  singlebranch={singlebranch}
+                  doublebranch={doublebranch}
+                  handleToggle={handleToggle}
+                />
+              </div>
+
+              {/* Item Count */}
+              <div className="text-sm text-gray-600 text-right sm:text-left w-full sm:w-auto">
+                {filteredItems.length} items
+              </div>
             </div>
           </div>
         </div>
@@ -269,7 +307,7 @@ function StockTableSection({
         <CardContent className="p-2">
           {filteredItems?.length ? (
             <>
-              <div className="flex justify-center">
+              {/* <div className="flex justify-center">
                 <div className="flex flex-wrap justify-center gap-4 p-4  rounded-xl  w-full max-w-4xl ">
                   {Object.entries(columnVisibility).map(([key, value]) => {
                     if (
@@ -297,8 +335,13 @@ function StockTableSection({
                     );
                   })}
                 </div>
-              </div>
-
+              </div> */}
+              {/* <ColumnVisibilityDropdown
+                columnVisibility={columnVisibility}
+                singlebranch={singlebranch}
+                doublebranch={doublebranch}
+                handleToggle={handleToggle}
+              /> */}
               <div
                 className="overflow-x-auto text-[11px] grid grid-cols-1 p-0 md:p-6 print:p-4"
                 ref={containerRef}
@@ -434,7 +477,7 @@ function StockTableSection({
                         opening + purchase - purchaseR - sale + saleR;
                       const box = Math.floor(total / itemPiece);
                       const piece = total % itemPiece;
-                     
+
                       return (
                         <tr
                           key={index}

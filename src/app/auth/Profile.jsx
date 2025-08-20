@@ -144,6 +144,7 @@ const Profile = ({ open, setOpen }) => {
               value={formData?.email}
               onChange={handleInputChange}
               placeholder="Enter Email"
+              autoFocus
             />
           </div>
           <div className="grid gap-2">

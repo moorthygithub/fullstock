@@ -331,37 +331,37 @@ const CreateItem = ({ editId = null }) => {
 
             <div className="grid gap-4">
               <div>
-                <label htmlFor="category" className="text-sm font-medium">
-                  Category *
+                <label htmlFor="item_name" className="text-sm font-medium">
+                  Item Name *
                 </label>
-                <Select
-                  value={formData.item_category_id}
-                  onValueChange={handleSelectChange("item_category_id")}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Select Item Category *" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    {categoryData?.category?.map((product, index) => (
-                      <SelectItem key={index} value={product.id}>
-                        {product.category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="item_name"
+                  autoFocus
+                  placeholder="Item Name"
+                  value={formData.item_name}
+                  onChange={handleInputChange}
+                />
               </div>
-
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label htmlFor="item_name" className="text-sm font-medium">
-                    Item Name *
+                  <label htmlFor="category" className="text-sm font-medium">
+                    Category *
                   </label>
-                  <Input
-                    id="item_name"
-                    placeholder="Item Name"
-                    value={formData.item_name}
-                    onChange={handleInputChange}
-                  />
+                  <Select
+                    value={formData.item_category_id}
+                    onValueChange={handleSelectChange("item_category_id")}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select Item Category *" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {categoryData?.category?.map((product, index) => (
+                        <SelectItem key={index} value={product.id}>
+                          {product.category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label htmlFor="item_rate" className="text-sm font-medium">

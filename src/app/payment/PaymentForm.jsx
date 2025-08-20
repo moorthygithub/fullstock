@@ -250,6 +250,7 @@ const PaymentForm = ({ paymentId = null }) => {
                       payment_date: e.target.value,
                     }))
                   }
+                  autoFocus
                 />
               </div>
 

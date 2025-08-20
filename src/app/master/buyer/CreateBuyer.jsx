@@ -300,6 +300,7 @@ const BuyerForm = ({ buyerId = null }) => {
                       buyer_name: e.target.value,
                     }))
                   }
+                  autoFocus
                 />
               </div>
 
