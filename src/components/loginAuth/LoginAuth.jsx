@@ -118,7 +118,7 @@ export default function LoginAuth() {
             transition={{ delay: 0.2 }}
           >
             <Card className="border-none shadow-none">
-              <CardHeader className="mb-4">
+              {/* <CardHeader className="mb-4">
                 <div className="flex items-center space-x-3">
                   <motion.div
                     animate={{ scale: [1, 1.4, 1] }}
@@ -137,8 +137,32 @@ export default function LoginAuth() {
                 <CardTitle className="text-3xl text-yellow-900 mt-4">
                   Sign In
                 </CardTitle>
-              </CardHeader>
+              </CardHeader> */}
+              <CardHeader className="text-center">
+                <div className="flex items-center justify-center gap-3">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 2.5,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <Logo className="w-12 h-12" />
+                  </motion.div>
 
+                  <h1 className="text-2xl md:text-3xl font-bold text-yellow-900">
+                    {companyname?.CompanyName}
+                  </h1>
+                </div>
+
+                <CardTitle className="text-lg md:text-xl text-gray-700 mt-3">
+                  Welcome Back 👋 <br />
+                  <span className="font-semibold text-yellow-800">
+                    Sign in to continue
+                  </span>
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
@@ -148,6 +172,7 @@ export default function LoginAuth() {
                     <Input
                       id="email"
                       type="text"
+                      autoFocus
                       placeholder="Enter your username"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}

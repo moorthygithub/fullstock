@@ -119,6 +119,7 @@ const ChangePassword = ({ open, setOpen }) => {
               onChange={handleInputChange}
               placeholder="Enter Current Password "
               type="password"
+              autoFocus
             />
           </div>
           <div className="grid gap-2">

@@ -267,8 +267,7 @@ const CreateDispatch = () => {
       const selectedItem = itemsData?.items?.find((item) => item.id === value);
       if (selectedItem) {
         updatedData[rowIndex]["item_size"] = selectedItem.item_size;
-        updatedData[rowIndex]["dispatch_sub_rate"] =
-          selectedItem.item_rate;
+        updatedData[rowIndex]["dispatch_sub_rate"] = selectedItem.item_rate;
         updatedData[rowIndex]["item_brand"] = selectedItem.item_brand;
       }
       focusBoxInput(rowIndex);
@@ -517,6 +516,7 @@ const CreateDispatch = () => {
                     value={formData.dispatch_date}
                     onChange={(e) => handleInputChange(e, "dispatch_date")}
                     type="date"
+                    autoFocus
                   />
                 </div>
                 <div className="mb-4">
@@ -539,10 +539,14 @@ const CreateDispatch = () => {
                     value={formData.dispatch_buyer_id}
                     onChange={(e) => handleInputChange(e, "dispatch_buyer_id")}
                     options={
-                      buyerData?.buyers?.map((buyer) => ({
-                        value: buyer.id,
-                        label: buyer.buyer_name,
-                      })) || []
+                      buyerData?.buyers
+                        ?.filter((buyer) =>
+                          buyer.buyer_type?.split(",").includes("1")
+                        )
+                        .map((buyer) => ({
+                          value: buyer.id,
+                          label: buyer.buyer_name,
+                        })) || []
                     }
                     placeholder="Select Buyer"
                     className="bg-white focus:ring-2 focus:ring-yellow-300"
@@ -925,6 +929,7 @@ const CreateDispatch = () => {
                         onChange={(e) => handleInputChange(e, "dispatch_date")}
                         placeholder="Enter Payment Date"
                         type="date"
+                        autoFocus
                       />
                     </div>
                   </div>
@@ -953,10 +958,14 @@ const CreateDispatch = () => {
                         handleInputChange(e, "dispatch_buyer_id")
                       }
                       options={
-                        buyerData?.buyers?.map((buyer) => ({
-                          value: buyer.id,
-                          label: buyer.buyer_name,
-                        })) || []
+                        buyerData?.buyers
+                          ?.filter((buyer) =>
+                            buyer.buyer_type?.split(",").includes("1")
+                          )
+                          .map((buyer) => ({
+                            value: buyer.id,
+                            label: buyer.buyer_name,
+                          })) || []
                       }
                       placeholder="Select Buyer"
                       className="bg-white focus:ring-2 focus:ring-yellow-300"

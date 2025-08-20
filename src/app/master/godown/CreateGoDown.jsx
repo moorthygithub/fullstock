@@ -224,6 +224,7 @@ const CreateGoDownForm = ({ editId = null }) => {
               </label>
               <Input
                 id="godown"
+                autoFocus
                 placeholder="Enter Godown"
                 value={formData.godown}
                 onChange={(e) =>

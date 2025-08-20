@@ -224,6 +224,7 @@ const CreateCategory = ({ editId = null }) => {
               <Input
                 id="category"
                 placeholder="Enter category"
+                autoFocus
                 value={formData.category}
                 onChange={(e) => {
                   const value = e.target.value;

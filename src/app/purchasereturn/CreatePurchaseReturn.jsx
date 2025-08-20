@@ -506,6 +506,7 @@ const CreatePurchaseReturn = () => {
                     value={formData.purchase_date}
                     onChange={(e) => handleInputChange(e, "purchase_date")}
                     type="date"
+                    autoFocus
                   />
                 </div>
                 <div className="mb-4">
@@ -528,10 +529,14 @@ const CreatePurchaseReturn = () => {
                     value={formData.purchase_buyer_id}
                     onChange={(e) => handleInputChange(e, "purchase_buyer_id")}
                     options={
-                      buyerData?.buyers?.map((buyer) => ({
-                        value: buyer.id,
-                        label: buyer.buyer_name,
-                      })) || []
+                      buyerData?.buyers
+                        ?.filter((buyer) =>
+                          buyer.buyer_type?.split(",").includes("1")
+                        )
+                        .map((buyer) => ({
+                          value: buyer.id,
+                          label: buyer.buyer_name,
+                        })) || []
                     }
                     placeholder="Select Buyer"
                     className="bg-white focus:ring-2 focus:ring-yellow-300"
@@ -892,6 +897,7 @@ const CreatePurchaseReturn = () => {
                         onChange={(e) => handleInputChange(e, "purchase_date")}
                         placeholder="Enter Payment Date"
                         type="date"
+                        autoFocus
                       />
                     </div>
                   </div>
@@ -920,10 +926,14 @@ const CreatePurchaseReturn = () => {
                         handleInputChange(e, "purchase_buyer_id")
                       }
                       options={
-                        buyerData?.buyers?.map((buyer) => ({
-                          value: buyer.id,
-                          label: buyer.buyer_name,
-                        })) || []
+                        buyerData?.buyers
+                          ?.filter((buyer) =>
+                            buyer.buyer_type?.split(",").includes("1")
+                          )
+                          .map((buyer) => ({
+                            value: buyer.id,
+                            label: buyer.buyer_name,
+                          })) || []
                       }
                       placeholder="Select Buyer"
                       className="bg-white focus:ring-2 focus:ring-yellow-300"
