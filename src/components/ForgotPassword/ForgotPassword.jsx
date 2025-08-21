@@ -18,6 +18,7 @@ import companyname from "../../json/company.json";
 import AnimatedBackgroundLines from "../common/AnimatedBackgroundLines";
 import StockIllustrationCycle from "../common/stock-illustration.";
 import { PANEL_FORGOT_PASSWORD } from "@/api";
+import { AnimatedBackgroundBubble } from "../common/AnimatedBackgroundBubble";
 
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
@@ -99,6 +100,7 @@ export default function LoginAuth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-100 px-4">
       <div className="absolute inset-0 z-0 pointer-events-none">
         <AnimatedBackgroundLines />
+        <AnimatedBackgroundBubble />
       </div>
 
       <motion.div
@@ -121,7 +123,7 @@ export default function LoginAuth() {
           >
             <Card className="border-none shadow-none">
               <CardHeader className="mb-4">
-                <div className="flex items-center space-x-3">
+                {/* <div className="flex items-center space-x-3">
                   <motion.div
                     animate={{ scale: [1, 1.4, 1] }}
                     transition={{
@@ -138,7 +140,30 @@ export default function LoginAuth() {
                 </div>
                 <CardTitle className="text-3xl text-yellow-900 mt-4">
                   Forgot Password
-                </CardTitle>
+                </CardTitle> */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="flex">
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2.5,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <Logo className="w-12 h-12" />
+                    </motion.div>
+
+                    <h1 className="text-2xl md:text-3xl ml-4 font-bold text-yellow-900">
+                      {companyname?.CompanyName}
+                    </h1>
+                  </div>
+                  <div className="flex justify-end mt-2">
+                    <span className="font-semibold text-yellow-800 text-sm">
+                      Forgot Password
+                    </span>
+                  </div>
+                </div>
               </CardHeader>
 
               <CardContent>
