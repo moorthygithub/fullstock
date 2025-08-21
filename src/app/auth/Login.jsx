@@ -1,5 +1,3 @@
-
-
 import LoginAuth from "@/components/loginAuth/LoginAuth";
 
 const Login = () => {
@@ -7,10 +5,9 @@ const Login = () => {
     <>
       <div className="relative w-full min-h-screen overflow-hidden">
         <div className="relative z-10">
-          <LoginAuth/>
+          <LoginAuth />
         </div>
       </div>
-   
     </>
   );
 };

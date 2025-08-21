@@ -70,6 +70,7 @@ const QuotationForm = () => {
   const singlebranch = useSelector((state) => state.auth.branch_s_unit);
   const doublebranch = useSelector((state) => state.auth.branch_d_unit);
   const token = usetoken();
+  const barcodeInputRefs = useRef([]);
 
   const [formData, setFormData] = useState({
     quotation_date: today,
@@ -89,6 +90,7 @@ const QuotationForm = () => {
       quotation_sub_box: 0,
       item_brand: "",
       item_size: "",
+      item_barcode: "",
       quotation_sub_piece: 0,
       stockData: {
         total: 0,
@@ -299,6 +301,71 @@ const QuotationForm = () => {
 
     setFormData(updatedFormData);
   };
+
+  const [inputValues, setInputValues] = useState({});
+  const [inputLocked, setInputLocked] = useState({}); // track lock per row
+
+  const CheckBarcode = (value, rowIndex, callback) => {
+    if (value.length !== 6) return;
+    const foundItem = itemsData?.items?.find(
+      (item) => item.item_barcode === value
+    );
+
+    if (foundItem) {
+      toast({
+        title: "Success",
+        description: "Barcode matched",
+        variant: "default",
+      });
+
+      const updatedData = [...invoiceData];
+      updatedData[rowIndex] = {
+        ...updatedData[rowIndex],
+        item_barcode: foundItem.item_barcode,
+        quotation_sub_item_id: foundItem.id,
+        quotation_sub_rate: foundItem.item_rate,
+        quotation_sub_piece: foundItem.item_piece,
+      };
+      setInvoiceData(updatedData);
+      setInputValues((prev) => ({ ...prev, [rowIndex]: "" }));
+
+      if (rowIndex === invoiceData.length - 1) {
+        setInvoiceData((prev) => [
+          ...prev,
+          {
+            id: null,
+            quotation_sub_item_id: "",
+            quotation_sub_godown_id: "",
+            quotation_sub_rate: "",
+            quotation_sub_box: 0,
+            item_brand: "",
+            item_size: "",
+            item_barcode: "",
+            quotation_sub_piece: 0,
+            stockData: { total: 0, total_box: 0, total_piece: 0 },
+          },
+        ]);
+      }
+
+      setTimeout(() => {
+        const nextIndex = rowIndex + 1;
+        if (barcodeInputRefs.current[nextIndex]) {
+          barcodeInputRefs.current[nextIndex].focus();
+        }
+      }, 0);
+    } else {
+      toast({
+        title: "Error",
+        description: "Barcode not found",
+        variant: "destructive",
+      });
+      setInputValues((prev) => ({ ...prev, [rowIndex]: "" }));
+    }
+
+    // Execute callback after check
+    if (callback) callback();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -641,6 +708,11 @@ const QuotationForm = () => {
                   <Table className="w-full border-collapse">
                     <TableHeader>
                       <TableRow className="bg-gradient-to-r from-yellow-100 to-yellow-50">
+                        {!editId && (
+                          <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
+                            Barcode
+                          </TableHead>
+                        )}
                         <TableHead className="text-xs font-semibold text-gray-700 py-3 px-4">
                           Item
                         </TableHead>
@@ -669,7 +741,73 @@ const QuotationForm = () => {
                           key={rowIndex}
                           className="border-b border-yellow-100 hover:bg-yellow-50 transition-colors relative"
                         >
-                          {/* Item Select */}
+                          {!editId && (
+                            <TableCell className="px-4 py-3 min-w-[150px] align-top">
+                              <Input
+                                ref={(el) =>
+                                  (barcodeInputRefs.current[rowIndex] = el)
+                                }
+                                className="bg-white border border-gray-300 w-full text-xs"
+                                value={
+                                  invoiceData[rowIndex]?.item_barcode ||
+                                  inputValues[rowIndex] ||
+                                  ""
+                                }
+                                onChange={(e) => {
+                                  let value = e.target.value;
+
+                                  // ✅ Stop if barcode already matched for this row
+                                  if (invoiceData[rowIndex]?.item_barcode)
+                                    return;
+
+                                  // ✅ Stop if temporarily locked
+                                  if (inputLocked[rowIndex]) return;
+
+                                  // ✅ Limit to 6 characters max
+                                  if (value.length > 6) {
+                                    value = value.slice(0, 6);
+                                  }
+
+                                  // Always update the input field so user can see what they typed
+                                  setInputValues((prev) => ({
+                                    ...prev,
+                                    [rowIndex]: value,
+                                  }));
+
+                                  // ✅ Only trigger check when exactly 6 chars
+                                  if (value.length === 6) {
+                                    // Lock input
+                                    setInputLocked((prev) => ({
+                                      ...prev,
+                                      [rowIndex]: true,
+                                    }));
+
+                                    CheckBarcode(value, rowIndex, () => {
+                                      // Unlock input after 2s
+                                      setTimeout(() => {
+                                        setInputLocked((prev) => ({
+                                          ...prev,
+                                          [rowIndex]: false,
+                                        }));
+                                      }, 2000);
+                                    });
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    const nextIndex = rowIndex + 1;
+                                    if (barcodeInputRefs.current[nextIndex]) {
+                                      barcodeInputRefs.current[
+                                        nextIndex
+                                      ].focus();
+                                    }
+                                  }
+                                }}
+                                placeholder="Barcode"
+                              />
+                            </TableCell>
+                          )}
                           <TableCell className="px-4 py-3 min-w-[200px] align-top">
                             <div className="space-y-1">
                               <MemoizedProductSelect
@@ -729,7 +867,6 @@ const QuotationForm = () => {
                               </button>
                             )}
                           </TableCell>
-
                           {/* Godown Select */}
                           <TableCell className="px-4 py-3 min-w-[150px] align-top">
                             <div className="space-y-1">
@@ -776,7 +913,6 @@ const QuotationForm = () => {
                               />
                             </div>
                           </TableCell>
-
                           {singlebranch == "Yes" && (
                             <TableCell className="px-4 py-3 min-w-[150px] align-top">
                               <div className="space-y-1">
@@ -807,7 +943,6 @@ const QuotationForm = () => {
                               </div>
                             </TableCell>
                           )}
-
                           {doublebranch == "Yes" && (
                             <TableCell className="px-4 py-3 min-w-[150px] align-top">
                               <div className="space-y-1">
@@ -872,7 +1007,13 @@ const QuotationForm = () => {
         </div>
 
         <div className="hidden sm:block">
-          <form onSubmit={handleSubmit} className="w-full ">
+          <form
+            onSubmit={handleSubmit}
+            className="w-full "
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.preventDefault();
+            }}
+          >
             <div
               className={`flex sticky top-0 z-10 border border-gray-200 rounded-lg justify-between items-start gap-8 mb-2 ${ButtonConfig.cardheaderColor} p-4 shadow-sm`}
             >
@@ -1012,6 +1153,11 @@ const QuotationForm = () => {
                   <Table className="border border-gray-300 rounded-lg shadow-sm">
                     <TableHeader>
                       <TableRow className="bg-gray-100">
+                        {!editId && (
+                          <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
+                            Barcode
+                          </TableHead>
+                        )}
                         <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
                           <div className="flex items-center justify-between">
                             <span>
@@ -1028,7 +1174,6 @@ const QuotationForm = () => {
                             )}
                           </div>
                         </TableHead>
-
                         <TableHead className="text-sm font-semibold text-gray-600 px-4 py-3">
                           Godown
                           <span className="text-red-500 ml-1 text-xs">*</span>
@@ -1057,6 +1202,73 @@ const QuotationForm = () => {
                           key={rowIndex}
                           className="border-t border-gray-200 hover:bg-gray-50 relative"
                         >
+                          {!editId && (
+                            <TableCell className="px-4 py-3 align-top">
+                              <Input
+                                ref={(el) =>
+                                  (barcodeInputRefs.current[rowIndex] = el)
+                                }
+                                className="bg-white border border-gray-300 w-full text-xs"
+                                value={
+                                  invoiceData[rowIndex]?.item_barcode ||
+                                  inputValues[rowIndex] ||
+                                  ""
+                                }
+                                onChange={(e) => {
+                                  let value = e.target.value;
+
+                                  // ✅ Stop if barcode already matched for this row
+                                  if (invoiceData[rowIndex]?.item_barcode)
+                                    return;
+
+                                  // ✅ Stop if temporarily locked
+                                  if (inputLocked[rowIndex]) return;
+
+                                  // ✅ Limit to 6 characters max
+                                  if (value.length > 6) {
+                                    value = value.slice(0, 6);
+                                  }
+
+                                  // Always update the input field so user can see what they typed
+                                  setInputValues((prev) => ({
+                                    ...prev,
+                                    [rowIndex]: value,
+                                  }));
+
+                                  // ✅ Only trigger check when exactly 6 chars
+                                  if (value.length === 6) {
+                                    // Lock input
+                                    setInputLocked((prev) => ({
+                                      ...prev,
+                                      [rowIndex]: true,
+                                    }));
+
+                                    CheckBarcode(value, rowIndex, () => {
+                                      // Unlock input after 2s
+                                      setTimeout(() => {
+                                        setInputLocked((prev) => ({
+                                          ...prev,
+                                          [rowIndex]: false,
+                                        }));
+                                      }, 2000);
+                                    });
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    const nextIndex = rowIndex + 1;
+                                    if (barcodeInputRefs.current[nextIndex]) {
+                                      barcodeInputRefs.current[
+                                        nextIndex
+                                      ].focus();
+                                    }
+                                  }
+                                }}
+                                placeholder="Barcode"
+                              />
+                            </TableCell>
+                          )}
                           {/* Item Column */}
                           <TableCell className="px-4 py-3 align-top">
                             <div className="flex flex-col gap-1">

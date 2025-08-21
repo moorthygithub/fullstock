@@ -21,8 +21,9 @@ import companyname from "../../json/company.json";
 import AnimatedBackgroundLines from "../common/AnimatedBackgroundLines";
 import StockIllustrationCycle from "../common/stock-illustration.";
 import EnquiryDrawer from "./EnquiryDrawer";
+import { AnimatedBackgroundBubble } from "../common/AnimatedBackgroundBubble";
 
-export default function LoginAuth() {
+function LoginAuth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -97,6 +98,7 @@ export default function LoginAuth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-100 px-4">
       <div className="absolute inset-0 z-0 pointer-events-none">
         <AnimatedBackgroundLines />
+        <AnimatedBackgroundBubble />
       </div>
 
       <motion.div
@@ -139,28 +141,30 @@ export default function LoginAuth() {
                 </CardTitle>
               </CardHeader> */}
               <CardHeader className="text-center">
-                <div className="flex items-center justify-center gap-3">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 2.5,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    <Logo className="w-12 h-12" />
-                  </motion.div>
-
-                  <h1 className="text-2xl md:text-3xl font-bold text-yellow-900">
-                    {companyname?.CompanyName}
-                  </h1>
-                </div>
-
                 <CardTitle className="text-lg md:text-xl text-gray-700 mt-3">
-                  Welcome Back 👋 <br />
-                  <span className="font-semibold text-yellow-800">
-                    Sign in to continue
-                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="flex">
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 2.5,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <Logo className="w-12 h-12" />
+                      </motion.div>
+
+                      <h1 className="text-2xl md:text-3xl ml-4 font-bold text-yellow-900">
+                        {companyname?.CompanyName}
+                      </h1>
+                    </div>
+                    <div className="flex justify-end mt-2">
+                      <span className="font-semibold text-yellow-800 text-sm">
+                        Sign in to continue
+                      </span>
+                    </div>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -245,3 +249,4 @@ export default function LoginAuth() {
     </div>
   );
 }
+export default LoginAuth;
