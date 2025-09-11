@@ -43,12 +43,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  DISPATCH_EDIT_LIST,
   fetchPreBookingById,
   navigateTODispatchEdit,
   navigateTODispatchView,
   navigateToPreBookingEdit,
   navigateToPreBookingView,
+  PRE_BOOKING_CREATE,
   PRE_BOOKING_LIST
 } from "@/api";
 import apiClient from "@/api/axios";
@@ -112,7 +112,7 @@ const PreBookingList = () => {
   const confirmDelete = async () => {
     try {
       const response = await apiClient.delete(
-        `${DISPATCH_EDIT_LIST}/${deleteItemId}`,
+        `${PRE_BOOKING_CREATE}/${deleteItemId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
