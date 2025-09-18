@@ -26,6 +26,7 @@ const PaymentForm = ({ paymentId = null }) => {
     payment_mode: "",
     payment_amount: "",
     payment_transaction: "",
+    payment_remarks: "",
   });
   const [originalData, setOriginalData] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -62,6 +63,7 @@ const PaymentForm = ({ paymentId = null }) => {
         payment_mode: data.payment_mode || "",
         payment_amount: data.payment_amount || "",
         payment_transaction: data.payment_transaction || "",
+        payment_remarks: data.payment_remarks || "",
       });
       setOriginalData({
         payment_date: data.payment_date || "",
@@ -69,6 +71,7 @@ const PaymentForm = ({ paymentId = null }) => {
         payment_mode: data.payment_mode || "",
         payment_amount: data.payment_amount || "",
         payment_transaction: data.payment_transaction || "",
+        payment_remarks: data.payment_remarks || "",
       });
     } catch {
       toast({
@@ -210,7 +213,8 @@ const PaymentForm = ({ paymentId = null }) => {
       formData.payment_buyer_id !== originalData.payment_buyer_id ||
       formData.payment_mode !== originalData.payment_mode ||
       formData.payment_amount !== originalData.payment_amount ||
-      formData.payment_transaction !== originalData.payment_transaction);
+      formData.payment_transaction !== originalData.payment_transaction ||
+      formData.payment_remarks !== originalData.payment_remarks);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{renderTrigger()}</DialogTrigger>
@@ -283,7 +287,7 @@ const PaymentForm = ({ paymentId = null }) => {
                   Payment Type *
                 </label>
                 <MemoizedSelect
-                  value={formData.buyepayment_moder_type}
+                  value={formData.payment_mode}
                   onChange={(vals) =>
                     setFormData({ ...formData, payment_mode: vals })
                   }
@@ -325,6 +329,24 @@ const PaymentForm = ({ paymentId = null }) => {
                     setFormData((prev) => ({
                       ...prev,
                       payment_transaction: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="col-span-2">
+                <label
+                  htmlFor="payment_remarks"
+                  className="text-sm font-medium"
+                >
+                  Remarks
+                </label>
+                <Textarea
+                  placeholder="Remarks"
+                  value={formData.payment_remarks}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      payment_remarks: e.target.value,
                     }))
                   }
                 />
